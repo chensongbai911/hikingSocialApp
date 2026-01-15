@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+
+    <!-- Viewport 配置 -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+
+    <!-- iOS PWA 支持 -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="徒步社交" />
+
+    <!-- 防止缩放 -->
+    <meta name="format-detection" content="telephone=no" />
+
+    <title>徒步社交 - Hiking Social App</title>
+
+    <!-- 高德地图 API -->
+    <script type="text/javascript">
+      window._AMapSecurityConfig = {
+        securityJsCode: 'edae25d7aec90d6c2d6eb0d3f6c7f680',
+      }
+    </script>
+    <script src="https://webapi.amap.com/maps?v=2.0&key=b92a734708f227d392015c74eb075ac6&plugin=AMap.PlaceSearch,AMap.Geocoder,AMap.Geolocation"></script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
