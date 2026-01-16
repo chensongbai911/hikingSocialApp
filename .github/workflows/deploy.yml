@@ -39,11 +39,15 @@ jobs:
           # 检查是否是 git 仓库
           if [ ! -d .git ]; then
             echo "📥 初始化 Git 仓库..."
-            # 清理可能存在的文件
+            # 检查目录是否为空
             if [ "$(ls -A)" ]; then
-              echo "⚠️  目录不为空，先备份现有文件..."
-              mv * ../hikingSocialApp_backup_$(date +%Y%m%d_%H%M%S) 2>/dev/null || true
+              echo "⚠️  目录不为空，清理现有文件..."
+              # 删除所有文件和目录（除了隐藏文件）
+              rm -rf * 2>/dev/null || true
+              # 删除隐藏文件（除了. 和 ..）
+              rm -rf .[!.]* 2>/dev/null || true
             fi
+            echo "📥 克隆代码仓库..."
             git clone https://github.com/chensongbai911/hikingSocialApp.git . || (echo "❌ 克隆失败" && exit 1)
           else
             echo "📥 更新现有仓库..."
