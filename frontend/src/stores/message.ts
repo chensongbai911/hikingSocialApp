@@ -75,12 +75,12 @@ export const useMessageStore = defineStore('message', () => {
     try {
       isLoading.value = true
       const result = await messageApi.getConversations(page, limit)
-      conversations.value = result.conversations || []
+      conversations.value = result?.conversations || []
       conversationPagination.value = {
         page,
         limit,
-        total: result.total || 0,
-        totalPages: result.totalPages || 0,
+        total: result?.total || 0,
+        totalPages: result?.totalPages || 0,
       }
       unreadCount.value = conversations.value.reduce(
         (sum, c) => sum + (getUnreadForConversation(c) || 0),
@@ -88,7 +88,7 @@ export const useMessageStore = defineStore('message', () => {
       )
     } catch (error) {
       console.error('Failed to fetch conversations:', error)
-      throw error
+      conversations.value = []
     } finally {
       isLoading.value = false
     }
@@ -263,9 +263,10 @@ export const useMessageStore = defineStore('message', () => {
   const fetchUnreadCount = async () => {
     try {
       const result = await messageApi.getUnreadCount()
-      unreadCount.value = result.count || 0
+      unreadCount.value = result?.count || 0
     } catch (error) {
       console.error('Failed to fetch unread count:', error)
+      unreadCount.value = 0
     }
   }
 

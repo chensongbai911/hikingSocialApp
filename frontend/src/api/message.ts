@@ -12,7 +12,8 @@ export const getConversations = async (page: number = 1, limit: number = 20) => 
   const response = await request.get('/messages/conversations', {
     params: { page, limit },
   })
-  return response.data.data
+  console.log('getConversations API response:', response)
+  return response.data
 }
 
 /**
@@ -142,7 +143,8 @@ export const removeFromBlacklist = async (targetUserId: string) => {
  */
 export const getUnreadCount = async () => {
   const response = await request.get('/messages/unread-count')
-  return response.data.data
+  console.log('getUnreadCount API response:', response)
+  return response.data
 }
 
 /**

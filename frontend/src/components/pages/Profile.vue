@@ -251,8 +251,15 @@ const userProfile = computed(() => {
     photo_url: p.photo_url
   }));
 
+  // 确保头像 URL 是完整路径
+  let avatarUrl = currentUser.value.avatar_url || 'https://via.placeholder.com/112'
+  if (avatarUrl && avatarUrl.startsWith('/')) {
+    const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+    avatarUrl = `${baseURL}${avatarUrl}`
+  }
+
   return {
-    avatar: currentUser.value.avatar_url || 'https://via.placeholder.com/112',
+    avatar: avatarUrl,
     nickname: currentUser.value.nickname,
     gender: currentUser.value.gender,
     age: currentUser.value.age || 0,
