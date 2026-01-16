@@ -44,7 +44,7 @@ api.interceptors.response.use(
     // 直接返回整个响应供业务层处理
     return response.data
   },
-  (error: AxiosError<any>) => {
+  async (error: AxiosError<any>) => {
     const userStore = useUserStore()
 
     // 处理401 - token过期或无效
