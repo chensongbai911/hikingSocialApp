@@ -33,7 +33,7 @@ jobs:
         username: ${{ secrets.SERVER_USER }}
         key: ${{ secrets.SERVER_SSH_KEY }}
         port: 22
-        source: "backend/dist,backend/package.json,backend/package-lock.json,backend/.env.example,backend/ecosystem.config.js,frontend"
+        source: "backend/dist,backend/package.json,backend/package-lock.json,backend/.env.example,backend/ecosystem.config.cjs,frontend"
         target: "/tmp/hikingSocialApp"
         strip_components: 0
 
@@ -90,9 +90,9 @@ jobs:
           # 重启后端服务
           echo "🔄 重启后端服务..."
           if pm2 list | grep -q hiking-app-backend; then
-            pm2 restart ecosystem.config.js --only hiking-app-backend --env production || (echo "❌ 重启失败" && exit 1)
+            pm2 restart ecosystem.config.cjs --only hiking-app-backend --env production || (echo "❌ 重启失败" && exit 1)
           else
-            pm2 start ecosystem.config.js --env production || (echo "❌ 启动失败" && exit 1)
+            pm2 start ecosystem.config.cjs --env production || (echo "❌ 启动失败" && exit 1)
           fi
           pm2 save
 
