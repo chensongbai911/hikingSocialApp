@@ -17,7 +17,7 @@ export interface Activity {
   end_time: Date | null;
   difficulty: 'easy' | 'moderate' | 'hard';
   max_participants: number | null;
-  status: 'pending' | 'approved' | 'ongoing' | 'completed' | 'cancelled';
+  status: 'pending' | 'approved' | 'ongoing' | 'completed' | 'cancelled' | 'recruiting';
   route_description: string | null;
   equipment_required: string | null;
   created_at: Date;
@@ -76,7 +76,7 @@ export interface UpdateActivityPayload {
   end_time?: Date;
   difficulty?: 'easy' | 'moderate' | 'hard';
   max_participants?: number;
-  status?: 'pending' | 'approved' | 'ongoing' | 'completed' | 'cancelled';
+  status?: 'pending' | 'approved' | 'ongoing' | 'completed' | 'cancelled' | 'recruiting';
   route_description?: string;
   equipment_required?: string;
 }

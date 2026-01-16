@@ -230,7 +230,7 @@ export class ActivityController {
 
       // 只在明确提供 status 时才验证（排除 undefined 和空字符串）
       if (status !== undefined && status !== null && status !== '') {
-        if (!['pending', 'approved', 'ongoing', 'completed', 'cancelled'].includes(status)) {
+        if (!['pending', 'approved', 'ongoing', 'completed', 'cancelled', 'recruiting'].includes(status)) {
           return validationError(res, { status: '状态值不合法' });
         }
       }

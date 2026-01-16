@@ -56,6 +56,19 @@
         </p>
       </div>
 
+      <!-- 地区信息 -->
+      <div v-if="userProfile.region || userProfile.city || userProfile.province" class="bg-white rounded-2xl shadow-sm p-5 mb-4">
+        <h3 class="text-sm font-semibold text-gray-500 mb-3">所在地</h3>
+        <div class="flex items-center gap-2 text-gray-700">
+          <svg class="w-5 h-5 text-teal-500" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+          </svg>
+          <span>
+            {{ userProfile.region || `${userProfile.province || ''} ${userProfile.city || ''}`.trim() || '未设置' }}
+          </span>
+        </div>
+      </div>
+
       <!-- 徒步偏好 -->
       <div class="bg-white rounded-2xl shadow-sm p-5 mb-4">
         <h3 class="text-sm font-semibold text-gray-500 mb-3">我的徒步偏好</h3>
@@ -240,6 +253,9 @@ const userProfile = computed(() => {
     gender: currentUser.value.gender,
     age: currentUser.value.age || 0,
     bio: currentUser.value.bio || '这个人很懒，什么都没写...',
+    province: currentUser.value.province || '',
+    city: currentUser.value.city || '',
+    region: currentUser.value.region || '',
     preferences: preferenceLabels,
     photos: photos
   };

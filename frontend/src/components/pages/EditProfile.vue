@@ -71,6 +71,33 @@
         </div>
       </div>
 
+      <!-- 地区选择 -->
+      <div class="bg-white rounded-2xl shadow-sm p-5 mb-4">
+        <label class="block text-sm font-semibold text-gray-500 mb-3">所在地区</label>
+        <div class="grid grid-cols-2 gap-3">
+          <select
+            v-model="formData.province"
+            @change="onProvinceChange"
+            class="px-4 py-3 bg-gray-50 rounded-xl border-0 focus:ring-2 focus:ring-teal-500 outline-none text-gray-800"
+          >
+            <option value="">请选择省份</option>
+            <option v-for="province in provinces" :key="province" :value="province">
+              {{ province }}
+            </option>
+          </select>
+          <select
+            v-model="formData.city"
+            :disabled="!formData.province"
+            class="px-4 py-3 bg-gray-50 rounded-xl border-0 focus:ring-2 focus:ring-teal-500 outline-none text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <option value="">请选择城市</option>
+            <option v-for="city in cities" :key="city" :value="city">
+              {{ city }}
+            </option>
+          </select>
+        </div>
+      </div>
+
       <!-- 关于我 -->
       <div class="bg-white rounded-2xl shadow-sm p-5 mb-4">
         <div class="flex items-center justify-between mb-3">
@@ -157,6 +184,7 @@ import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import type { UpdateProfileData } from '@/types';
 import { compressImage } from '@/utils/imageUpload';
+import { getAllProvinces, getCitiesByProvince } from '@/utils/chinaRegions';
 import toast from '@/utils/toast';
 
 const router = useRouter();
@@ -172,11 +200,31 @@ const formData = ref<UpdateProfileData & { preferences: string[] }>({
   age: undefined,
   bio: '',
   avatar_url: '',
+  province: '',
+  city: '',
+  region: '',
   preferences: []
 });
 
 // 是否显示推荐标签
 const showSuggestedTags = ref(false);
+
+// 地区数据
+const provinces = ref<string[]>(getAllProvinces());
+const cities = ref<string[]>([]);
+
+// 当省份改变时，更新城市列表
+const onProvinceChange = () => {
+  const province = formData.value.province;
+  if (province) {
+    cities.value = getCitiesByProvince(province);
+    // 清空城市选择
+    formData.value.city = '';
+  } else {
+    cities.value = [];
+    formData.value.city = '';
+  }
+};
 
 // 推荐标签
 const suggestedTags = ref([
@@ -249,12 +297,23 @@ const removePreference = (index: number) => {
 // 保存资料
 const saveProfile = async () => {
   try {
+    // 根据省份和城市构建完整地区描述
+    let regionText = '';
+    if (formData.value.province && formData.value.city) {
+      regionText = `${formData.value.province} ${formData.value.city}`;
+    } else if (formData.value.province) {
+      regionText = formData.value.province;
+    }
+
     const updateData: UpdateProfileData = {
       nickname: formData.value.nickname,
       gender: formData.value.gender,
       age: formData.value.age,
       bio: formData.value.bio,
-      avatar_url: formData.value.avatar_url
+      avatar_url: formData.value.avatar_url,
+      province: formData.value.province,
+      city: formData.value.city,
+      region: regionText
     };
 
     const success = await userStore.updateProfile(updateData);
@@ -265,12 +324,15 @@ const saveProfile = async () => {
         await userStore.updatePreferences(formData.value.preferences);
       }
 
+      toast.success('资料保存成功');
       console.log('保存资料成功');
       router.back();
     } else {
+      toast.error(userStore.error || '保存失败');
       console.error('保存资料失败:', userStore.error);
     }
   } catch (error) {
+    toast.error('保存失败，请重试');
     console.error('保存资料失败:', error);
   }
 };
@@ -289,8 +351,16 @@ const loadUserProfile = async () => {
         age: currentUser.value.age,
         bio: currentUser.value.bio || '',
         avatar_url: currentUser.value.avatar_url || '',
+        province: currentUser.value.province || '',
+        city: currentUser.value.city || '',
+        region: currentUser.value.region || '',
         preferences: (currentUser.value.preferences || []).map(p => p.preference_value)
       };
+
+      // 如果有省份，加载对应的城市列表
+      if (formData.value.province) {
+        cities.value = getCitiesByProvince(formData.value.province);
+      }
     }
 
     console.log('用户资料加载成功');

@@ -9,6 +9,9 @@ interface UpdateProfilePayload {
   bio?: string;
   hiking_level?: 'beginner' | 'intermediate' | 'advanced';
   avatar_url?: string;
+  province?: string;
+  city?: string;
+  region?: string;
 }
 
 interface UserProfile {
@@ -20,6 +23,9 @@ interface UserProfile {
   avatar_url: string | null;
   bio: string | null;
   hiking_level: string;
+  province: string | null;
+  city: string | null;
+  region: string | null;
   is_verified: boolean;
   created_at: Date;
   preferences: UserPreference[];
@@ -45,9 +51,9 @@ export class UserService {
    * 获取用户完整资料
    */
   async getProfile(userId: string): Promise<UserProfile> {
-    // 获取用户基本信息
+    // 获取用户基本信息（包括地区字段）
     const [users] = await pool.query<RowDataPacket[]>(
-      `SELECT id, email, nickname, gender, age, avatar_url, bio, hiking_level, is_verified, created_at
+      `SELECT id, email, nickname, gender, age, avatar_url, bio, hiking_level, province, city, region, is_verified, created_at
        FROM users WHERE id = ? AND deleted_at IS NULL`,
       [userId]
     );
@@ -114,6 +120,18 @@ export class UserService {
     if (data.avatar_url !== undefined) {
       updates.push('avatar_url = ?');
       values.push(data.avatar_url);
+    }
+    if (data.province !== undefined) {
+      updates.push('province = ?');
+      values.push(data.province);
+    }
+    if (data.city !== undefined) {
+      updates.push('city = ?');
+      values.push(data.city);
+    }
+    if (data.region !== undefined) {
+      updates.push('region = ?');
+      values.push(data.region);
     }
 
     if (updates.length === 0) {

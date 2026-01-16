@@ -28,6 +28,9 @@ export interface User {
   age?: number
   bio?: string
   hiking_level?: 'beginner' | 'intermediate' | 'advanced' | 'expert'
+  province?: string
+  city?: string
+  region?: string
   is_verified?: boolean
   created_at?: string
   updated_at?: string
@@ -306,6 +309,9 @@ export interface UpdateProfileData {
   hiking_level?: 'beginner' | 'intermediate' | 'advanced' | 'expert'
   bio?: string
   avatar_url?: string
+  province?: string
+  city?: string
+  region?: string
 }
 
 export interface UpdatePreferencesData {

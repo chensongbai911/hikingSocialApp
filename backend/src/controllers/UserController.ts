@@ -74,7 +74,7 @@ export class UserController {
         return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
       }
 
-      const { nickname, gender, age, bio, hiking_level, avatar_url } = req.body;
+      const { nickname, gender, age, bio, hiking_level, avatar_url, province, city, region } = req.body;
 
       // 参数验证
       if (nickname !== undefined && (nickname.length < 2 || nickname.length > 20)) {
@@ -93,13 +93,28 @@ export class UserController {
         return validationError(res, { hiking_level: '徒步等级值不合法' });
       }
 
+      if (province !== undefined && province.length > 100) {
+        return validationError(res, { province: '省份名称过长' });
+      }
+
+      if (city !== undefined && city.length > 100) {
+        return validationError(res, { city: '城市名称过长' });
+      }
+
+      if (region !== undefined && region.length > 200) {
+        return validationError(res, { region: '地区描述过长' });
+      }
+
       const profile = await userService.updateProfile(userId, {
         nickname,
         gender,
         age,
         bio,
         hiking_level,
-        avatar_url
+        avatar_url,
+        province,
+        city,
+        region
       });
 
       return success(res, profile, '更新用户资料成功');

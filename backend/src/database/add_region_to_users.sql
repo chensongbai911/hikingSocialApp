@@ -1,0 +1,14 @@
+-- 为 users 表添加地区字段
+ALTER TABLE users ADD COLUMN IF NOT EXISTS province VARCHAR(100) COMMENT '省份/地区' AFTER bio;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS city VARCHAR(100) COMMENT '城市' AFTER province;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS region VARCHAR(200) COMMENT '完整地区描述' AFTER city;
+
+-- 创建索引以优化查询
+CREATE INDEX IF NOT EXISTS idx_province ON users(province);
+CREATE INDEX IF NOT EXISTS idx_city ON users(city);
+
+-- 验证添加结果
+SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_COMMENT
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'users' AND TABLE_SCHEMA = 'hiking_social'
+AND COLUMN_NAME IN ('province', 'city', 'region');
