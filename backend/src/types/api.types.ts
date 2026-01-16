@@ -97,15 +97,15 @@ export enum BusinessErrorCode {
   PREFERENCE_NOT_FOUND = 3009,
   PHOTO_NOT_FOUND = 3010,
   MAX_PHOTOS_EXCEEDED = 3011,
-
-  // 资源不存在 (4xxx) - 返回404
-  USER_NOT_FOUND = 4001,
   RESOURCE_NOT_FOUND = 3012,
   FORBIDDEN = 3013,
 
-  // 资源限制 (4xxx)
-  RATE_LIMIT_EXCEEDED = 4001,
-  QUOTA_EXCEEDED = 4002,
+  // 资源不存在 (4xxx) - 返回404
+  USER_NOT_FOUND = 4001,
+  
+  // 资源限制 (4xxx) - 返回429或422
+  RATE_LIMIT_EXCEEDED = 4101,
+  QUOTA_EXCEEDED = 4102,
 
   // 系统错误 (5xxx)
   DATABASE_ERROR = 5001,

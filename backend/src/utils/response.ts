@@ -236,9 +236,13 @@ function getHttpStatusFromBusinessCode(businessCode: BusinessErrorCode): number 
   if (businessCode >= 3001 && businessCode <= 3999) {
     return HttpStatusCode.UNPROCESSABLE_ENTITY;
   }
-  // 资源不存在 (4xxx) -> 404
-  if (businessCode >= 4001 && businessCode <= 4999) {
+  // 资源不存在 (4001-4099) -> 404
+  if (businessCode >= 4001 && businessCode <= 4099) {
     return HttpStatusCode.NOT_FOUND;
+  }
+  // 资源限制 (4100-4999) -> 429
+  if (businessCode >= 4100 && businessCode <= 4999) {
+    return HttpStatusCode.UNPROCESSABLE_ENTITY;
   }
   // 系统错误 (5xxx) -> 500
   if (businessCode >= 5001 && businessCode <= 5999) {
