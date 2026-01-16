@@ -251,7 +251,7 @@ export const useUserStore = defineStore('user', () => {
       if (response.code === 200 && response.data) {
         // 获取头像URL（可能是相对路径）
         let avatarUrl = response.data.avatar_url || response.data.url
-        
+
         // 如果是相对路径，拼接完整URL
         if (avatarUrl && avatarUrl.startsWith('/')) {
           const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'

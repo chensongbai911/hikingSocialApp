@@ -22,7 +22,7 @@
       <div class="flex flex-col items-center mb-6">
         <div class="relative mb-4">
           <img
-            :src="(userProfile.avatar || defaultAvatar) + '?t=' + Date.now()"
+            :src="(userProfile.avatar || defaultAvatar) + '?t=' + avatarTimestamp"
             :alt="userProfile.nickname"
             class="w-28 h-28 rounded-full object-cover border-4 border-white shadow-lg cursor-pointer hover:opacity-80 transition-opacity"
             @click="openAvatarUpload"
@@ -220,6 +220,7 @@ const userStore = useUserStore();
 const defaultAvatar = 'https://api.dicebear.com/7.x/avataaars/svg?seed=default';
 const showAvatarUpload = ref(false);
 const avatarFile = ref<File | null>(null);
+const avatarTimestamp = ref(Date.now());
 
 // 照片预览相关状态
 const showPreview = ref(false);
@@ -405,6 +406,8 @@ const uploadAndUpdateAvatar = async (file: File) => {
       toast.success('头像已更新');
       // 重新加载用户信息
       await userStore.fetchCurrentUser();
+      // 更新时间戳强制刷新图片
+      avatarTimestamp.value = Date.now();
     } else {
       toast.error('头像上传失败');
     }
