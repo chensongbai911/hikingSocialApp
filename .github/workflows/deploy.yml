@@ -24,7 +24,26 @@ jobs:
       run: |
         cd backend
         npm ci
+
+        # 清理旧的构建文件
+        rm -rf dist
+
+        # 构建
         npm run build
+
+        # 验证关键文件是否存在
+        echo "✓ 验证构建文件..."
+        test -f dist/server.js || (echo "❌ server.js 缺失" && exit 1)
+        test -d dist/config || (echo "❌ config 目录缺失" && exit 1)
+        test -f dist/config/database.js || (echo "❌ database.js 缺失" && exit 1)
+        test -d dist/routes || (echo "❌ routes 目录缺失" && exit 1)
+        test -f dist/routes/messageRoutes.js || (echo "❌ messageRoutes.js 缺失" && exit 1)
+        test -f dist/routes/userRoutes.js || (echo "❌ userRoutes.js 缺失" && exit 1)
+
+        echo "✅ 所有关键文件验证通过"
+        ls -la dist/
+        ls -la dist/config/
+        ls -la dist/routes/
 
     - name: Prepare deployment package
       run: |
@@ -184,6 +203,14 @@ jobs:
           echo "📦 安装生产依赖..."
           npm ci --production || npm install --production || (echo "❌ npm install 失败" && exit 1)
 
+          # 验证部署的文件
+          echo "✓ 验证后端文件..."
+          test -f dist/server.js || (echo "❌ dist/server.js 不存在" && exit 1)
+          test -f dist/config/database.js || (echo "❌ dist/config/database.js 不存在" && exit 1)
+          test -f dist/routes/messageRoutes.js || (echo "❌ dist/routes/messageRoutes.js 不存在" && exit 1)
+          test -f dist/routes/userRoutes.js || (echo "❌ dist/routes/userRoutes.js 不存在" && exit 1)
+          echo "✅ 后端文件验证通过"
+
           # 重启后端服务
           echo "🔄 重启后端服务..."
           if pm2 list | grep -q hiking-app-backend; then
@@ -192,6 +219,19 @@ jobs:
             pm2 start ecosystem.config.cjs --env production || (echo "❌ 启动失败" && exit 1)
           fi
           pm2 save
+
+          # 等待后端启动
+          echo "⏳ 等待后端启动..."
+          sleep 3
+
+          # 验证后端启动成功
+          if pm2 list | grep hiking-app-backend | grep -q "online"; then
+            echo "✅ 后端服务启动成功"
+          else
+            echo "❌ 后端服务启动失败，查看日志："
+            pm2 logs hiking-app-backend --lines 30 --nostream
+            exit 1
+          fi
 
           # 前端部署
           echo "=========================================="
