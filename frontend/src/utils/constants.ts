@@ -38,6 +38,12 @@ export const STORAGE_KEYS = {
   THEME: 'theme',
 }
 
+// 默认配置
+export const DEFAULT_CONFIG = {
+  AVATAR: 'https://api.dicebear.com/7.x/avataaars/svg?seed=default',
+  PLACEHOLDER_IMAGE: 'https://via.placeholder.com/400x300?text=No+Image',
+}
+
 // 难度等级
 export const DIFFICULTY_LEVELS = {
   EASY: 'easy',

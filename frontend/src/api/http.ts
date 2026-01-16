@@ -2,8 +2,26 @@
 import axios, { AxiosInstance, AxiosError, AxiosResponse } from 'axios'
 import { useUserStore } from '@/stores/user'
 
+// 获取API基础URL
+const getBaseURL = () => {
+  const envBaseURL = import.meta.env.VITE_API_BASE_URL
+
+  // 如果配置的是相对路径，使用当前域名
+  if (envBaseURL && envBaseURL.startsWith('/')) {
+    return `${window.location.origin}${envBaseURL}`
+  }
+
+  // 如果是完整URL，直接使用
+  if (envBaseURL && envBaseURL.startsWith('http')) {
+    return envBaseURL
+  }
+
+  // 默认值
+  return 'http://localhost:3000/api/v1'
+}
+
 const api: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1',
+  baseURL: getBaseURL(),
   timeout: import.meta.env.VITE_API_TIMEOUT ? parseInt(import.meta.env.VITE_API_TIMEOUT) : 30000,
 })
 

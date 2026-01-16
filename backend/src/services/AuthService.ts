@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { pool } from '../config/database';
 import { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { BusinessErrorCode } from '../types/api.types';
+import { getFullUrl } from '../utils/urlHelper';
 
 interface RegisterPayload {
   email: string;
@@ -29,11 +30,14 @@ interface UserInfo {
   gender: string | null;
   age: number | null;
   avatar_url: string | null;
+  bio?: string | null;
   hiking_level: string;
   province: string | null;
   city: string | null;
   region: string | null;
   created_at: Date;
+  preferences?: any[];
+  photos?: any[];
 }
 
 export class AuthService {
@@ -208,9 +212,10 @@ export class AuthService {
 
     // 获取用户偏好
     const [preferences] = await pool.query<RowDataPacket[]>(
-      `SELECT preference_type, preference_value
+      `SELECT id, preference_type, preference_value, created_at
        FROM user_preferences
-       WHERE user_id = ?`,
+       WHERE user_id = ?
+       ORDER BY created_at DESC`,
       [userId]
     );
 
@@ -223,7 +228,31 @@ export class AuthService {
       [userId]
     );
 
-    return user;
+    // 获取基础URL
+    const getFullUrl = (path: string | null): string | null => {
+      if (!path) return null;
+      if (path.startsWith('http')) return path;
+
+      // 使用环境变量或默认值
+      const baseUrl = process.env.API_BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
+      return `${baseUrl}${path}`;
+    };
+
+    // 处理头像URL
+    user.avatar_url = getFullUrl(user.avatar_url);
+
+    // 处理照片URL
+    const photosWithFullUrl = photos.map((photo: any) => ({
+      ...photo,
+      photo_url: getFullUrl(photo.photo_url)
+    }));
+
+    // 返回包含偏好和照片的完整用户信息
+    return {
+      ...user,
+      preferences: preferences as any[],
+      photos: photosWithFullUrl
+    };
   }
 
   /**
