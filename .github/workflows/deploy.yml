@@ -89,10 +89,10 @@ jobs:
 
           # 重启后端服务
           echo "🔄 重启后端服务..."
-          if pm2 list | grep -q hiking-api; then
-            pm2 restart hiking-api --env production || (echo "❌ 重启失败" && exit 1)
+          if pm2 list | grep -q hiking-app-backend; then
+            pm2 restart ecosystem.config.js --only hiking-app-backend --env production || (echo "❌ 重启失败" && exit 1)
           else
-            pm2 start dist/server.js --name hiking-api --env production || (echo "❌ 启动失败" && exit 1)
+            pm2 start ecosystem.config.js --env production || (echo "❌ 启动失败" && exit 1)
           fi
           pm2 save
 

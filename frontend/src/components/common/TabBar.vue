@@ -3,7 +3,10 @@
     <div class="flex justify-around max-w-xl mx-auto">
       <router-link
         to="/discover"
-        :class="['flex-1 py-3 px-2 text-center transition', isActive('/discover') ? 'text-green-600 border-t-2 border-green-600' : 'text-gray-600']"
+        :class="[
+          'flex-1 py-3 px-2 text-center transition',
+          isActive('/discover') ? 'text-green-600 border-t-2 border-green-600' : 'text-gray-600',
+        ]"
       >
         <div class="text-xl">🔍</div>
         <div class="text-xs mt-1">发现</div>
@@ -11,7 +14,12 @@
 
       <router-link
         to="/create-activity"
-        :class="['flex-1 py-3 px-2 text-center transition', isActive('/create-activity') ? 'text-green-600 border-t-2 border-green-600' : 'text-gray-600']"
+        :class="[
+          'flex-1 py-3 px-2 text-center transition',
+          isActive('/create-activity')
+            ? 'text-green-600 border-t-2 border-green-600'
+            : 'text-gray-600',
+        ]"
       >
         <div class="text-xl">✚</div>
         <div class="text-xs mt-1">创建</div>
@@ -19,18 +27,27 @@
 
       <router-link
         to="/messages"
-        :class="['flex-1 py-3 px-2 text-center transition relative', isActive('/messages') ? 'text-green-600 border-t-2 border-green-600' : 'text-gray-600']"
+        :class="[
+          'flex-1 py-3 px-2 text-center transition relative',
+          isActive('/messages') ? 'text-green-600 border-t-2 border-green-600' : 'text-gray-600',
+        ]"
       >
         <div class="text-xl">💬</div>
         <div class="text-xs mt-1">消息</div>
-        <span v-if="unreadCount > 0" class="absolute top-1 right-2 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+        <span
+          v-if="unreadCount > 0"
+          class="absolute top-1 right-2 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center"
+        >
           {{ unreadCount }}
         </span>
       </router-link>
 
       <router-link
         to="/my-hiking"
-        :class="['flex-1 py-3 px-2 text-center transition', isActive('/my-hiking') ? 'text-green-600 border-t-2 border-green-600' : 'text-gray-600']"
+        :class="[
+          'flex-1 py-3 px-2 text-center transition',
+          isActive('/my-hiking') ? 'text-green-600 border-t-2 border-green-600' : 'text-gray-600',
+        ]"
       >
         <div class="text-xl">📋</div>
         <div class="text-xs mt-1">记录</div>
@@ -38,7 +55,10 @@
 
       <router-link
         to="/profile"
-        :class="['flex-1 py-3 px-2 text-center transition', isActive('/profile') ? 'text-green-600 border-t-2 border-green-600' : 'text-gray-600']"
+        :class="[
+          'flex-1 py-3 px-2 text-center transition',
+          isActive('/profile') ? 'text-green-600 border-t-2 border-green-600' : 'text-gray-600',
+        ]"
       >
         <div class="text-xl">👤</div>
         <div class="text-xs mt-1">资料</div>
@@ -51,18 +71,22 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMessageStore } from '@/stores/message'
+import { useUserStore } from '@/stores/user'
 
 const route = useRoute()
 const messageStore = useMessageStore()
+const userStore = useUserStore()
 
 const unreadCount = computed(() => messageStore.totalUnread || 0)
 
-// 轻量初始化：如果未读数为 0 且会话列表为空，主动拉取未读/会话
-if (!messageStore.unreadCount) {
-  messageStore.fetchUnreadCount().catch(() => {})
-}
-if (!messageStore.conversations?.length) {
-  messageStore.fetchConversations().catch(() => {})
+// 轻量初始化：如果已登录且未读数为 0 且会话列表为空，主动拉取未读/会话
+if (userStore.isLoggedIn) {
+  if (!messageStore.unreadCount) {
+    messageStore.fetchUnreadCount().catch(() => {})
+  }
+  if (!messageStore.conversations?.length) {
+    messageStore.fetchConversations().catch(() => {})
+  }
 }
 
 const isActive = (path: string) => {

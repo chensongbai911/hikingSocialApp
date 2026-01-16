@@ -72,6 +72,11 @@ export const useMessageStore = defineStore('message', () => {
    * 获取对话列表
    */
   const fetchConversations = async (page: number = 1, limit: number = 20) => {
+    // 如果未登录，不请求接口
+    if (!userStore.isLoggedIn) {
+      return
+    }
+
     try {
       isLoading.value = true
       const result = await messageApi.getConversations(page, limit)
@@ -261,6 +266,11 @@ export const useMessageStore = defineStore('message', () => {
    * 获取未读消息数
    */
   const fetchUnreadCount = async () => {
+    // 如果未登录，不请求接口
+    if (!userStore.isLoggedIn) {
+      return
+    }
+
     try {
       const result = await messageApi.getUnreadCount()
       unreadCount.value = result?.count || 0

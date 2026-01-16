@@ -3,7 +3,9 @@
     <div class="bg-white p-4 sticky top-0 z-10">
       <div class="flex items-center justify-between mb-4">
         <h1 class="text-2xl font-bold text-gray-800">消息中心</h1>
-        <span v-if="totalUnread > 0" class="text-xs px-2 py-1 bg-red-100 text-red-600 rounded-full">未读 {{ totalUnread }}</span>
+        <span v-if="totalUnread > 0" class="text-xs px-2 py-1 bg-red-100 text-red-600 rounded-full"
+          >未读 {{ totalUnread }}</span
+        >
       </div>
       <div class="relative">
         <input
@@ -12,15 +14,31 @@
           placeholder="搜索联系人或聊天记录"
           class="w-full pl-12 pr-4 py-3 bg-gray-50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500"
         />
-        <svg class="w-6 h-6 text-teal-500 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        <svg
+          class="w-6 h-6 text-teal-500 absolute left-4 top-1/2 -translate-y-1/2"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+          />
         </svg>
       </div>
       <div class="flex justify-end mt-2 space-x-2 text-sm">
         <button
           class="px-3 py-1 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200"
-          @click="() => { if (!loading) loadConversations(true) }"
-        >刷新</button>
+          @click="
+            () => {
+              if (!loading) loadConversations(true)
+            }
+          "
+        >
+          刷新
+        </button>
       </div>
     </div>
 
@@ -47,7 +65,11 @@
         class="flex items-center p-4 border-b border-gray-100 active:bg-gray-50 cursor-pointer"
       >
         <div class="relative flex-shrink-0">
-          <img :src="chat.avatar || fallbackAvatar" :alt="chat.name" class="w-14 h-14 rounded-full object-cover" />
+          <img
+            :src="chat.avatar || fallbackAvatar"
+            :alt="chat.name"
+            class="w-14 h-14 rounded-full object-cover"
+          />
           <div
             v-if="chat.isOnline"
             class="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-white rounded-full"
@@ -71,8 +93,18 @@
       </div>
 
       <div v-if="!loading && filteredChats.length === 0" class="py-20 text-center text-gray-400">
-        <svg class="w-20 h-20 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        <svg
+          class="w-20 h-20 mx-auto mb-4 text-gray-300"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+          />
         </svg>
         <p>暂无聊天记录</p>
       </div>
@@ -164,6 +196,11 @@ const mapConversation = (raw: any): ChatItem => {
 }
 
 const loadConversations = async (reset = true) => {
+  // 如果未登录，不加载会话列表
+  if (!userStore.isLoggedIn) {
+    return
+  }
+
   if (reset) {
     page.value = 1
     chats.value = []
@@ -178,10 +215,12 @@ const loadConversations = async (reset = true) => {
     chats.value = reset
       ? mapped
       : [...chats.value, ...mapped].sort(
-          (a, b) => (b.lastTime ? new Date(b.lastTime).getTime() : 0) - (a.lastTime ? new Date(a.lastTime).getTime() : 0)
+          (a, b) =>
+            (b.lastTime ? new Date(b.lastTime).getTime() : 0) -
+            (a.lastTime ? new Date(a.lastTime).getTime() : 0)
         )
     if (list.length > 0) page.value += 1
-  } catch (err: any) {
+  } catch (err) {
     toast.error(err?.message || '加载会话失败')
   } finally {
     loading.value = false
@@ -192,8 +231,8 @@ const loadConversations = async (reset = true) => {
 const filteredChats = computed(() => {
   if (!searchQuery.value.trim()) return chats.value
   const q = searchQuery.value.toLowerCase()
-  return chats.value.filter((c) =>
-    c.name.toLowerCase().includes(q) || (c.lastMessage || '').toLowerCase().includes(q)
+  return chats.value.filter(
+    (c) => c.name.toLowerCase().includes(q) || (c.lastMessage || '').toLowerCase().includes(q)
   )
 })
 
@@ -231,7 +270,11 @@ const upsertChat = (conversationId: string, payload: Partial<ChatItem>) => {
       otherUserId: payload.otherUserId,
     })
   }
-  chats.value = [...chats.value].sort((a, b) => (b.lastTime ? new Date(b.lastTime).getTime() : 0) - (a.lastTime ? new Date(a.lastTime).getTime() : 0))
+  chats.value = [...chats.value].sort(
+    (a, b) =>
+      (b.lastTime ? new Date(b.lastTime).getTime() : 0) -
+      (a.lastTime ? new Date(a.lastTime).getTime() : 0)
+  )
   return existed
 }
 
@@ -257,7 +300,9 @@ onMounted(async () => {
       const existed = upsertChat(conversationId, {
         lastMessage: data.message?.content || data.content || '[新消息]',
         lastTime: data.message?.created_at || data.createdAt || new Date().toISOString(),
-        unreadCount: isSelf ? 0 : ((chats.value.find((c) => c.id === conversationId)?.unreadCount || 0) + 1),
+        unreadCount: isSelf
+          ? 0
+          : (chats.value.find((c) => c.id === conversationId)?.unreadCount || 0) + 1,
         name: data.senderNickname || data.sender_nickname || undefined,
         avatar: data.senderAvatar || data.sender_avatar || undefined,
         otherUserId: otherUser ? String(otherUser) : undefined,
@@ -270,7 +315,9 @@ onMounted(async () => {
     socketService.onOnlineStatusChange((data: any) => {
       const targetId = String(data.userId || data.id)
       chats.value = chats.value.map((c) =>
-        c.otherUserId === targetId ? { ...c, isOnline: data.type === 'online' || data.status === 'online' } : c
+        c.otherUserId === targetId
+          ? { ...c, isOnline: data.type === 'online' || data.status === 'online' }
+          : c
       )
     })
   )

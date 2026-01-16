@@ -3,7 +3,12 @@
     <div class="bg-white border-b border-gray-100 p-4 flex items-center space-x-3 flex-shrink-0">
       <button @click="router.back()" class="p-2 -ml-2">
         <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M15 19l-7-7 7-7"
+          />
         </svg>
       </button>
       <img
@@ -19,16 +24,25 @@
         </p>
       </div>
       <div class="flex items-center space-x-2" v-if="isLimited">
-        <span class="text-xs text-amber-700 bg-amber-100 px-2 py-1 rounded-full">剩余 {{ remainingMessages ?? 0 }} / 3</span>
+        <span class="text-xs text-amber-700 bg-amber-100 px-2 py-1 rounded-full"
+          >剩余 {{ remainingMessages ?? 0 }} / 3</span
+        >
       </div>
       <button @click="handleClear" class="p-2 text-gray-500 hover:text-red-500" title="清空对话">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
         </svg>
       </button>
     </div>
 
-    <div v-if="isBlacklisted" class="bg-red-50 text-red-600 text-sm px-4 py-2">对方已将你拉黑，无法发送消息</div>
+    <div v-if="isBlacklisted" class="bg-red-50 text-red-600 text-sm px-4 py-2">
+      对方已将你拉黑，无法发送消息
+    </div>
     <div v-else-if="isLimited" class="bg-amber-50 text-amber-700 text-sm px-4 py-2">
       未互关，仅可再发送 {{ remainingMessages ?? 0 }} 条消息
     </div>
@@ -39,7 +53,13 @@
         :key="message.id"
         :class="['flex', message.senderId === userStore.userId ? 'justify-end' : 'justify-start']"
       >
-        <div :class="['flex', message.senderId === userStore.userId ? 'flex-row-reverse' : 'flex-row', 'items-end space-x-2']">
+        <div
+          :class="[
+            'flex',
+            message.senderId === userStore.userId ? 'flex-row-reverse' : 'flex-row',
+            'items-end space-x-2',
+          ]"
+        >
           <img
             v-if="message.senderId !== userStore.userId"
             :src="chatUser.avatar || 'https://placehold.co/48x48'"
@@ -54,13 +74,16 @@
                 'px-4 py-2 rounded-2xl',
                 message.senderId === userStore.userId
                   ? 'bg-teal-500 text-white rounded-br-sm'
-                  : 'bg-white text-gray-800 rounded-bl-sm'
+                  : 'bg-white text-gray-800 rounded-bl-sm',
               ]"
             >
               <p class="break-words">{{ message.content }}</p>
             </div>
 
-            <div v-else-if="message.contentType === 'image' && !message.isRecalled" class="rounded-2xl overflow-hidden">
+            <div
+              v-else-if="message.contentType === 'image' && !message.isRecalled"
+              class="rounded-2xl overflow-hidden"
+            >
               <img
                 :src="message.imageUrl || message.content"
                 alt="图片"
@@ -78,12 +101,16 @@
                   v-if="message.senderId === userStore.userId && !message.isRecalled"
                   class="hover:text-red-500"
                   @click="handleRecall(message.id)"
-                >撤回</button>
+                >
+                  撤回
+                </button>
                 <button
                   v-else-if="!message.isRecalled"
                   class="hover:text-amber-600"
                   @click="handleReport(message.id)"
-                >举报</button>
+                >
+                  举报
+                </button>
               </div>
             </div>
           </div>
@@ -119,12 +146,18 @@
           @touchcancel.prevent="cancelRecording"
           :class="[
             'p-2.5 rounded-full transition-all duration-200 flex-shrink-0',
-            isRecording ? 'bg-red-500 text-white scale-110' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            isRecording
+              ? 'bg-red-500 text-white scale-110'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200',
           ]"
         >
           <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
-            <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
+            <path
+              d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"
+            />
+            <path
+              d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"
+            />
           </svg>
         </button>
 
@@ -144,11 +177,16 @@
             @click.stop="toggleEmojiPicker"
             :class="[
               'p-2 transition-colors flex-shrink-0',
-              showEmojiPicker ? 'text-teal-500' : 'text-gray-600'
+              showEmojiPicker ? 'text-teal-500' : 'text-gray-600',
             ]"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
           </button>
 
@@ -157,7 +195,12 @@
             class="p-2 text-gray-600 hover:text-teal-500 transition-colors flex-shrink-0"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
             </svg>
           </button>
           <input
@@ -174,17 +217,26 @@
           :disabled="sendDisabled"
           :class="[
             'p-2.5 rounded-full transition-all duration-200 flex-shrink-0',
-            !sendDisabled ? 'bg-teal-500 text-white hover:bg-teal-600' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            !sendDisabled
+              ? 'bg-teal-500 text-white hover:bg-teal-600'
+              : 'bg-gray-300 text-gray-500 cursor-not-allowed',
           ]"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+            />
           </svg>
         </button>
       </div>
 
       <div v-if="isRecording" class="mt-3 text-center">
-        <div class="inline-flex items-center space-x-2 bg-red-50 text-red-600 px-4 py-2 rounded-full">
+        <div
+          class="inline-flex items-center space-x-2 bg-red-50 text-red-600 px-4 py-2 rounded-full"
+        >
           <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
           <span class="text-sm font-medium">正在录音 {{ recordingDuration }}"</span>
         </div>
@@ -198,9 +250,17 @@
       class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
     >
       <img :src="previewImageUrl" alt="预览" class="max-w-full max-h-full object-contain" />
-      <button @click.stop="previewImageUrl = null" class="absolute top-4 right-4 p-2 bg-white/20 rounded-full text-white">
+      <button
+        @click.stop="previewImageUrl = null"
+        class="absolute top-4 right-4 p-2 bg-white/20 rounded-full text-white"
+      >
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
         </svg>
       </button>
     </div>
@@ -210,8 +270,16 @@
 <script setup lang="ts">
 import { ref, onMounted, nextTick, onUnmounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { sendMessage, getMessages, recallMessage, reportMessage, clearConversation, getConversationInfo, markConversationAsRead } from '@/api/message'
-import { uploadImage } from '@/api/upload'
+import {
+  sendMessage,
+  getMessages,
+  recallMessage,
+  reportMessage,
+  clearConversation,
+  getConversationInfo,
+  markConversationAsRead,
+} from '@/api/message'
+import { uploadApi } from '@/api/upload'
 import { socketService } from '@/services/socket'
 import { useUserStore } from '@/stores/user'
 import toast from '@/utils/toast'
@@ -260,14 +328,40 @@ const chatUser = ref({
   isOnline: true,
 })
 
-const emojis = ['😊', '😂', '❤️', '👍', '🙏', '😍', '😭', '🤔', '👏', '🎉', '🔥', '💪', '🌟', '✨', '🌈', '🌸', '🌺', '🌻', '🌞', '🌙', '⭐', '💫', '✅', '❌']
+const emojis = [
+  '😊',
+  '😂',
+  '❤️',
+  '👍',
+  '🙏',
+  '😍',
+  '😭',
+  '🤔',
+  '👏',
+  '🎉',
+  '🔥',
+  '💪',
+  '🌟',
+  '✨',
+  '🌈',
+  '🌸',
+  '🌺',
+  '🌻',
+  '🌞',
+  '🌙',
+  '⭐',
+  '💫',
+  '✅',
+  '❌',
+]
 
 const loadConversation = async () => {
   const id = route.params.id as string
   conversationId.value = id
   try {
     const info = await getConversationInfo(id)
-    const { otherUserId, isLimited: limited, remainingMessages: remain, isBlacklisted: black } = info || {}
+    const { otherUserId, isLimited: limited, remainingMessages: remain, isBlacklisted: black } =
+      info || {}
     chatUser.value.id = otherUserId || chatUser.value.id || id
     isLimited.value = !!limited
     remainingMessages.value = remain
@@ -287,12 +381,15 @@ const loadConversation = async () => {
     }))
     await markConversationAsRead(conversationId.value)
     scrollToBottom()
-  } catch (err: any) {
+  } catch (err) {
     toast.error(err?.message || '加载失败')
   }
 }
 
-const handleSendMessage = async (contentType: 'text' | 'image' = 'text', payload?: { imageUrl?: string }) => {
+const handleSendMessage = async (
+  contentType: 'text' | 'image' = 'text',
+  payload?: { imageUrl?: string }
+) => {
   if (isBlacklisted.value) {
     toast.warning('你已被对方拉黑，无法发送')
     return
@@ -332,13 +429,14 @@ const handleSendMessage = async (contentType: 'text' | 'image' = 'text', payload
     if (contentType === 'text') messageInput.value = ''
     adjustTextareaHeight()
     scrollToBottom()
-  } catch (err: any) {
+  } catch (err) {
     toast.error(err?.message || '发送失败')
   }
 }
 
 const sendDisabled = computed(() => {
-  const limitedEmpty = isLimited.value && remainingMessages.value !== undefined && remainingMessages.value <= 0
+  const limitedEmpty =
+    isLimited.value && remainingMessages.value !== undefined && remainingMessages.value <= 0
   return isBlacklisted.value || limitedEmpty || !messageInput.value.trim()
 })
 
@@ -352,11 +450,11 @@ const handleImageUpload = async (e: Event) => {
     return
   }
   try {
-    const uploadRes = await uploadImage(file)
+    const uploadRes = await uploadApi.uploadImage(file)
     const url = uploadRes?.data?.url || uploadRes?.url
     if (!url) throw new Error('上传失败')
     await handleSendMessage('image', { imageUrl: url })
-  } catch (err: any) {
+  } catch (err) {
     toast.error(err?.message || '上传失败')
   } finally {
     ;(e.target as HTMLInputElement).value = ''
@@ -366,9 +464,11 @@ const handleImageUpload = async (e: Event) => {
 const handleRecall = async (messageId: string) => {
   try {
     await recallMessage(messageId)
-    messages.value = messages.value.map((m) => (m.id === messageId ? { ...m, isRecalled: true } : m))
+    messages.value = messages.value.map((m) =>
+      m.id === messageId ? { ...m, isRecalled: true } : m
+    )
     toast.success('已撤回')
-  } catch (err: any) {
+  } catch (err) {
     toast.error(err?.message || '撤回失败')
   }
 }
@@ -377,7 +477,7 @@ const handleReport = async (messageId: string) => {
   try {
     await reportMessage(messageId, 'inappropriate')
     toast.success('已举报')
-  } catch (err: any) {
+  } catch (err) {
     toast.error(err?.message || '举报失败')
   }
 }
@@ -387,7 +487,7 @@ const handleClear = async () => {
     await clearConversation(conversationId.value)
     messages.value = []
     toast.success('已清空并归档')
-  } catch (err: any) {
+  } catch (err) {
     toast.error(err?.message || '清空失败')
   }
 }
@@ -405,7 +505,8 @@ const formatTime = (date: Date) => {
   const diff = now.getTime() - date.getTime()
   if (diff < 60000) return '刚刚'
   if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`
-  if (diff < 86400000) return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+  if (diff < 86400000)
+    return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
   return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
 }
 
@@ -496,15 +597,22 @@ onMounted(async () => {
       if (messageExists(incomingId)) return
       messages.value.push({
         id: incomingId,
-        content: data.message?.content || data.content || data.message?.image_url || data.imageUrl || '',
-        contentType: (data.message?.content_type || data.contentType || 'text') as 'text' | 'image' | 'file',
+        content:
+          data.message?.content || data.content || data.message?.image_url || data.imageUrl || '',
+        contentType: (data.message?.content_type || data.contentType || 'text') as
+          | 'text'
+          | 'image'
+          | 'file',
         senderId: String(data.message?.sender_id || data.senderId || data.sender_id),
         createdAt: data.message?.created_at || data.createdAt || new Date().toISOString(),
         isRecalled: data.message?.is_recalled,
         imageUrl: data.message?.image_url || data.imageUrl,
         fileUrl: data.message?.file_url || data.fileUrl,
       })
-      if (String(data.message?.sender_id || data.senderId || data.sender_id) !== String(userStore.userId)) {
+      if (
+        String(data.message?.sender_id || data.senderId || data.sender_id) !==
+        String(userStore.userId)
+      ) {
         markConversationAsRead(conversationId.value).catch(() => {})
       }
       scrollToBottom()
@@ -514,13 +622,18 @@ onMounted(async () => {
   socketUnsubscribers.push(
     socketService.onRecall((data: any) => {
       if (String(data.conversationId) !== conversationId.value) return
-      messages.value = messages.value.map((m) => (m.id === String(data.messageId) ? { ...m, isRecalled: true } : m))
+      messages.value = messages.value.map((m) =>
+        m.id === String(data.messageId) ? { ...m, isRecalled: true } : m
+      )
     })
   )
 
   socketUnsubscribers.push(
     socketService.onBlacklist((data: any) => {
-      if (String(data.targetUserId) === userStore.userId || String(data.userId) === chatUser.value.id) {
+      if (
+        String(data.targetUserId) === userStore.userId ||
+        String(data.userId) === chatUser.value.id
+      ) {
         isBlacklisted.value = data.action === 'added'
       }
     })
