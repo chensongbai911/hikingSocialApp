@@ -69,7 +69,7 @@ jobs:
         use_insecure_cipher: true
       env:
         DEBUG: true
-    
+
     - name: Retry deploy if failed (attempt 2)
       if: steps.scp_deploy.outcome != 'success'
       uses: appleboy/scp-action@v0.1.7
@@ -86,7 +86,7 @@ jobs:
         command_timeout: 15m
         overwrite: true
         use_insecure_cipher: true
-    
+
     - name: Extract package on server
       if: steps.scp_deploy.outcome == 'success' || steps.scp_deploy_retry.outcome == 'success'
       uses: appleboy/ssh-action@v1.0.3
