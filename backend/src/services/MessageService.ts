@@ -162,34 +162,70 @@ export class MessageService {
     page: number = 1,
     limit: number = 50
   ): Promise<{
-    messages: Message[]
+    messages: any[]
     total: number
     totalPages: number
   }> {
     const offset = (page - 1) * limit
 
-    const { count, rows } = await Message.findAndCountAll({
-      where: {
-        conversationId,
-        deletedAt: null,
-      },
-      include: [
-        {
-          model: User,
-          as: 'sender',
-          attributes: ['id', 'nickname', 'avatarUrl'],
-        },
-      ],
-      order: [['createdAt', 'DESC']],
-      limit,
-      offset,
-    })
+    // 获取总数
+    const [countResult] = await pool.query<RowDataPacket[]>(
+      `SELECT COUNT(*) as total FROM messages 
+       WHERE conversation_id = ? AND deleted_at IS NULL`,
+      [conversationId]
+    )
+    const total = countResult[0].total
+
+    // 获取消息列表（带用户信息）
+    const [messages] = await pool.query<RowDataPacket[]>(
+      `SELECT 
+        m.id,
+        m.conversation_id as conversationId,
+        m.sender_id as senderId,
+        m.content,
+        m.content_type as contentType,
+        m.image_url as imageUrl,
+        m.file_url as fileUrl,
+        m.is_read as isRead,
+        m.read_at as readAt,
+        m.created_at as createdAt,
+        m.updated_at as updatedAt,
+        u.id as 'sender_id',
+        u.nickname as 'sender_nickname',
+        u.avatar_url as 'sender_avatarUrl'
+       FROM messages m
+       LEFT JOIN users u ON m.sender_id = u.id
+       WHERE m.conversation_id = ? AND m.deleted_at IS NULL
+       ORDER BY m.created_at DESC
+       LIMIT ? OFFSET ?`,
+      [conversationId, limit, offset]
+    )
+
+    // 转换嵌套对象结构
+    const formattedMessages = messages.map((msg: any) => ({
+      id: msg.id,
+      conversationId: msg.conversationId,
+      senderId: msg.senderId,
+      content: msg.content,
+      contentType: msg.contentType,
+      imageUrl: msg.imageUrl,
+      fileUrl: msg.fileUrl,
+      isRead: msg.isRead,
+      readAt: msg.readAt,
+      createdAt: msg.createdAt,
+      updatedAt: msg.updatedAt,
+      sender: {
+        id: msg.sender_id,
+        nickname: msg.sender_nickname,
+        avatarUrl: msg.sender_avatarUrl
+      }
+    }))
 
     // 反向排序以显示最新消息在底部
     return {
-      messages: rows.reverse(),
-      total: count,
-      totalPages: Math.ceil(count / limit),
+      messages: formattedMessages.reverse(),
+      total,
+      totalPages: Math.ceil(total / limit),
     }
   }
 
@@ -290,43 +326,48 @@ export class MessageService {
     conversationId: number,
     userId: string
   ): Promise<void> {
-    const conversation = await Conversation.findByPk(conversationId)
-    if (!conversation) {
+    // 获取对话信息
+    const [conversations] = await pool.query<RowDataPacket[]>(
+      `SELECT id, user_id1, user_id2 FROM conversations 
+       WHERE id = ? AND deleted_at IS NULL`,
+      [conversationId]
+    )
+
+    if (conversations.length === 0) {
       throw new Error('对话不存在')
     }
 
+    const conversation = conversations[0]
+
     // 检查用户是否是对话参与者
     if (
-      String(conversation.userId1) !== String(userId) &&
-      String(conversation.userId2) !== String(userId)
+      String(conversation.user_id1) !== String(userId) &&
+      String(conversation.user_id2) !== String(userId)
     ) {
       throw new Error('用户不是对话的参与者')
     }
 
     // 标记该用户的所有未读消息为已读
-    const unreadMessages = await Message.findAll({
-      where: {
-        conversationId,
-        isRead: false,
-        [Op.not]: { senderId: userId }, // 不包括自己发送的消息
-      },
-    })
-
-    await Promise.all(
-      unreadMessages.map((msg) =>
-        msg.update({
-          isRead: true,
-          readAt: new Date(),
-        })
-      )
+    await pool.query(
+      `UPDATE messages 
+       SET is_read = 1, read_at = NOW() 
+       WHERE conversation_id = ? 
+         AND is_read = 0 
+         AND sender_id != ?
+         AND deleted_at IS NULL`,
+      [conversationId, userId]
     )
 
     // 重置对话中该用户的未读计数
     const unreadCountField =
-      conversation.userId1 === userId ? 'user1UnreadCount' : 'user2UnreadCount'
-    await conversation.update({
-      [unreadCountField]: 0,
-    })
+      conversation.user_id1 === userId ? 'user1_unread_count' : 'user2_unread_count'
+    
+    await pool.query(
+      `UPDATE conversations 
+       SET ${unreadCountField} = 0, updated_at = NOW()
+       WHERE id = ?`,
+      [conversationId]
+    )
   }
 
   /**
