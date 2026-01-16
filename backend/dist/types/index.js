@@ -1,3 +1,0 @@
-// 后端 TypeScript 类型定义
-export {};
-//# sourceMappingURL=index.js.map
