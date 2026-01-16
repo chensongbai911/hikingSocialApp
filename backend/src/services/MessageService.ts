@@ -170,7 +170,7 @@ export class MessageService {
 
     // 获取总数
     const [countResult] = await pool.query<RowDataPacket[]>(
-      `SELECT COUNT(*) as total FROM messages 
+      `SELECT COUNT(*) as total FROM messages
        WHERE conversation_id = ? AND deleted_at IS NULL`,
       [conversationId]
     )
@@ -178,7 +178,7 @@ export class MessageService {
 
     // 获取消息列表（带用户信息）
     const [messages] = await pool.query<RowDataPacket[]>(
-      `SELECT 
+      `SELECT
         m.id,
         m.conversation_id as conversationId,
         m.sender_id as senderId,
@@ -328,7 +328,7 @@ export class MessageService {
   ): Promise<void> {
     // 获取对话信息
     const [conversations] = await pool.query<RowDataPacket[]>(
-      `SELECT id, user_id1, user_id2 FROM conversations 
+      `SELECT id, user_id1, user_id2 FROM conversations
        WHERE id = ? AND deleted_at IS NULL`,
       [conversationId]
     )
@@ -349,10 +349,10 @@ export class MessageService {
 
     // 标记该用户的所有未读消息为已读
     await pool.query(
-      `UPDATE messages 
-       SET is_read = 1, read_at = NOW() 
-       WHERE conversation_id = ? 
-         AND is_read = 0 
+      `UPDATE messages
+       SET is_read = 1, read_at = NOW()
+       WHERE conversation_id = ?
+         AND is_read = 0
          AND sender_id != ?
          AND deleted_at IS NULL`,
       [conversationId, userId]
@@ -361,9 +361,9 @@ export class MessageService {
     // 重置对话中该用户的未读计数
     const unreadCountField =
       conversation.user_id1 === userId ? 'user1_unread_count' : 'user2_unread_count'
-    
+
     await pool.query(
-      `UPDATE conversations 
+      `UPDATE conversations
        SET ${unreadCountField} = 0, updated_at = NOW()
        WHERE id = ?`,
       [conversationId]

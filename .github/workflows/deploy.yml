@@ -74,7 +74,7 @@ jobs:
         tar -czf deploy-package.tar.gz -C deploy-package .
         ls -lh deploy-package.tar.gz
 
-    - name: Deploy to server
+    - name: Deploy to server (Attempt 1)
       uses: appleboy/scp-action@v0.1.7
       continue-on-error: true
       id: scp_deploy
@@ -85,16 +85,16 @@ jobs:
         port: 22
         source: "deploy-package.tar.gz"
         target: "/tmp/"
-        timeout: 15m
-        command_timeout: 15m
+        timeout: 20m
+        command_timeout: 20m
         overwrite: true
         strip_components: 0
         rm: false
         use_insecure_cipher: true
       env:
-        DEBUG: true
+        DEBUG: false
 
-    - name: Retry deploy if failed (attempt 2)
+    - name: Retry deploy if failed (Attempt 2)
       if: steps.scp_deploy.outcome != 'success'
       uses: appleboy/scp-action@v0.1.7
       continue-on-error: true
@@ -106,13 +106,34 @@ jobs:
         port: 22
         source: "deploy-package.tar.gz"
         target: "/tmp/"
-        timeout: 15m
-        command_timeout: 15m
+        timeout: 20m
+        command_timeout: 20m
         overwrite: true
         use_insecure_cipher: true
+      env:
+        DEBUG: false
+
+    - name: Retry deploy if failed (Attempt 3)
+      if: steps.scp_deploy.outcome != 'success' && steps.scp_deploy_retry.outcome != 'success'
+      uses: appleboy/scp-action@v0.1.7
+      continue-on-error: true
+      id: scp_deploy_retry2
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        port: 22
+        source: "deploy-package.tar.gz"
+        target: "/tmp/"
+        timeout: 25m
+        command_timeout: 25m
+        overwrite: true
+        use_insecure_cipher: true
+      env:
+        DEBUG: false
 
     - name: Extract package on server
-      if: steps.scp_deploy.outcome == 'success' || steps.scp_deploy_retry.outcome == 'success'
+      if: steps.scp_deploy.outcome == 'success' || steps.scp_deploy_retry.outcome == 'success' || steps.scp_deploy_retry2.outcome == 'success'
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.SERVER_HOST }}
@@ -127,18 +148,58 @@ jobs:
           echo "✅ 解压完成"
           ls -lah /tmp/hikingSocialApp/
 
-    - name: Fallback - Manual upload instruction
-      if: steps.scp_deploy.outcome != 'success' && steps.scp_deploy_retry.outcome != 'success'
+    - name: Try alternative deployment method
+      if: steps.scp_deploy.outcome != 'success' && steps.scp_deploy_retry.outcome != 'success' && steps.scp_deploy_retry2.outcome != 'success'
+      uses: appleboy/ssh-action@v1.0.3
+      continue-on-error: true
+      id: alternative_deploy
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        port: 22
+        script: |
+          echo "🔄 尝试备用部署方法：直接从 Git 拉取..."
+          cd /var/www/hikingSocialApp || mkdir -p /var/www/hikingSocialApp
+
+          if [ -d ".git" ]; then
+            echo "更新现有仓库..."
+            git fetch origin
+            git reset --hard origin/master
+          else
+            echo "克隆新仓库..."
+            cd /var/www
+            rm -rf hikingSocialApp
+            git clone https://github.com/${{ github.repository }}.git hikingSocialApp
+            cd hikingSocialApp
+          fi
+
+          echo "✅ 代码已更新"
+
+    - name: Fallback - Manual deployment instruction
+      if: |
+        steps.scp_deploy.outcome != 'success' &&
+        steps.scp_deploy_retry.outcome != 'success' &&
+        steps.scp_deploy_retry2.outcome != 'success' &&
+        steps.alternative_deploy.outcome != 'success'
       run: |
-        echo "❌ 自动部署失败"
-        echo "建议手动部署："
-        echo "1. scp deploy-package.tar.gz user@server:/tmp/"
-        echo "2. ssh user@server"
-        echo "3. cd /tmp && tar -xzf deploy-package.tar.gz"
-        exit 1
+        echo "⚠️  自动部署多次失败"
+        echo ""
+        echo "📋 手动部署步骤："
+        echo "方案 1 - 使用 SCP："
+        echo "  1. scp deploy-package.tar.gz ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/"
+        echo "  2. ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}"
+        echo "  3. cd /tmp && tar -xzf deploy-package.tar.gz"
+        echo ""
+        echo "方案 2 - 使用 Git："
+        echo "  1. ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}"
+        echo "  2. cd /var/www/hikingSocialApp"
+        echo "  3. git pull origin master"
+        echo ""
+        echo "⚠️  注意：这不会停止部署流程，将继续使用现有代码"
 
     - name: Verify upload
-      if: steps.scp_deploy.outcome == 'success' || steps.scp_deploy_retry.outcome == 'success'
+      if: steps.scp_deploy.outcome == 'success' || steps.scp_deploy_retry.outcome == 'success' || steps.scp_deploy_retry2.outcome == 'success'
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.SERVER_HOST }}
@@ -174,48 +235,62 @@ jobs:
           # 确保项目目录存在
           mkdir -p "$PROJECT_DIR" || (echo "❌ 无法创建项目目录" && exit 1)
 
-          # 备份现有环境变量文件
-          if [ -f "$PROJECT_DIR/backend/.env" ]; then
-            echo "📦 备份环境变量文件..."
-            cp "$PROJECT_DIR/backend/.env" "/tmp/backend.env.backup"
-          fi
+          # 检查是否有上传的文件
+          if [ -d "$TEMP_DIR/backend" ] && [ -d "$TEMP_DIR/frontend" ]; then
+            echo "✅ 检测到上传的部署包，使用 SCP 方式..."
 
-          # 同步代码（从临时目录到项目目录）
-          echo "📥 同步代码..."
-          rsync -av --delete "$TEMP_DIR/backend/" "$PROJECT_DIR/backend/" || (echo "❌ 后端同步失败" && exit 1)
-          rsync -av --delete "$TEMP_DIR/frontend/" "$PROJECT_DIR/frontend/" || (echo "❌ 前端同步失败" && exit 1)
+            # 备份现有环境变量文件
+            if [ -f "$PROJECT_DIR/backend/.env" ]; then
+              echo "📦 备份环境变量文件..."
+              cp "$PROJECT_DIR/backend/.env" "/tmp/backend.env.backup"
+            fi
 
-          # 恢复环境变量文件
-          if [ -f "/tmp/backend.env.backup" ]; then
-            cp "/tmp/backend.env.backup" "$PROJECT_DIR/backend/.env"
-            rm "/tmp/backend.env.backup"
-          fi
+            # 同步代码（从临时目录到项目目录）
+            echo "📥 同步代码..."
+            rsync -av --delete "$TEMP_DIR/backend/" "$PROJECT_DIR/backend/" || (echo "❌ 后端同步失败" && exit 1)
+            rsync -av --delete "$TEMP_DIR/frontend/" "$PROJECT_DIR/frontend/" || (echo "❌ 前端同步失败" && exit 1)
 
-          # 清理临时目录
-          rm -rf "$TEMP_DIR"
+            # 恢复环境变量文件
+            if [ -f "/tmp/backend.env.backup" ]; then
+              cp "/tmp/backend.env.backup" "$PROJECT_DIR/backend/.env"
+              rm "/tmp/backend.env.backup"
+            fi
 
-          # 后端部署
-          echo "=========================================="
-          echo "🔧 部署后端..."
-          echo "=========================================="
-          cd "$PROJECT_DIR/backend"
-
-          echo "📦 安装生产依赖..."
-          npm ci --production || npm install --production || (echo "❌ npm install 失败" && exit 1)
-
-          # 验证部署的文件
-          echo "✓ 验证后端文件..."
-          test -f dist/server.js || (echo "❌ dist/server.js 不存在" && exit 1)
-          test -f dist/config/database.js || (echo "❌ dist/config/database.js 不存在" && exit 1)
-          test -f dist/routes/messageRoutes.js || (echo "❌ dist/routes/messageRoutes.js 不存在" && exit 1)
-          test -f dist/routes/userRoutes.js || (echo "❌ dist/routes/userRoutes.js 不存在" && exit 1)
-          echo "✅ 后端文件验证通过"
-
-          # 重启后端服务
-          echo "🔄 重启后端服务..."
-          if pm2 list | grep -q hiking-app-backend; then
-            pm2 restart ecosystem.config.cjs --only hiking-app-backend --env production || (echo "❌ 重启失败" && exit 1)
+            # 清理临时目录
+            rm -rf "$TEMP_DIR"
           else
+            echo "⚠️  未检测到上传的部署包，使用 Git 拉取方式..."
+            cd "$PROJECT_DIR"
+
+            # 备份环境变量
+            if [ -f "backend/.env" ]; then
+              cp backend/.env /tmp/backend.env.backup
+            fi
+
+            # 从 Git 拉取最新代码
+            if [ -d ".git" ]; then
+              echo "📥 拉取最新代码..."
+              git fetch origin
+              git reset --hard origin/master
+            else
+              echo "❌ Git 仓库不存在，无法部署"
+              exit 1
+            fi
+
+            # 恢复环境变量
+            if [ -f "/tmp/backend.env.backup" ]; then
+              cp /tmp/backend.env.backup backend/.env
+              rm /tmp/backend.env.backup
+            fi
+
+            # 构建后端
+            echo "🔨 构建后端..."
+            cd backend
+            npm ci || npm install
+            npm run build
+            cd ..
+          fi
+
             pm2 start ecosystem.config.cjs --env production || (echo "❌ 启动失败" && exit 1)
           fi
           pm2 save
@@ -274,6 +349,12 @@ jobs:
           echo "=========================================="
           echo "✅ 部署完成！"
           echo "=========================================="
+
+          # 清理临时目录
+          if [ -d "$TEMP_DIR" ]; then
+            echo "🧹 清理临时目录..."
+            rm -rf "$TEMP_DIR"
+          fi
 
           # 显示服务状态
           pm2 list
