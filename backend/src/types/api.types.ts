@@ -71,11 +71,10 @@ export enum HttpStatusCode {
 
 // 业务错误码
 export enum BusinessErrorCode {
-  // 认证相关 (1xxx)
+  // 认证相关 (1xxx) - 仅用于token/登录认证失败
   INVALID_CREDENTIALS = 1001,
   TOKEN_EXPIRED = 1002,
   TOKEN_INVALID = 1003,
-  USER_NOT_FOUND = 1004,
   USER_ALREADY_EXISTS = 1005,
   UNAUTHORIZED = 1006,
 
@@ -98,6 +97,9 @@ export enum BusinessErrorCode {
   PREFERENCE_NOT_FOUND = 3009,
   PHOTO_NOT_FOUND = 3010,
   MAX_PHOTOS_EXCEEDED = 3011,
+  
+  // 资源不存在 (4xxx) - 返回404
+  USER_NOT_FOUND = 4001,
   RESOURCE_NOT_FOUND = 3012,
   FORBIDDEN = 3013,
 

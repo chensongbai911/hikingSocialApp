@@ -68,6 +68,21 @@ api.interceptors.response.use(
         responseData: error.response?.data
       })
 
+      // 检查是否是真正的认证失败(1xxx业务码)
+      const businessCode = error.response?.data?.code
+      const isAuthError = businessCode >= 1001 && businessCode <= 1999
+      
+      console.log('[HTTP] 错误码:', businessCode, '是认证错误:', isAuthError)
+
+      // 只有真正的认证错误才清空token
+      if (!isAuthError) {
+        console.warn('[HTTP] 非认证错误，保留token，直接返回错误')
+        return Promise.reject(error.response?.data || {
+          code: error.response?.status || 500,
+          message: error.message || '请求失败'
+        })
+      }
+
       // 避免在获取用户信息接口本身失败时再次调用造成无限循环
       const isGetCurrentUser = error.config?.url?.includes('/auth/me')
 
@@ -86,7 +101,7 @@ api.interceptors.response.use(
         }
       }
 
-      console.warn('[HTTP] 清空token并跳转登录页')
+      console.warn('[HTTP] 真正的认证失败，清空token并跳转登录页')
       // 清空本地状态并跳转登录
       userStore.setToken(null)
       userStore.setCurrentUser(null)

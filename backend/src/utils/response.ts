@@ -224,23 +224,23 @@ export function serverError(
  * @returns HTTP状态码
  */
 function getHttpStatusFromBusinessCode(businessCode: BusinessErrorCode): number {
-  // 认证相关 -> 401
+  // 认证相关 (1xxx) -> 401
   if (businessCode >= 1001 && businessCode <= 1999) {
     return HttpStatusCode.UNAUTHORIZED;
   }
-  // 参数验证 -> 400
+  // 参数验证 (2xxx) -> 400
   if (businessCode >= 2001 && businessCode <= 2999) {
     return HttpStatusCode.BAD_REQUEST;
   }
-  // 业务逻辑 -> 422
+  // 业务逻辑 (3xxx) -> 422
   if (businessCode >= 3001 && businessCode <= 3999) {
     return HttpStatusCode.UNPROCESSABLE_ENTITY;
   }
-  // 资源限制 -> 429 (Too Many Requests，这里用422代替)
+  // 资源不存在 (4xxx) -> 404
   if (businessCode >= 4001 && businessCode <= 4999) {
-    return HttpStatusCode.UNPROCESSABLE_ENTITY;
+    return HttpStatusCode.NOT_FOUND;
   }
-  // 系统错误 -> 500
+  // 系统错误 (5xxx) -> 500
   if (businessCode >= 5001 && businessCode <= 5999) {
     return HttpStatusCode.INTERNAL_SERVER_ERROR;
   }
