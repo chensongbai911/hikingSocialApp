@@ -61,7 +61,7 @@
       未互关，仅可再发送 {{ remainingMessages ?? 0 }} 条消息
     </div>
 
-    <div ref="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+    <div ref="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50" @scroll="handleScroll">
       <div v-if="loading" class="text-center text-gray-400 py-8">加载中...</div>
       <div v-else-if="!messages.length" class="flex flex-col items-center justify-center py-16">
         <svg class="w-20 h-20 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -342,6 +342,9 @@ interface ChatMessage {
 }
 
 const messages = ref<ChatMessage[]>([])
+const currentPage = ref(1)
+const totalPages = ref(1)
+const isLoadingMore = ref(false)
 
 const loading = ref(true)
 const loadError = ref('')
@@ -397,7 +400,7 @@ const loadConversation = async () => {
     const info = await getConversationInfo(id)
     const { otherUserId, isLimited: limited, remainingMessages: remain, isBlacklisted: black } =
       info || {}
-    
+
     const targetUserId = otherUserId || id
     chatUser.value.id = targetUserId
 
@@ -406,7 +409,7 @@ const loadConversation = async () => {
       console.log('[ChatWindow] 获取用户资料:', targetUserId)
       const profile = await userApi.getUserProfile(targetUserId)
       console.log('[ChatWindow] 用户资料响应:', profile)
-      
+
       const user = profile?.data?.data || profile?.data || profile
       if (user) {
         chatUser.value.name = user.nickname || user.name || user.email || `用户${targetUserId.slice(-4)}`
@@ -574,6 +577,52 @@ const scrollToBottom = () => {
       messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
     }
   })
+}
+
+const loadMoreMessages = async () => {
+  if (isLoadingMore.value || currentPage.value >= totalPages.value) {
+    return
+  }
+  
+  try {
+    isLoadingMore.value = true
+    const nextPage = currentPage.value + 1
+    const list = await getMessages(conversationId.value, nextPage)
+    
+    if (list?.pagination) {
+      totalPages.value = list.pagination.totalPages || 1
+    }
+    
+    const rawMessages = (list?.messages || list?.items || []) as any[]
+    const newMessages = rawMessages.map((m: any) => ({
+      id: String(m.id),
+      content: m.content || m.image_url || m.file_url || '',
+      contentType: (m.content_type || m.contentType || 'text') as 'text' | 'image' | 'file',
+      senderId: String(m.sender_id || m.senderId),
+      createdAt: m.created_at || m.createdAt,
+      isRecalled: m.is_recalled,
+      imageUrl: m.image_url,
+      fileUrl: m.file_url,
+    }))
+    
+    // 新消息加到前面（因为是向上滚动加载）
+    messages.value.unshift(...newMessages)
+    currentPage.value = nextPage
+  } catch (err) {
+    console.error('[ChatWindow] 加载更多消息失败:', err)
+  } finally {
+    isLoadingMore.value = false
+  }
+}
+
+const handleScroll = (e: Event) => {
+  const el = e.target as HTMLDivElement
+  if (!el) return
+  
+  // 当滚动到顶部时，加载更多消息
+  if (el.scrollTop < 100 && !isLoadingMore.value && currentPage.value < totalPages.value) {
+    loadMoreMessages()
+  }
 }
 
 const formatTime = (date: Date) => {
