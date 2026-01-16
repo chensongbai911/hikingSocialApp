@@ -9,6 +9,72 @@ export interface SendPrecheckResult {
 }
 
 export class ChatPolicyService {
+  private tablesReady = false
+  private ensureTablesPromise: Promise<void> | null = null
+
+  private async ensureChatTables(): Promise<void> {
+    if (this.tablesReady) return
+    if (this.ensureTablesPromise) return this.ensureTablesPromise
+
+    this.ensureTablesPromise = (async () => {
+      // 黑名单表
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS user_blacklist (
+          id INT PRIMARY KEY AUTO_INCREMENT,
+          user_id VARCHAR(50) NOT NULL,
+          blocked_user_id VARCHAR(50) NOT NULL,
+          reason VARCHAR(255) NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE KEY uniq_user_blocked (user_id, blocked_user_id),
+          INDEX idx_user (user_id),
+          INDEX idx_blocked (blocked_user_id)
+        ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+      `)
+
+      // 单向关注限制表
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS message_limits (
+          id INT PRIMARY KEY AUTO_INCREMENT,
+          conversation_id INT NOT NULL,
+          sender_id VARCHAR(50) NOT NULL,
+          receiver_id VARCHAR(50) NOT NULL,
+          message_count INT DEFAULT 0,
+          is_limited BOOLEAN DEFAULT TRUE,
+          limit_reason ENUM('not_mutual_follow', 'receiver_not_replied') DEFAULT 'not_mutual_follow',
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          UNIQUE KEY unique_sender_receiver (conversation_id, sender_id),
+          INDEX idx_conversation (conversation_id)
+        ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+      `)
+
+      this.tablesReady = true
+    })()
+
+    try {
+      await this.ensureTablesPromise
+    } catch (err) {
+      this.ensureTablesPromise = null
+      throw err
+    }
+  }
+
+  public async ensureTablesReady(): Promise<void> {
+    await this.ensureChatTables()
+  }
+
+  private async queryWithAutoMigrate<T extends any[]>(sql: string, params: any[] = []): Promise<[T, any]> {
+    try {
+      return await pool.query<T>(sql, params)
+    } catch (err: any) {
+      if (err?.code === 'ER_NO_SUCH_TABLE') {
+        await this.ensureChatTables()
+        return await pool.query<T>(sql, params)
+      }
+      throw err
+    }
+  }
+
   async getConversationParticipants(conversationId: number): Promise<{ user1: string; user2: string }> {
     const [rows] = await pool.query<any[]>(
       'SELECT user_id1 AS user1, user_id2 AS user2 FROM conversations WHERE id = ? LIMIT 1',
@@ -19,7 +85,7 @@ export class ChatPolicyService {
   }
 
   async isBlacklisted(userA: string, userB: string): Promise<boolean> {
-    const [rows] = await pool.query<any[]>(
+    const [rows] = await this.queryWithAutoMigrate<any[]>(
       'SELECT 1 FROM user_blacklist WHERE (user_id = ? AND blocked_user_id = ?) OR (user_id = ? AND blocked_user_id = ?) LIMIT 1',
       [userA, userB, userB, userA]
     )
@@ -43,7 +109,7 @@ export class ChatPolicyService {
   }
 
   async getLimitRecord(conversationId: number, senderId: string): Promise<{ message_count: number } | null> {
-    const [rows] = await pool.query<any[]>(
+    const [rows] = await this.queryWithAutoMigrate<any[]>(
       'SELECT message_count FROM message_limits WHERE conversation_id = ? AND sender_id = ? LIMIT 1',
       [conversationId, senderId]
     )
@@ -51,7 +117,7 @@ export class ChatPolicyService {
   }
 
   async ensureLimitRow(conversationId: number, senderId: string, receiverId: string): Promise<void> {
-    await pool.query(
+    await this.queryWithAutoMigrate(
       `INSERT INTO message_limits (conversation_id, sender_id, receiver_id, message_count, is_limited, limit_reason)
        VALUES (?, ?, ?, 0, TRUE, 'not_mutual_follow')
        ON DUPLICATE KEY UPDATE conversation_id = conversation_id`,
@@ -60,7 +126,7 @@ export class ChatPolicyService {
   }
 
   async incrementLimit(conversationId: number, senderId: string): Promise<void> {
-    await pool.query(
+    await this.queryWithAutoMigrate(
       'UPDATE message_limits SET message_count = message_count + 1 WHERE conversation_id = ? AND sender_id = ?',
       [conversationId, senderId]
     )

@@ -23,7 +23,10 @@ export const createConversation = async (targetUserId: string) => {
   const response = await request.post('/messages/conversations', {
     targetUserId,
   })
-  return response.data.data.conversation
+  const payload = response?.data || {}
+  // 兼容后端不同的包装层级，避免 undefined.conversation 报错
+  const conversation = payload.data?.conversation || payload.conversation || payload.data || payload
+  return conversation
 }
 
 /**

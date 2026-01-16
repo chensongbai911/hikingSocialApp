@@ -390,6 +390,9 @@ export class MessageController {
       if (!userId) return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问')
       const targetUserId = req.params.targetUserId
       if (!targetUserId) return validationError(res, '缺少目标用户')
+
+      // 确保黑名单/限制表存在，避免本地开发缺表导致 500
+      await chatPolicyService.ensureTablesReady()
       await pool.query(
         'INSERT INTO user_blacklist (user_id, blocked_user_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE user_id = user_id',
         [String(userId), String(targetUserId)]
@@ -418,6 +421,9 @@ export class MessageController {
       if (!userId) return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问')
       const targetUserId = req.params.targetUserId
       if (!targetUserId) return validationError(res, '缺少目标用户')
+
+      // 确保黑名单/限制表存在，避免本地开发缺表导致 500
+      await chatPolicyService.ensureTablesReady()
       await pool.query(
         'DELETE FROM user_blacklist WHERE user_id = ? AND blocked_user_id = ?',
         [String(userId), String(targetUserId)]
@@ -444,6 +450,9 @@ export class MessageController {
     try {
       const userId = (req as any).user?.id
       if (!userId) return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问')
+
+      // 确保黑名单/限制表存在，避免本地开发缺表导致 500
+      await chatPolicyService.ensureTablesReady()
       const [rows] = await pool.query<any[]>(
         'SELECT blocked_user_id FROM user_blacklist WHERE user_id = ?',
         [String(userId)]
@@ -568,6 +577,9 @@ export class MessageController {
       if (!conversationId || isNaN(conversationId)) {
         return validationError(res, '无效的对话ID')
       }
+
+      // 确保限制表存在，避免清空对话时缺表
+      await chatPolicyService.ensureTablesReady()
 
       // 校验参与者
       const [convRows] = await pool.query<any[]>(

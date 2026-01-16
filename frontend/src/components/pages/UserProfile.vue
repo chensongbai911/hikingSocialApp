@@ -296,8 +296,9 @@ const openChat = async () => {
     // 创建或获取对话
     try {
       const conversation = await messageApi.createConversation(targetUserId)
+      const convId = conversation?.id || conversation?.conversationId || conversation?.conversation_id
 
-      if (conversation && conversation.id) {
+      if (convId) {
         // 短暂延迟确保对话已在服务器创建
         await new Promise(resolve => setTimeout(resolve, 200))
 
@@ -305,9 +306,10 @@ const openChat = async () => {
         toast.success('正在打开私信...')
         await router.push({
           path: '/messages',
-          query: { conversationId: conversation.id }
+          query: { conversationId: convId }
         })
       } else {
+        console.error('createConversation 返回异常:', conversation)
         toast.error('创建对话失败')
       }
     } catch (apiError: any) {
