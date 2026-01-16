@@ -251,14 +251,17 @@ const goBack = () => {
 
 // 上传头像
 const uploadAvatar = () => {
+  console.log('uploadAvatar 函数被调用');
   // 创建隐藏的 input 元素
   const input = document.createElement('input')
   input.type = 'file'
   input.accept = 'image/*'
   input.onchange = async (e: Event) => {
+    console.log('文件选择器触发');
     const target = e.target as HTMLInputElement
     const file = target.files?.[0]
     if (file) {
+      console.log('选择的文件:', file.name, file.size);
       try {
         // 检查文件大小（最大5MB）
         if (file.size > 5 * 1024 * 1024) {
@@ -270,6 +273,7 @@ const uploadAvatar = () => {
 
         // 压缩并上传
         const compressedBase64 = await compressImage(file, 400, 400, 0.8)
+        console.log('图片压缩完成，大小:', compressedBase64.length);
         formData.value.avatar_url = compressedBase64
 
         toast.success('头像上传成功，请点击保存')
@@ -277,8 +281,11 @@ const uploadAvatar = () => {
         console.error('上传头像失败:', error)
         toast.error('上传失败，请重试')
       }
+    } else {
+      console.log('没有选择文件');
     }
   }
+  console.log('触发文件选择器');
   input.click()
 };
 

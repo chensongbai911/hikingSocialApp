@@ -30,6 +30,9 @@ interface UserInfo {
   age: number | null;
   avatar_url: string | null;
   hiking_level: string;
+  province: string | null;
+  city: string | null;
+  region: string | null;
   created_at: Date;
 }
 
@@ -189,7 +192,7 @@ export class AuthService {
    */
   async getCurrentUser(userId: string): Promise<UserInfo> {
     const [users] = await pool.query<RowDataPacket[]>(
-      `SELECT id, email, nickname, gender, age, avatar_url, bio, hiking_level, created_at
+      `SELECT id, email, nickname, gender, age, avatar_url, bio, hiking_level, province, city, region, created_at
        FROM users WHERE id = ? AND deleted_at IS NULL`,
       [userId]
     );
