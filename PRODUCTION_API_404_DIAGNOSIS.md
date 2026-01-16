@@ -28,7 +28,7 @@
 - **消息相关接口**：`backend/src/routes/messageRoutes.ts`
   - ✅ `GET /messages/unread-count` - 已定义
   - ✅ `GET /messages/conversations` - 已定义
-  
+
 - **用户相关接口**：`backend/src/routes/userRoutes.ts`
   - ✅ `GET /users/:userId/follow-status` - 已定义
   - ✅ `GET /users/:userId/detail` - 已定义
@@ -304,7 +304,7 @@ fix: 解决生产环境 API 404 错误 - 优化 Nginx 部署和验证
 
 ---
 
-**问题分类**：🔴 Critical  
-**优先级**：🔴 P1 (Highest)  
-**状态**：✅ Resolved (已修复，等待生产部署验证)  
+**问题分类**：🔴 Critical
+**优先级**：🔴 P1 (Highest)
+**状态**：✅ Resolved (已修复，等待生产部署验证)
 **最后更新**：2026-01-16

@@ -183,14 +183,14 @@ FAIL_COUNT=0
 for endpoint in "${ENDPOINTS[@]}"; do
   METHOD=$(echo "$endpoint" | awk '{print $1}')
   PATH=$(echo "$endpoint" | awk '{print $2}')
-  
+
   if [ -n "$TEST_TOKEN" ]; then
     HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X "$METHOD" "http://115.190.252.62$PATH" \
       -H "Authorization: Bearer $TEST_TOKEN" 2>/dev/null)
   else
     HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X "$METHOD" "http://115.190.252.62$PATH" 2>/dev/null)
   fi
-  
+
   if [ "$HTTP_CODE" == "200" ] || [ "$HTTP_CODE" == "201" ]; then
     echo -e "${GREEN}✅ $METHOD $PATH${NC} -> HTTP $HTTP_CODE"
     ((SUCCESS_COUNT++))
