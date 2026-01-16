@@ -1,5 +1,5 @@
 <template>
-  <div class="fixed inset-0 bg-white flex flex-col z-40">
+  <div class="fixed inset-0 bg-white flex flex-col z-40" style="max-height: 100vh; max-height: 100dvh;">
     <div class="bg-white border-b border-gray-100 p-4 flex items-center space-x-3 flex-shrink-0">
       <button @click="handleBack" class="p-2 -ml-2">
         <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -11,16 +11,27 @@
           />
         </svg>
       </button>
-      <img
-        :src="chatUser.avatar || 'https://placehold.co/48x48'"
-        :alt="chatUser.name"
-        class="w-10 h-10 rounded-full object-cover"
-      />
+      <div class="relative flex-shrink-0">
+        <img
+          :src="chatUser.avatar || 'https://placehold.co/48x48'"
+          :alt="chatUser.name"
+          class="w-10 h-10 rounded-full object-cover"
+        />
+        <div
+          v-if="!isBlacklisted"
+          :class="[
+            'absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white',
+            chatUser.isOnline ? 'bg-green-500' : 'bg-gray-400'
+          ]"
+        ></div>
+      </div>
       <div class="flex-1 min-w-0">
-        <h2 class="font-medium text-gray-800 truncate">{{ chatUser.name || '聊天' }}</h2>
-        <p class="text-xs text-gray-500 truncate">
+        <h2 class="font-semibold text-gray-900 truncate text-base">{{ chatUser.name || '对方' }}</h2>
+        <p class="text-xs truncate flex items-center space-x-1">
           <span v-if="isBlacklisted" class="text-red-500">已被对方拉黑</span>
-          <span v-else>{{ chatUser.isOnline ? '在线' : '离线' }}</span>
+          <span v-else :class="chatUser.isOnline ? 'text-green-600' : 'text-gray-500'">
+            {{ chatUser.isOnline ? '在线' : '离线' }}
+          </span>
         </p>
       </div>
       <div class="flex items-center space-x-2" v-if="isLimited">
@@ -131,7 +142,7 @@
       <div v-if="typingUsers.size > 0" class="text-xs text-gray-500 mt-2">对方正在输入...</div>
     </div>
 
-    <div class="bg-white border-t border-gray-100 p-4 flex-shrink-0">
+    <div class="bg-white border-t border-gray-100 p-4 flex-shrink-0" style="padding-bottom: max(1rem, env(safe-area-inset-bottom));">
       <div
         v-if="showEmojiPicker"
         class="mb-3 p-3 bg-gray-50 rounded-2xl grid grid-cols-8 gap-2 max-h-48 overflow-y-auto"
@@ -386,18 +397,34 @@ const loadConversation = async () => {
     const info = await getConversationInfo(id)
     const { otherUserId, isLimited: limited, remainingMessages: remain, isBlacklisted: black } =
       info || {}
-    chatUser.value.id = otherUserId || chatUser.value.id || id
+    
+    const targetUserId = otherUserId || id
+    chatUser.value.id = targetUserId
 
     // 拉取对方用户信息填充头像和昵称
     try {
-      const profile = await userApi.getUserProfile(chatUser.value.id)
-      const user = profile?.data || profile?.data?.data || profile
+      console.log('[ChatWindow] 获取用户资料:', targetUserId)
+      const profile = await userApi.getUserProfile(targetUserId)
+      console.log('[ChatWindow] 用户资料响应:', profile)
+      
+      const user = profile?.data?.data || profile?.data || profile
       if (user) {
-        chatUser.value.name = user.nickname || user.name || chatUser.value.name
-        chatUser.value.avatar = user.avatar || user.avatar_url || chatUser.value.avatar
+        chatUser.value.name = user.nickname || user.name || user.email || `用户${targetUserId.slice(-4)}`
+        chatUser.value.avatar = user.avatar_url || user.avatar || chatUser.value.avatar
+        chatUser.value.isOnline = user.is_online ?? user.isOnline ?? false
+        console.log('[ChatWindow] 用户信息已设置:', chatUser.value)
+      } else {
+        console.warn('[ChatWindow] 用户数据为空，使用默认值')
+        chatUser.value.name = `用户${targetUserId.slice(-4)}`
       }
-    } catch (e) {
-      console.warn('获取对方资料失败，使用默认占位', e)
+    } catch (e: any) {
+      console.error('[ChatWindow] 获取对方资料失败:', e)
+      // 即使失败也显示一个友好的名字
+      chatUser.value.name = `用户${targetUserId.slice(-4)}`
+      // 如果是404错误，不影响继续使用
+      if (e?.code !== 4001 && e?.code !== 404) {
+        throw e
+      }
     }
 
     isLimited.value = !!limited
