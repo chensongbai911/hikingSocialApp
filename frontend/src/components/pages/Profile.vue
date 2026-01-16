@@ -89,7 +89,21 @@
       <!-- 徒步偏好 -->
       <div class="bg-white rounded-2xl shadow-sm p-5 mb-4">
         <h3 class="text-sm font-semibold text-gray-500 mb-3">我的徒步偏好</h3>
-        <div class="flex flex-wrap gap-2">
+
+        <!-- 空状态提示 -->
+        <div v-if="!userProfile.preferences || userProfile.preferences.length === 0" class="text-center py-6">
+          <div class="text-4xl mb-2">🏷️</div>
+          <p class="text-gray-500 text-sm mb-2">还没有设置徒步偏好</p>
+          <button
+            @click="router.push('/edit-profile')"
+            class="text-teal-500 text-xs font-medium hover:underline"
+          >
+            去设置 →
+          </button>
+        </div>
+
+        <!-- 标签列表 -->
+        <div v-else class="flex flex-wrap gap-2">
           <span
             v-for="(tag, index) in userProfile.preferences"
             :key="index"
@@ -106,7 +120,22 @@
           <h3 class="text-sm font-semibold text-gray-500">生活相册</h3>
           <span class="text-xs text-gray-400">{{ userProfile.photos.length }}/9</span>
         </div>
-        <div class="grid grid-cols-3 gap-3">
+
+        <!-- 空状态提示 -->
+        <div v-if="userProfile.photos.length === 0" class="text-center py-8">
+          <div class="text-4xl mb-3">📷</div>
+          <p class="text-gray-500 text-sm mb-2">还没有生活照片</p>
+          <p class="text-gray-400 text-xs mb-4">分享你的精彩瞬间</p>
+          <button
+            @click="addPhoto"
+            class="px-6 py-2 bg-teal-500 text-white text-sm rounded-full hover:bg-teal-600 transition"
+          >
+            添加照片
+          </button>
+        </div>
+
+        <!-- 照片网格 -->
+        <div v-else class="grid grid-cols-3 gap-3">
           <div
             v-for="(photo, index) in userProfile.photos"
             :key="photo.id"

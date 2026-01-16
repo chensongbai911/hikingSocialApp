@@ -192,14 +192,35 @@ export class AuthService {
   }
 
   /**
-   * 获取当前用户信息
+   * 获取当前用户信息（优化版本 - 使用并行查询）
    */
   async getCurrentUser(userId: string): Promise<UserInfo> {
-    const [users] = await pool.query<RowDataPacket[]>(
-      `SELECT id, email, nickname, gender, age, avatar_url, bio, hiking_level, province, city, region, created_at
-       FROM users WHERE id = ? AND deleted_at IS NULL`,
-      [userId]
-    );
+    // 使用 Promise.all 并行查询，大幅提升性能
+    const [
+      [users],
+      [preferences],
+      [photos]
+    ] = await Promise.all([
+      pool.query<RowDataPacket[]>(
+        `SELECT id, email, nickname, gender, age, avatar_url, bio, hiking_level, province, city, region, created_at
+         FROM users WHERE id = ? AND deleted_at IS NULL`,
+        [userId]
+      ),
+      pool.query<RowDataPacket[]>(
+        `SELECT id, preference_type, preference_value, created_at
+         FROM user_preferences
+         WHERE user_id = ?
+         ORDER BY created_at DESC`,
+        [userId]
+      ),
+      pool.query<RowDataPacket[]>(
+        `SELECT id, photo_url, sort_order, created_at
+         FROM user_photos
+         WHERE user_id = ?
+         ORDER BY sort_order ASC, created_at DESC`,
+        [userId]
+      )
+    ]);
 
     if (users.length === 0) {
       throw {
@@ -210,38 +231,10 @@ export class AuthService {
 
     const user = users[0] as UserInfo;
 
-    // 获取用户偏好
-    const [preferences] = await pool.query<RowDataPacket[]>(
-      `SELECT id, preference_type, preference_value, created_at
-       FROM user_preferences
-       WHERE user_id = ?
-       ORDER BY created_at DESC`,
-      [userId]
-    );
-
-    // 获取用户照片
-    const [photos] = await pool.query<RowDataPacket[]>(
-      `SELECT id, photo_url, sort_order, created_at
-       FROM user_photos
-       WHERE user_id = ?
-       ORDER BY sort_order ASC, created_at DESC`,
-      [userId]
-    );
-
-    // 获取基础URL
-    const getFullUrl = (path: string | null): string | null => {
-      if (!path) return null;
-      if (path.startsWith('http')) return path;
-
-      // 使用环境变量或默认值
-      const baseUrl = process.env.API_BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
-      return `${baseUrl}${path}`;
-    };
-
-    // 处理头像URL
+    // 使用统一的 URL 工具函数处理头像和照片 URL
     user.avatar_url = getFullUrl(user.avatar_url);
 
-    // 处理照片URL
+    // 批量处理照片 URL
     const photosWithFullUrl = photos.map((photo: any) => ({
       ...photo,
       photo_url: getFullUrl(photo.photo_url)

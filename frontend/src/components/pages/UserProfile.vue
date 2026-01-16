@@ -85,7 +85,16 @@
           查看全部 {{ user.hikingTrails.length }}
         </button>
       </div>
-      <div class="grid grid-cols-3 gap-3">
+
+      <!-- 空状态提示 -->
+      <div v-if="!displayedTrails.length" class="bg-gray-50 rounded-2xl p-8 text-center">
+        <div class="text-5xl mb-3">🥾</div>
+        <p class="text-gray-500 text-sm">还没有徒步足迹</p>
+        <p class="text-gray-400 text-xs mt-1">期待TA的精彩户外旅程</p>
+      </div>
+
+      <!-- 足迹列表 -->
+      <div v-else class="grid grid-cols-3 gap-3">
         <div
           v-for="(trail, index) in displayedTrails"
           :key="index"
@@ -153,9 +162,18 @@
     <!-- 兴趣爱好 -->
     <div class="px-4 mt-6 pb-32">
       <h3 class="text-lg font-bold text-gray-800 mb-4">兴趣爱好</h3>
-      <div class="flex gap-3 flex-wrap">
+
+      <!-- 空状态提示 -->
+      <div v-if="!(user && user.tags && user.tags.length)" class="bg-gray-50 rounded-2xl p-8 text-center">
+        <div class="text-5xl mb-3">🏷️</div>
+        <p class="text-gray-500 text-sm">还没有设置兴趣爱好</p>
+        <p class="text-gray-400 text-xs mt-1">更多了解从设置兴趣开始</p>
+      </div>
+
+      <!-- 标签列表 -->
+      <div v-else class="flex gap-3 flex-wrap">
         <span
-          v-for="tag in (user && user.tags) || []"
+          v-for="tag in user.tags"
           :key="tag"
           class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm font-medium"
         >
@@ -167,30 +185,44 @@
     <!-- 底部操作按钮 -->
     <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 shadow-lg">
       <div class="flex gap-3 max-w-lg mx-auto">
-        <!-- 消息按钮 -->
+        <!-- 关注按钮（未关注时） -->
         <button
-          class="flex-shrink-0 w-14 h-14 bg-white border-2 border-gray-200 rounded-2xl flex items-center justify-center text-2xl hover:border-teal-500 transition"
-        >
-          💬
-        </button>
-
-        <!-- 关注按钮 -->
-        <button
-          class="h-14 rounded-2xl font-bold text-base transition shadow-lg"
-          :class="isFollowing
-            ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 px-6'
-            : 'flex-1 bg-teal-500 text-white hover:bg-teal-600'"
+          v-if="!isFollowing"
+          class="flex-1 h-14 bg-teal-500 text-white rounded-2xl font-bold text-base hover:bg-teal-600 transition shadow-lg active:scale-95"
           @click="toggleFollow"
           :disabled="followLoading"
         >
           <span v-if="followLoading">处理中...</span>
-          <span v-else>{{ isFollowing ? '已关注' : '+ 关注' }}</span>
+          <span v-else>+ 关注</span>
         </button>
 
-        <!-- 邀请徒步按钮 -->
+        <!-- 私信按钮（已关注时） -->
+        <button
+          v-if="isFollowing"
+          class="flex-1 h-14 bg-teal-500 text-white rounded-2xl font-bold text-base hover:bg-teal-600 transition shadow-lg active:scale-95 flex items-center justify-center gap-2"
+          @click="openChat"
+          :disabled="chatLoading"
+        >
+          <span class="text-xl">💬</span>
+          <span v-if="chatLoading">加载中...</span>
+          <span v-else>发送私信</span>
+        </button>
+
+        <!-- 取消关注按钮（已关注时，辅助按钮） -->
+        <button
+          v-if="isFollowing"
+          class="flex-shrink-0 w-14 h-14 bg-gray-100 text-gray-700 rounded-2xl flex items-center justify-center text-xl hover:bg-gray-200 transition active:scale-95"
+          @click="toggleFollow"
+          :disabled="followLoading"
+          title="取消关注"
+        >
+          ✓
+        </button>
+
+        <!-- 邀请徒步按钮（未关注时，辅助按钮） -->
         <button
           v-if="!isFollowing"
-          class="h-14 bg-gray-100 text-gray-700 rounded-2xl font-bold text-base hover:bg-gray-200 transition px-6"
+          class="flex-shrink-0 h-14 bg-gray-100 text-gray-700 rounded-2xl font-bold text-base hover:bg-gray-200 transition px-6 active:scale-95"
         >
           邀请徒步
         </button>
@@ -202,7 +234,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { userApi, activityApi } from '@/api'
+import { userApi, activityApi, messageApi } from '@/api'
 import toast from '@/utils/toast'
 
 const router = useRouter()
@@ -213,6 +245,7 @@ const user = ref<any>(null)
 const loading = ref(true)
 const isFollowing = ref(false)
 const followLoading = ref(false)
+const chatLoading = ref(false)
 
 // 防止重复请求的标记
 let isLoadingData = false
@@ -257,6 +290,35 @@ const goBack = () => {
   router.back()
 }
 
+// 打开聊天对话
+const openChat = async () => {
+  if (!user.value || chatLoading.value) return
+
+  try {
+    chatLoading.value = true
+    const targetUserId = user.value.id
+
+    // 创建或获取对话
+    const conversation = await messageApi.createConversation(targetUserId)
+
+    if (conversation && conversation.id) {
+      // 跳转到消息页面，并传递对话 ID
+      toast.success('正在打开私信...')
+      await router.push({
+        path: '/messages',
+        query: { conversationId: conversation.id }
+      })
+    } else {
+      toast.error('创建对话失败')
+    }
+  } catch (error: any) {
+    console.error('打开聊天失败:', error)
+    toast.error(error.message || '打开聊天失败，请重试')
+  } finally {
+    chatLoading.value = false
+  }
+}
+
 // 关注/取消关注
 const toggleFollow = async () => {
   if (!user.value || followLoading.value) return
@@ -281,7 +343,7 @@ const toggleFollow = async () => {
       if (res.code === 200) {
         isFollowing.value = true
         user.value.stats.followers += 1
-        toast.success('关注成功')
+        toast.success('关注成功！现在可以发送私信了')
       } else {
         toast.error(res.message || '关注失败')
       }

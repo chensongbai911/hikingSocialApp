@@ -26,16 +26,91 @@ jobs:
         npm ci
         npm run build
 
+    - name: Prepare deployment package
+      run: |
+        echo "📦 准备部署包..."
+        mkdir -p deploy-package/backend
+        mkdir -p deploy-package/frontend
+
+        # 复制后端必要文件
+        cp -r backend/dist deploy-package/backend/
+        cp backend/package.json deploy-package/backend/
+        cp backend/package-lock.json deploy-package/backend/
+        cp backend/.env.example deploy-package/backend/
+        cp backend/ecosystem.config.cjs deploy-package/backend/
+
+        # 复制前端文件（排除 node_modules）
+        rsync -av --exclude='node_modules' --exclude='.git' --exclude='*.log' frontend/ deploy-package/frontend/
+
+        echo "✅ 部署包准备完成"
+        du -sh deploy-package/*
+
+        # 创建压缩包（备用方案）
+        echo "📦 创建压缩包..."
+        tar -czf deploy-package.tar.gz -C deploy-package .
+        ls -lh deploy-package.tar.gz
+
     - name: Deploy to server
       uses: appleboy/scp-action@master
+      continue-on-error: true
+      id: scp_deploy
       with:
         host: ${{ secrets.SERVER_HOST }}
         username: ${{ secrets.SERVER_USER }}
         key: ${{ secrets.SERVER_SSH_KEY }}
         port: 22
-        source: "backend/dist,backend/package.json,backend/package-lock.json,backend/.env.example,backend/ecosystem.config.cjs,frontend"
-        target: "/tmp/hikingSocialApp"
-        strip_components: 0
+        source: "deploy-package.tar.gz"
+        target: "/tmp/"
+        timeout: 10m
+        command_timeout: 10m
+        overwrite: true
+      env:
+        DEBUG: true
+
+    - name: Extract package on server
+      if: steps.scp_deploy.outcome == 'success'
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        port: 22
+        script: |
+          echo "📦 解压部署包..."
+          rm -rf /tmp/hikingSocialApp
+          mkdir -p /tmp/hikingSocialApp
+          tar -xzf /tmp/deploy-package.tar.gz -C /tmp/hikingSocialApp/
+          echo "✅ 解压完成"
+          ls -lah /tmp/hikingSocialApp/
+
+    - name: Fallback - Deploy via rsync over SSH
+      if: steps.scp_deploy.outcome != 'success'
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        port: 22
+        script: |
+          echo "⚠️ SCP失败，使用备用部署方式..."
+          echo "此方法需要在服务器上配置 GitHub Actions runner 的 SSH 访问"
+          exit 1
+
+    - name: Verify upload
+      if: steps.scp_deploy.outcome == 'success'
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        port: 22
+        script: |
+          echo "✅ 验证上传文件..."
+          ls -lah /tmp/hikingSocialApp/
+          echo "后端文件:"
+          ls -lah /tmp/hikingSocialApp/backend/ || echo "后端目录不存在"
+          echo "前端文件:"
+          ls -lah /tmp/hikingSocialApp/frontend/ || echo "前端目录不存在"
 
     - name: Execute deployment commands
       uses: appleboy/ssh-action@master
