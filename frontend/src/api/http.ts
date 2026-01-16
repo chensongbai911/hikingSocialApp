@@ -31,6 +31,17 @@ api.interceptors.request.use(
     const userStore = useUserStore()
     if (userStore.token) {
       config.headers.Authorization = `Bearer ${userStore.token}`
+      console.log('[HTTP] 请求拦截器 - 添加token:', {
+        url: config.url,
+        method: config.method,
+        hasToken: true,
+        tokenPrefix: userStore.token.substring(0, 20) + '...'
+      })
+    } else {
+      console.warn('[HTTP] 请求拦截器 - 未找到token:', {
+        url: config.url,
+        method: config.method
+      })
     }
     return config
   },
@@ -49,22 +60,33 @@ api.interceptors.response.use(
 
     // 处理401 - token过期或无效
     if (error.response?.status === 401) {
+      console.error('[HTTP] 401错误:', {
+        url: error.config?.url,
+        method: error.config?.method,
+        hasToken: !!userStore.token,
+        hasUser: !!userStore.currentUser,
+        responseData: error.response?.data
+      })
+
       // 避免在获取用户信息接口本身失败时再次调用造成无限循环
       const isGetCurrentUser = error.config?.url?.includes('/auth/me')
-      
+
       if (!isGetCurrentUser && userStore.token && !userStore.currentUser) {
+        console.log('[HTTP] 尝试静默刷新用户信息...')
         // 尝试静默刷新用户信息
         try {
           const success = await userStore.fetchCurrentUser(true)
           if (success && userStore.currentUser) {
+            console.log('[HTTP] 用户信息刷新成功，重试请求')
             // 重试原请求
             return api.request(error.config as any)
           }
         } catch (e) {
-          // 静默失败
+          console.error('[HTTP] 静默刷新用户信息失败:', e)
         }
       }
 
+      console.warn('[HTTP] 清空token并跳转登录页')
       // 清空本地状态并跳转登录
       userStore.setToken(null)
       userStore.setCurrentUser(null)

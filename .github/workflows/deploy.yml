@@ -13,36 +13,20 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-          # 尝试使用 SSH 方式拉取（避免服务器无法访问 GitHub 443 的问题）
-          if [ -n "${GITHUB_DEPLOY_KEY}" ]; then
-            echo "🔑 配置 GitHub SSH 部署密钥..."
-            mkdir -p ~/.ssh
-            echo "${GITHUB_DEPLOY_KEY}" > ~/.ssh/github_deploy_key
-            chmod 600 ~/.ssh/github_deploy_key
-            touch ~/.ssh/known_hosts
-            ssh-keyscan -p 22 github.com >> ~/.ssh/known_hosts || true
-            export GIT_SSH_COMMAND="ssh -i ~/.ssh/github_deploy_key -o StrictHostKeyChecking=no -p 22"
-            GIT_URL="git@github.com:${{ github.repository }}.git"
-          else
-            echo "⚠️ 未提供 GITHUB_DEPLOY_KEY，回退使用 https（可能被防火墙拦截）"
-            GIT_URL="https://github.com/${{ github.repository }}.git"
-          fi
-
     - name: Setup Node.js
       uses: actions/setup-node@v3
-            git fetch origin || git fetch "$GIT_URL"
-            git reset --hard origin/master || git reset --hard FETCH_HEAD
+      with:
+        node-version: '18'
         cache: 'npm'
         cache-dependency-path: backend/package-lock.json
 
     - name: Build backend
-            git clone "$GIT_URL" hikingSocialApp
+      run: |
         cd backend
         npm ci
 
         # 清理旧的构建文件
         rm -rf dist
-        GITHUB_DEPLOY_KEY: ${{ secrets.GITHUB_DEPLOY_KEY }}
 
         # 构建
         npm run build
@@ -286,6 +270,32 @@ jobs:
             exit 1
           fi
 
+          # 后端部署
+          echo "=========================================="
+          echo "🔧 部署后端..."
+          echo "=========================================="
+          cd "$PROJECT_DIR/backend"
+
+          # 安装依赖（仅在 node_modules 不存在或 package-lock.json 有更新时）
+          if [ ! -d node_modules ]; then
+            echo "📦 安装生产依赖..."
+            npm ci --omit=dev || (echo "❌ 依赖安装失败" && exit 1)
+          fi
+
+          # 检查环境变量文件
+          if [ ! -f .env ]; then
+            echo "⚠️ .env 文件不存在，从模板创建..."
+            cp .env.example .env
+            echo "请手动配置 /var/www/hikingSocialApp/backend/.env"
+          fi
+
+          # PM2 重启后端
+          echo "🔄 重启后端服务..."
+          if pm2 list | grep -q "hiking-app-backend"; then
+            echo "重启现有服务..."
+            pm2 restart hiking-app-backend || (echo "❌ 重启失败" && exit 1)
+          else
+            echo "首次启动服务..."
             pm2 start ecosystem.config.cjs --env production || (echo "❌ 启动失败" && exit 1)
           fi
           pm2 save
