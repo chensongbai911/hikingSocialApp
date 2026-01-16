@@ -49,20 +49,23 @@ api.interceptors.response.use(
 
     // 处理401 - token过期或无效
     if (error.response?.status === 401) {
-      // 尝试一次静默刷新用户信息（防止短暂失效或本地状态未拉取完成就被判未登录）
-      if (userStore.token && !userStore.currentUser) {
+      // 避免在获取用户信息接口本身失败时再次调用造成无限循环
+      const isGetCurrentUser = error.config?.url?.includes('/auth/me')
+      
+      if (!isGetCurrentUser && userStore.token && !userStore.currentUser) {
+        // 尝试静默刷新用户信息
         try {
-          await userStore.fetchCurrentUser()
-          // 如果拉取成功则重试原请求
-          if (userStore.currentUser) {
+          const success = await userStore.fetchCurrentUser(true)
+          if (success && userStore.currentUser) {
+            // 重试原请求
             return api.request(error.config as any)
           }
         } catch (e) {
-          // 忽略，走后续清理
+          // 静默失败
         }
       }
 
-      // 仍然 401，才清空本地并跳转登录
+      // 清空本地状态并跳转登录
       userStore.setToken(null)
       userStore.setCurrentUser(null)
       if (!window.location.pathname.includes('/login')) {

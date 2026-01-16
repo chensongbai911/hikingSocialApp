@@ -94,7 +94,7 @@ export const useUserStore = defineStore('user', () => {
   }
 
   // 获取当前用户信息
-  const fetchCurrentUser = async () => {
+  const fetchCurrentUser = async (silent = false) => {
     try {
       loading.value = true
       const response = await authApi.getCurrentUser()
@@ -106,18 +106,18 @@ export const useUserStore = defineStore('user', () => {
 
       return false
     } catch (err) {
+      // 静默模式下不清空 token，避免初始化时的竞态条件
+      if (!silent) {
+        console.error('获取用户信息失败:', err)
+      }
       return false
     } finally {
       loading.value = false
     }
   }
 
-  // 应用启动时，若存在 token 但 currentUser 为空，尝试拉取一次用户信息，避免 token 失效时无限 401 清空
-  if (token.value && !currentUser.value) {
-    fetchCurrentUser().catch(() => {
-      // 若 token 已失效，fetchCurrentUser 内部会返回 false，这里保持静默
-    })
-  }
+  // 不在 store 初始化时自动拉取，改为由路由守卫按需拉取，避免竞态条件
+  // 移除自动拉取逻辑，防止启动时 token 失效导致的无限 401 循环
 
   // 更新个人资料
   const updateProfile = async (data: UpdateProfileData) => {
