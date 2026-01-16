@@ -26,7 +26,8 @@
 ## 🚀 快速开始
 
 ### 前提条件
-- 一台云服务器（Ubuntu 20.04+，2核4G起）
+
+- 一台云服务器（Ubuntu 20.04+，2 核 4G 起）
 - 服务器 IP 地址和 SSH 登录信息
 - （可选）已购买的域名
 
@@ -101,12 +102,13 @@ sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com -d api.yourdomain.c
 ## 📖 详细文档
 
 - **[完整部署指南](./DEPLOYMENT_GUIDE.md)** - 包含所有细节和最佳实践
-- **[快速部署指南](./QUICK_DEPLOY.md)** - 5步完成部署
+- **[快速部署指南](./QUICK_DEPLOY.md)** - 5 步完成部署
 - **[脚本使用说明](./SCRIPTS_GUIDE.md)** - 自动化脚本详解
 
 ## 🔧 常用命令
 
 ### 查看服务状态
+
 ```bash
 pm2 list                    # 查看所有进程
 pm2 logs hiking-api         # 查看后端日志
@@ -115,17 +117,20 @@ sudo systemctl status mysql # 查看 MySQL 状态
 ```
 
 ### 更新应用
+
 ```bash
 cd /var/www/hikingSocialApp
 bash scripts/update-deploy.sh
 ```
 
 ### 健康检查
+
 ```bash
 bash scripts/health-check.sh
 ```
 
 ### 数据库备份
+
 ```bash
 bash scripts/backup-database.sh
 ```
@@ -133,13 +138,15 @@ bash scripts/backup-database.sh
 ## 📊 服务器配置要求
 
 ### 最低配置
-- CPU: 2核
+
+- CPU: 2 核
 - 内存: 4GB
 - 存储: 40GB
 - 带宽: 3Mbps+
 
 ### 推荐配置
-- CPU: 4核
+
+- CPU: 4 核
 - 内存: 8GB
 - 存储: 80GB
 - 带宽: 5Mbps+
@@ -163,24 +170,28 @@ bash scripts/backup-database.sh
 ## 🐛 故障排查
 
 ### 后端无法启动
+
 ```bash
 pm2 logs hiking-api  # 查看日志
 cat backend/.env     # 检查配置
 ```
 
 ### 数据库连接失败
+
 ```bash
 sudo systemctl status mysql          # 检查 MySQL 状态
 mysql -u hiking_user -p hiking_app   # 测试连接
 ```
 
 ### Nginx 报错
+
 ```bash
 sudo nginx -t                         # 测试配置
 sudo tail -f /var/log/nginx/error.log # 查看错误日志
 ```
 
 ### 前端显示空白
+
 ```bash
 ls -la frontend/dist                  # 检查构建文件
 cat frontend/.env.production          # 检查 API 地址

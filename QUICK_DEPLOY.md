@@ -3,6 +3,7 @@
 ## 🚀 5 步完成部署
 
 ### 前提条件
+
 - 一台云服务器（Ubuntu 20.04+）
 - 服务器 IP 地址和 SSH 登录信息
 - （可选）已购买的域名
@@ -33,11 +34,12 @@ sudo bash install-server.sh
 ```
 
 安装内容：
+
 - ✅ Node.js 20.x
 - ✅ MySQL 8.0
 - ✅ Nginx
 - ✅ PM2
-- ✅ Certbot (SSL证书)
+- ✅ Certbot (SSL 证书)
 
 ## 第三步：初始化数据库
 
@@ -52,6 +54,7 @@ sudo bash scripts/init-database.sh
 ```
 
 按提示输入：
+
 - MySQL root 密码
 - 数据库名称（默认：hiking_app）
 - 数据库用户名（默认：hiking_user）
@@ -70,6 +73,7 @@ nano .env
 ```
 
 修改以下内容：
+
 ```env
 # 生产环境
 NODE_ENV=production
@@ -100,6 +104,7 @@ nano .env.production
 ```
 
 修改内容：
+
 ```env
 # API 地址（替换为你的服务器 IP 或域名）
 VITE_API_BASE_URL=http://your-server-ip:3000/api/v1
@@ -112,6 +117,7 @@ VITE_WS_URL=ws://your-server-ip:3000
 ```
 
 如果有域名：
+
 ```env
 VITE_API_BASE_URL=https://api.yourdomain.com/api/v1
 VITE_WS_URL=wss://api.yourdomain.com
@@ -126,6 +132,7 @@ sudo bash scripts/deploy-app.sh
 ```
 
 部署脚本会自动：
+
 1. 安装依赖
 2. 构建后端
 3. 启动后端服务（PM2）
@@ -165,9 +172,10 @@ python3 -m http.server 8080
 #### 1. 添加 DNS 解析
 
 在域名服务商管理后台添加 A 记录：
-- `@` → 你的服务器IP（主域名）
-- `www` → 你的服务器IP
-- `api` → 你的服务器IP
+
+- `@` → 你的服务器 IP（主域名）
+- `www` → 你的服务器 IP
+- `api` → 你的服务器 IP
 
 #### 2. 配置 Nginx
 
@@ -208,12 +216,14 @@ nano /var/www/hikingSocialApp/frontend/.env.production
 ```
 
 修改为：
+
 ```env
 VITE_API_BASE_URL=https://api.yourdomain.com/api/v1
 VITE_WS_URL=wss://api.yourdomain.com
 ```
 
 重新构建前端：
+
 ```bash
 cd /var/www/hikingSocialApp/frontend
 npm run build
@@ -239,6 +249,7 @@ sudo nano /etc/nginx/sites-available/default
 ```
 
 简单配置：
+
 ```nginx
 server {
     listen 80 default_server;
@@ -266,6 +277,7 @@ sudo systemctl restart nginx
 ```
 
 访问：
+
 - 前端: http://your-server-ip
 - API: http://your-server-ip/api/v1/health
 
@@ -274,6 +286,7 @@ sudo systemctl restart nginx
 ## 🔧 常用命令
 
 ### 查看服务状态
+
 ```bash
 # 查看所有服务
 pm2 list
@@ -289,6 +302,7 @@ sudo systemctl status mysql
 ```
 
 ### 重启服务
+
 ```bash
 # 重启后端
 pm2 restart hiking-api
@@ -301,12 +315,14 @@ sudo systemctl restart mysql
 ```
 
 ### 更新应用
+
 ```bash
 cd /var/www/hikingSocialApp
 sudo bash scripts/update-deploy.sh
 ```
 
 ### 健康检查
+
 ```bash
 cd /var/www/hikingSocialApp
 sudo bash scripts/health-check.sh
@@ -317,6 +333,7 @@ sudo bash scripts/health-check.sh
 ## 🆘 常见问题
 
 ### 问题 1: 无法连接数据库
+
 ```bash
 # 检查 MySQL 状态
 sudo systemctl status mysql
@@ -327,6 +344,7 @@ SHOW GRANTS FOR 'hiking_user'@'localhost';
 ```
 
 ### 问题 2: 端口被占用
+
 ```bash
 # 查看端口占用
 sudo netstat -tlnp | grep :3000
@@ -337,6 +355,7 @@ sudo kill -9 <PID>
 ```
 
 ### 问题 3: 前端显示空白
+
 ```bash
 # 检查构建文件
 ls -la /var/www/hikingSocialApp/frontend/dist
@@ -349,6 +368,7 @@ cat /var/www/hikingSocialApp/frontend/.env.production
 ```
 
 ### 问题 4: API 返回 500 错误
+
 ```bash
 # 查看后端日志
 pm2 logs hiking-api

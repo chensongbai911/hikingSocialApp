@@ -9,7 +9,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
@@ -24,18 +24,18 @@ jobs:
         script: |
           cd /var/www/hikingSocialApp
           git pull origin master
-          
+
           # 更新后端
           cd backend
           npm install --production
           npm run build
           pm2 restart hiking-api
-          
+
           # 更新前端
           cd ../frontend
           npm install
           npm run build
-          
+
           echo "✅ 部署完成！"
           pm2 list
 
