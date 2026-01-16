@@ -267,13 +267,13 @@ jobs:
           elif [ -d "$PROJECT_DIR/.git" ]; then
             echo "✅ 检测到 Git 仓库，使用 Git 方式部署..."
             echo "代码已通过 Git 备用方案更新到最新版本"
-            
+
             # 备份环境变量文件
             if [ -f "$PROJECT_DIR/backend/.env" ]; then
               echo "📦 备份环境变量文件..."
               cp "$PROJECT_DIR/backend/.env" "/tmp/backend.env.backup"
             fi
-            
+
             # 确保后端有 dist 目录（Git 方式需要重新构建）
             if [ ! -d "$PROJECT_DIR/backend/dist" ]; then
               echo "🔨 后端需要重新构建..."
@@ -281,7 +281,7 @@ jobs:
               npm ci || (echo "❌ 后端依赖安装失败" && exit 1)
               npm run build || (echo "❌ 后端构建失败" && exit 1)
             fi
-            
+
             # 恢复环境变量文件
             if [ -f "/tmp/backend.env.backup" ]; then
               cp "/tmp/backend.env.backup" "$PROJECT_DIR/backend/.env"
