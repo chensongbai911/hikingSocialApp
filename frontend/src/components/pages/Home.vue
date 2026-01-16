@@ -1,11 +1,20 @@
 <template>
-  <div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold text-primary mb-4">Home - 首页</h1>
-    <p class="text-gray-600">推荐活动和内容展示区域（未来实现）</p>
-    <div class="mt-6">
-      <router-link to="/discover" class="btn btn-primary">
-        发现更多
-      </router-link>
+  <div class="home-page min-h-screen bg-white">
+    <!-- 页面头部 -->
+    <div class="sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm">
+      <div class="container mx-auto px-4 py-4">
+        <h1 class="text-2xl font-bold text-primary">Home - 首页</h1>
+      </div>
+    </div>
+
+    <!-- 页面内容 -->
+    <div class="container mx-auto px-4 py-6">
+      <p class="text-gray-600">推荐活动和内容展示区域（未来实现）</p>
+      <div class="mt-6">
+        <router-link to="/discover" class="btn btn-primary">
+          发现更多
+        </router-link>
+      </div>
     </div>
   </div>
 </template>

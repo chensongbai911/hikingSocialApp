@@ -1,7 +1,7 @@
 <template>
   <div class="discover-page min-h-screen bg-white pb-24">
     <!-- 页面头部 -->
-    <div class="bg-white pt-6 pb-4 px-4 border-b border-gray-100">
+    <div class="bg-white pt-6 pb-4 px-4 border-b border-gray-100 sticky top-0 z-10">
       <div class="container mx-auto">
         <!-- 标题居中 -->
         <div class="flex items-center justify-center mb-4">
@@ -26,7 +26,6 @@
           </button>
         </div>
       </div>
-
     </div>
 
     <!-- 全屏筛选面板（模态框） -->
@@ -38,10 +37,7 @@
       <div class="min-h-screen">
         <!-- 顶部操作栏 -->
         <div class="flex items-center justify-between px-4 py-4 border-b border-gray-100">
-          <button
-            @click="resetFilters"
-            class="text-gray-600 text-base font-medium"
-          >
+          <button @click="resetFilters" class="text-gray-600 text-base font-medium">
             重置
           </button>
           <h2 class="text-lg font-bold text-gray-800">筛选</h2>
@@ -67,7 +63,7 @@
                   'flex-1 py-3 rounded-full font-medium text-base transition',
                   activeFilters.gender.includes(gender)
                     ? 'bg-teal-500 text-white'
-                    : 'bg-gray-100 text-gray-700'
+                    : 'bg-gray-100 text-gray-700',
                 ]"
               >
                 {{ gender }}
@@ -105,7 +101,7 @@
                     class="absolute h-2 bg-teal-500 rounded-full"
                     :style="{
                       left: ((ageRange[0] - 18) / 32) * 100 + '%',
-                      right: (100 - ((ageRange[1] - 18) / 32) * 100) + '%'
+                      right: 100 - ((ageRange[1] - 18) / 32) * 100 + '%',
                     }"
                   ></div>
                 </div>
@@ -125,7 +121,7 @@
                   'flex-1 py-3 rounded-full font-medium text-base transition',
                   activeFilters.level.includes(level)
                     ? 'bg-teal-500 text-white'
-                    : 'bg-gray-100 text-gray-700'
+                    : 'bg-gray-100 text-gray-700',
                 ]"
               >
                 {{ level }}
@@ -145,7 +141,7 @@
                   'px-6 py-3 rounded-full font-medium text-base transition',
                   activeFilters.interests.includes(interest)
                     ? 'bg-teal-500 text-white'
-                    : 'bg-gray-100 text-gray-700'
+                    : 'bg-gray-100 text-gray-700',
                 ]"
               >
                 {{ interest }}
@@ -184,7 +180,9 @@
       <!-- 加载状态 -->
       <div v-if="loading" class="flex justify-center py-12">
         <div class="text-center">
-          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500 mx-auto mb-4"></div>
+          <div
+            class="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500 mx-auto mb-4"
+          ></div>
           <p class="text-gray-600">加载中...</p>
         </div>
       </div>
@@ -210,13 +208,18 @@
               class="absolute inset-0 w-full h-full object-cover"
             />
             <!-- 遮罩层（增强文字可读性） -->
-            <div v-if="user.coverImage" class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+            <div
+              v-if="user.coverImage"
+              class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"
+            ></div>
 
             <!-- 卡片内容 -->
             <div class="absolute inset-0 flex flex-col justify-between p-4">
               <!-- 顶部：等级徽章 + 关注按钮 -->
               <div class="flex justify-between items-start">
-                <span class="px-3 py-1 bg-white/90 backdrop-blur text-xs font-semibold text-gray-700 rounded-full">
+                <span
+                  class="px-3 py-1 bg-white/90 backdrop-blur text-xs font-semibold text-gray-700 rounded-full"
+                >
                   {{ user.hikingLevel }}
                 </span>
                 <button
@@ -224,14 +227,12 @@
                   :disabled="user.followingLoading"
                   :class="[
                     'px-3 py-1 rounded-full text-xs font-semibold transition-all',
-                    user.isFollowing
-                      ? 'bg-white/90 text-gray-700'
-                      : 'bg-teal-500 text-white',
-                    'disabled:opacity-50 disabled:cursor-not-allowed'
+                    user.isFollowing ? 'bg-white/90 text-gray-700' : 'bg-teal-500 text-white',
+                    'disabled:opacity-50 disabled:cursor-not-allowed',
                   ]"
                   class="backdrop-blur"
                 >
-                  {{ user.followingLoading ? '...' : (user.isFollowing ? '已关注' : '关注') }}
+                  {{ user.followingLoading ? '...' : user.isFollowing ? '已关注' : '关注' }}
                 </button>
               </div>
 
@@ -241,7 +242,9 @@
                 <h3 class="font-bold text-white text-base">{{ user.nickname }}</h3>
 
                 <!-- 基本信息 -->
-                <p class="text-xs text-white/90">{{ user.gender }}, {{ user.age }}岁, {{ user.hikingLevel }}</p>
+                <p class="text-xs text-white/90">
+                  {{ user.gender }}, {{ user.age }}岁, {{ user.hikingLevel }}
+                </p>
 
                 <!-- 最近活动 -->
                 <p class="text-xs text-white/80">最近活动: {{ user.recentActivity }}</p>
@@ -249,7 +252,8 @@
             </div>
           </div>
         </div>
-      </div>      <!-- 无结果提示 -->
+      </div>
+      <!-- 无结果提示 -->
       <div v-else class="text-center py-12">
         <div class="text-6xl mb-4">🔍</div>
         <p class="text-gray-600 text-lg">没有找到匹配的徒步伙伴</p>
@@ -282,7 +286,7 @@ const interestOptions = ['摄影', '露营', '美食', '宠物']
 const activeFilters = ref({
   gender: [] as string[],
   level: [] as string[],
-  interests: [] as string[]
+  interests: [] as string[],
 })
 
 // 范围筛选
@@ -296,7 +300,7 @@ const gradients = [
   'linear-gradient(135deg, #d4a574 0%, #f4a460 100%)', // 土黄→橙
   'linear-gradient(135deg, #8b7355 0%, #f4e4c1 100%)', // 咖啡→米黄
   'linear-gradient(135deg, #c9b998 0%, #6b5b4a 100%)', // 米色→深棕
-  'linear-gradient(135deg, #5f9ea0 0%, #e0f7fa 100%)'  // 青蓝→天蓝
+  'linear-gradient(135deg, #5f9ea0 0%, #e0f7fa 100%)', // 青蓝→天蓝
 ]
 
 // 从store获取推荐用户
@@ -310,12 +314,12 @@ const followingLoading = ref<Map<string | number, boolean>>(new Map())
 // 映射徒步等级
 const mapHikingLevel = (level: string | undefined): string => {
   const map: Record<string, string> = {
-    'beginner': '新手',
-    'intermediate': '中级',
-    'advanced': '高手',
-    'expert': '专家'
+    beginner: '新手',
+    intermediate: '中级',
+    advanced: '高手',
+    expert: '专家',
   }
-  return level ? (map[level] || level) : '新手'
+  return level ? map[level] || level : '新手'
 }
 
 // 计算过滤后的用户列表
@@ -336,7 +340,7 @@ const filteredUsers = computed(() => {
     gradient: gradients[index % gradients.length],
     commonPreferences: user.common_preferences || 0,
     isFollowing: followingMap.value.get(user.id) ?? false,
-    followingLoading: followingLoading.value.get(user.id) ?? false
+    followingLoading: followingLoading.value.get(user.id) ?? false,
   }))
 
   return transformedUsers.filter((user) => {
@@ -346,14 +350,16 @@ const filteredUsers = computed(() => {
       !searchQuery.value ||
       user.nickname.toLowerCase().includes(searchLower) ||
       user.bio.toLowerCase().includes(searchLower) ||
-      (user.tags.length > 0 && user.tags.some((tag: string) => tag.toLowerCase().includes(searchLower)))
+      (user.tags.length > 0 &&
+        user.tags.some((tag: string) => tag.toLowerCase().includes(searchLower)))
 
     // 性别过滤
     const matchesGender =
       activeFilters.value.gender.length === 0 || activeFilters.value.gender.includes(user.gender)
 
     // 年龄过滤 (允许年龄为0的用户，即未设置年龄的用户显示)
-    const matchesAge = user.age === 0 || (user.age >= ageRange.value[0] && user.age <= ageRange.value[1])
+    const matchesAge =
+      user.age === 0 || (user.age >= ageRange.value[0] && user.age <= ageRange.value[1])
 
     // 等级过滤
     const matchesLevel =
@@ -362,7 +368,8 @@ const filteredUsers = computed(() => {
     // 兴趣过滤
     const matchesInterests =
       activeFilters.value.interests.length === 0 ||
-      (user.tags.length > 0 && activeFilters.value.interests.some((interest: string) => user.tags.includes(interest)))
+      (user.tags.length > 0 &&
+        activeFilters.value.interests.some((interest: string) => user.tags.includes(interest)))
 
     return matchesSearch && matchesGender && matchesAge && matchesLevel && matchesInterests
   })
@@ -383,7 +390,7 @@ const resetFilters = () => {
   activeFilters.value = {
     gender: [],
     level: [],
-    interests: []
+    interests: [],
   }
   ageRange.value = [18, 50]
   distance.value = 50
@@ -394,7 +401,7 @@ const resetFilters = () => {
 const viewUserProfile = (userId: string | number) => {
   router.push({
     name: 'user-profile',
-    params: { id: userId }
+    params: { id: userId },
   })
 }
 

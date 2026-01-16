@@ -12,9 +12,7 @@
           @click="activeTab = 'joined'"
           :class="[
             'flex-1 py-3 px-4 font-medium text-center transition-all relative',
-            activeTab === 'joined'
-              ? 'text-teal-600'
-              : 'text-gray-600 hover:text-gray-800'
+            activeTab === 'joined' ? 'text-teal-600' : 'text-gray-600 hover:text-gray-800',
           ]"
         >
           <span>我加入的</span>
@@ -27,9 +25,7 @@
           @click="activeTab = 'created'"
           :class="[
             'flex-1 py-3 px-4 font-medium text-center transition-all relative',
-            activeTab === 'created'
-              ? 'text-teal-600'
-              : 'text-gray-600 hover:text-gray-800'
+            activeTab === 'created' ? 'text-teal-600' : 'text-gray-600 hover:text-gray-800',
           ]"
         >
           <span>我发布的</span>
@@ -67,10 +63,10 @@
                     activity.status === '待参加'
                       ? 'bg-teal-500'
                       : activity.status === '进行中'
-                        ? 'bg-orange-500'
-                        : activity.status === '已完成'
-                          ? 'bg-green-500'
-                          : 'bg-gray-500'
+                      ? 'bg-orange-500'
+                      : activity.status === '已完成'
+                      ? 'bg-green-500'
+                      : 'bg-gray-500',
                   ]"
                 >
                   {{ activity.status }}
@@ -87,21 +83,36 @@
               <!-- 时间和地点 -->
               <div class="space-y-2 mb-4 text-sm text-gray-600">
                 <div class="flex items-center gap-2">
-                  <svg class="w-4 h-4 text-gray-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+                  <svg
+                    class="w-4 h-4 text-gray-500 flex-shrink-0"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"
+                    />
                   </svg>
                   <span>{{ formatDateTime(activity.startTime) }}</span>
                 </div>
                 <div class="flex items-center gap-2">
-                  <svg class="w-4 h-4 text-gray-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                  <svg
+                    class="w-4 h-4 text-gray-500 flex-shrink-0"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
+                    />
                   </svg>
                   <span>{{ activity.location }}</span>
                 </div>
               </div>
 
               <!-- 参与者头像 -->
-              <div v-if="activity.participants && activity.participants.length > 0" class="flex items-center gap-2 py-3 border-t border-gray-100">
+              <div
+                v-if="activity.participants && activity.participants.length > 0"
+                class="flex items-center gap-2 py-3 border-t border-gray-100"
+              >
                 <div class="flex -space-x-2">
                   <img
                     v-for="(participant, index) in (activity.participants || []).slice(0, 5)"
@@ -146,7 +157,10 @@
             class="activity-card-created bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 group"
           >
             <!-- 大图封面 -->
-            <div class="relative overflow-hidden h-56 cursor-pointer" @click="viewActivity(activity.id)">
+            <div
+              class="relative overflow-hidden h-56 cursor-pointer"
+              @click="viewActivity(activity.id)"
+            >
               <img
                 :src="activity.coverImage"
                 :alt="activity.title"
@@ -160,8 +174,8 @@
                     activity.status === '招募中'
                       ? 'bg-teal-500'
                       : activity.status === '进行中'
-                        ? 'bg-orange-500'
-                        : 'bg-gray-500'
+                      ? 'bg-orange-500'
+                      : 'bg-gray-500',
                   ]"
                 >
                   {{ activity.status }}
@@ -169,7 +183,9 @@
               </div>
               <!-- 难度标签 -->
               <div class="absolute top-4 left-4">
-                <span class="inline-block text-xs font-bold px-3 py-1 rounded-full bg-yellow-500 text-white">
+                <span
+                  class="inline-block text-xs font-bold px-3 py-1 rounded-full bg-yellow-500 text-white"
+                >
                   难度 {{ activity.difficulty || '3.0' }}
                 </span>
               </div>
@@ -179,28 +195,46 @@
 
             <!-- 活动信息 -->
             <div class="p-4">
-              <h3 class="font-bold text-lg text-gray-800 mb-3 cursor-pointer hover:text-teal-600 transition" @click="viewActivity(activity.id)">
+              <h3
+                class="font-bold text-lg text-gray-800 mb-3 cursor-pointer hover:text-teal-600 transition"
+                @click="viewActivity(activity.id)"
+              >
                 {{ activity.title }}
               </h3>
 
               <!-- 时间和地点 -->
               <div class="space-y-2 mb-4 text-sm text-gray-600">
                 <div class="flex items-center gap-2">
-                  <svg class="w-4 h-4 text-gray-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+                  <svg
+                    class="w-4 h-4 text-gray-500 flex-shrink-0"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"
+                    />
                   </svg>
                   <span>{{ formatDateTime(activity.startTime) }}</span>
                 </div>
                 <div class="flex items-center gap-2">
-                  <svg class="w-4 h-4 text-gray-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                  <svg
+                    class="w-4 h-4 text-gray-500 flex-shrink-0"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
+                    />
                   </svg>
                   <span>{{ activity.location }}</span>
                 </div>
               </div>
 
               <!-- 申请者信息 - 招募中 -->
-              <div v-if="activity.status === '招募中'" class="mb-4 p-3 bg-teal-50 rounded-xl border border-teal-200">
+              <div
+                v-if="activity.status === '招募中'"
+                class="mb-4 p-3 bg-teal-50 rounded-xl border border-teal-200"
+              >
                 <div class="flex items-center justify-between gap-2">
                   <div class="flex items-center gap-2 flex-1 min-w-0">
                     <div class="flex -space-x-2 flex-shrink-0">
@@ -214,7 +248,8 @@
                       />
                     </div>
                     <span class="text-sm font-semibold text-gray-700 whitespace-nowrap">
-                      <span class="text-teal-600">{{ activity.applicantCount || 0 }}</span>人申请中
+                      <span class="text-teal-600">{{ activity.applicantCount || 0 }}</span
+                      >人申请中
                     </span>
                   </div>
                   <button
@@ -227,7 +262,10 @@
               </div>
 
               <!-- 参与者信息 - 进行中 -->
-              <div v-else-if="activity.status === '进行中'" class="mb-4 p-3 bg-orange-50 rounded-xl border border-orange-200">
+              <div
+                v-else-if="activity.status === '进行中'"
+                class="mb-4 p-3 bg-orange-50 rounded-xl border border-orange-200"
+              >
                 <div class="flex items-center justify-between gap-2">
                   <div class="flex items-center gap-2 flex-1 min-w-0">
                     <div class="flex -space-x-2 flex-shrink-0">
@@ -283,6 +321,46 @@
         </div>
       </div>
     </div>
+
+    <!-- 取消活动确认弹窗 -->
+    <div
+      v-if="showDeleteConfirm"
+      @click="showDeleteConfirm = false"
+      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+    >
+      <div @click.stop class="bg-white rounded-3xl w-full max-w-sm p-6 animate-scale-in">
+        <div class="text-center mb-6">
+          <div
+            class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4"
+          >
+            <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-gray-900 mb-2">确认取消该活动吗？</h3>
+          <p class="text-gray-600 text-sm">此操作不可撤销，活动取消后所有参与者都会收到通知。</p>
+        </div>
+        <div class="flex gap-3">
+          <button
+            @click="showDeleteConfirm = false"
+            class="flex-1 py-3 rounded-xl bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition"
+          >
+            我再想想
+          </button>
+          <button
+            @click="confirmDelete"
+            class="flex-1 py-3 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600 transition"
+          >
+            确认取消
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -321,6 +399,8 @@ const activityStore = useActivityStore()
 const userStore = useUserStore()
 const activeTab = ref<'joined' | 'created'>('joined')
 const loading = computed(() => activityStore.loading)
+const showDeleteConfirm = ref(false)
+const activityToDelete = ref<string | number | null>(null)
 
 // Helper function to get activity status
 const getActivityStatus = (activity: ActivityType): string => {
@@ -344,12 +424,14 @@ const transformActivity = (activity: ActivityType): Activity => {
     title: activity.title,
     location: activity.location,
     startTime: activity.start_time,
-    coverImage: activity.cover_image_url || 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&h=400&fit=crop',
+    coverImage:
+      activity.cover_image_url ||
+      'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&h=400&fit=crop',
     status: getActivityStatus(activity),
     difficulty: activity.difficulty || 'easy',
     participantCount: activity.participant_count || 0,
     participants: [],
-    applicants: []
+    applicants: [],
   }
 }
 
@@ -358,35 +440,35 @@ const joinedActivities = computed(() => {
   return activityStore.joinedActivities.map(transformActivity)
 })
 // Compute created activities from store
-  const createdActivities = computed(() => {
-    return activityStore.createdActivities.map(transformActivity)
-  })
+const createdActivities = computed(() => {
+  return activityStore.createdActivities.map(transformActivity)
+})
 
-  // 页面加载时获取数据
-  onMounted(async () => {
-    // Check if tab query parameter is set
-    if (route.query.tab === 'created') {
-      activeTab.value = 'created'
-    }
-    // 初始加载
-    await loadActivities()
-  })
-
-  // 加载活动列表
-  const loadActivities = async () => {
-    try {
-      // 分开加载，避免状态覆盖
-      // 这里的逻辑可以优化为按需加载，但为了保证数据新鲜度，这里都加载
-      await Promise.all([
-        activityStore.fetchMyJoinedActivities({ page: 1, page_size: 20 }),
-        activityStore.fetchMyCreatedActivities({ page: 1, page_size: 20 })
-      ])
-
-      console.log('活动列表加载成功')
-    } catch (error) {
-      console.error('加载活动列表失败:', error)
-    }
+// 页面加载时获取数据
+onMounted(async () => {
+  // Check if tab query parameter is set
+  if (route.query.tab === 'created') {
+    activeTab.value = 'created'
   }
+  // 初始加载
+  await loadActivities()
+})
+
+// 加载活动列表
+const loadActivities = async () => {
+  try {
+    // 分开加载，避免状态覆盖
+    // 这里的逻辑可以优化为按需加载，但为了保证数据新鲜度，这里都加载
+    await Promise.all([
+      activityStore.fetchMyJoinedActivities({ page: 1, page_size: 20 }),
+      activityStore.fetchMyCreatedActivities({ page: 1, page_size: 20 }),
+    ])
+
+    console.log('活动列表加载成功')
+  } catch (error) {
+    console.error('加载活动列表失败:', error)
+  }
+}
 
 // 格式化日期时间
 const formatDateTime = (dateTimeStr: string): string => {
@@ -422,16 +504,24 @@ const editActivity = (id: string | number) => {
   router.push(`/create-activity?id=${id}`)
 }
 
-const deleteActivity = async (id: string | number) => {
-  if (confirm('确定取消该活动吗？此操作不可撤销。')) {
-    try {
-      await activityStore.deleteActivity(id.toString())
-      toast.success('活动已取消')
-      await loadActivities()
-    } catch (error) {
-      console.error('取消活动失败:', error)
-      toast.error('取消活动失败')
-    }
+const deleteActivity = (id: string | number) => {
+  activityToDelete.value = id
+  showDeleteConfirm.value = true
+}
+
+const confirmDelete = async () => {
+  if (!activityToDelete.value) return
+
+  try {
+    await activityStore.deleteActivity(activityToDelete.value.toString())
+    toast.success('活动已取消')
+    await loadActivities()
+  } catch (error) {
+    console.error('取消活动失败:', error)
+    toast.error('取消活动失败')
+  } finally {
+    showDeleteConfirm.value = false
+    activityToDelete.value = null
   }
 }
 </script>

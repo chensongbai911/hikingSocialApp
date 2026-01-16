@@ -1,15 +1,14 @@
 <template>
   <div class="create-activity-page min-h-screen bg-gray-50 pb-32">
     <!-- 顶部导航栏 -->
-    <div class="bg-white border-b border-gray-100">
+    <div class="bg-white border-b border-gray-100 sticky top-0 z-10">
       <div class="flex items-center justify-center relative px-4 py-4">
-        <button
-          @click="goBack"
-          class="absolute left-4 w-10 h-10 flex items-center justify-center"
-        >
+        <button @click="goBack" class="absolute left-4 w-10 h-10 flex items-center justify-center">
           <span class="text-2xl">←</span>
         </button>
-        <h1 class="text-lg font-bold text-gray-800">{{ isEditMode ? '编辑活动' : '创建徒步活动' }}</h1>
+        <h1 class="text-lg font-bold text-gray-800">
+          {{ isEditMode ? '编辑活动' : '创建徒步活动' }}
+        </h1>
       </div>
     </div>
 
@@ -84,8 +83,12 @@
         >
           <div class="flex items-start justify-between">
             <div class="flex-1">
-              <h3 class="font-semibold text-gray-800 mb-1">{{ form.meetingPoint || '点击选择集合地点' }}</h3>
-              <p class="text-sm text-gray-500">{{ form.meetingAddress || '选择活动集合的具体位置' }}</p>
+              <h3 class="font-semibold text-gray-800 mb-1">
+                {{ form.meetingPoint || '点击选择集合地点' }}
+              </h3>
+              <p class="text-sm text-gray-500">
+                {{ form.meetingAddress || '选择活动集合的具体位置' }}
+              </p>
             </div>
             <button class="ml-3 text-teal-500 text-2xl">📍</button>
           </div>
@@ -105,7 +108,7 @@
               'flex-1 py-3 rounded-full font-medium text-base transition',
               form.difficulty === level.value
                 ? 'bg-teal-500 text-white'
-                : 'bg-gray-100 text-gray-700'
+                : 'bg-gray-100 text-gray-700',
             ]"
           >
             {{ level.label }}
@@ -160,7 +163,10 @@
           >
             <img :src="photo" alt="Uploaded" class="w-full h-full object-cover" />
             <!-- 封面标签 -->
-            <div v-if="index === 0" class="absolute top-1 left-1 bg-teal-500 text-white text-xs px-2 py-0.5 rounded-full">
+            <div
+              v-if="index === 0"
+              class="absolute top-1 left-1 bg-teal-500 text-white text-xs px-2 py-0.5 rounded-full"
+            >
               封面
             </div>
             <!-- 删除按钮 -->
@@ -188,12 +194,17 @@
             <span class="text-xs text-gray-500 mt-1">添加照片</span>
           </label>
         </div>
-        <p class="text-xs text-gray-400 mt-2">支持 JPG、PNG 格式，最多 6 张，第一张将作为活动封面</p>
+        <p class="text-xs text-gray-400 mt-2">
+          支持 JPG、PNG 格式，最多 6 张，第一张将作为活动封面
+        </p>
       </div>
     </div>
 
     <!-- 底部操作按钮 -->
-    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 pt-4 pb-6 z-40 shadow-top" style="padding-bottom: max(24px, env(safe-area-inset-bottom));">
+    <div
+      class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 pt-4 pb-6 z-40 shadow-top"
+      style="padding-bottom: max(24px, env(safe-area-inset-bottom));"
+    >
       <div class="flex gap-3">
         <button
           v-if="isEditMode"
@@ -207,11 +218,13 @@
           :disabled="loading"
           :class="[
             'py-4 rounded-2xl font-bold text-lg transition shadow-lg',
-            isEditMode ? 'flex-1 bg-teal-500 text-white hover:bg-teal-600' : 'w-full bg-teal-500 text-white hover:bg-teal-600',
-            'disabled:opacity-50 disabled:cursor-not-allowed'
+            isEditMode
+              ? 'flex-1 bg-teal-500 text-white hover:bg-teal-600'
+              : 'w-full bg-teal-500 text-white hover:bg-teal-600',
+            'disabled:opacity-50 disabled:cursor-not-allowed',
           ]"
         >
-          {{ loading ? '处理中...' : (isEditMode ? '保存修改' : '发布活动') }}
+          {{ loading ? '处理中...' : isEditMode ? '保存修改' : '发布活动' }}
         </button>
       </div>
     </div>
@@ -252,8 +265,10 @@
                 'aspect-square flex items-center justify-center rounded-full text-base transition',
                 date.isCurrentMonth ? 'text-gray-800' : 'text-gray-300',
                 date.isSelected ? 'bg-teal-500 text-white font-bold' : '',
-                !date.isSelected && date.isCurrentMonth && !date.disabled && !date.isPast ? 'hover:bg-gray-100' : '',
-                date.disabled || date.isPast ? 'opacity-30 cursor-not-allowed' : ''
+                !date.isSelected && date.isCurrentMonth && !date.disabled && !date.isPast
+                  ? 'hover:bg-gray-100'
+                  : '',
+                date.disabled || date.isPast ? 'opacity-30 cursor-not-allowed' : '',
               ]"
             >
               {{ date.day }}
@@ -333,10 +348,7 @@
     />
 
     <!-- 旧的模拟地图界面 (已弃用) -->
-    <div
-      v-if="false"
-      class="fixed inset-0 bg-white z-50"
-    >
+    <div v-if="false" class="fixed inset-0 bg-white z-50">
       <!-- 地图区域 (模拟) -->
       <div class="relative h-full bg-gradient-to-br from-teal-100 via-blue-100 to-green-100">
         <!-- 返回按钮 -->
@@ -349,10 +361,14 @@
 
         <!-- 图层按钮 -->
         <div class="absolute top-6 right-4 space-y-3 z-10">
-          <button class="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center">
+          <button
+            class="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center"
+          >
             <span class="text-2xl text-teal-500">🎯</span>
           </button>
-          <button class="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center">
+          <button
+            class="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center"
+          >
             <span class="text-2xl text-gray-600">📚</span>
           </button>
         </div>
@@ -361,14 +377,20 @@
         <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-full z-10">
           <div class="relative">
             <!-- 大标记点 (背景) -->
-            <div class="w-24 h-24 bg-yellow-400 rounded-full opacity-30 absolute -top-12 -left-12"></div>
+            <div
+              class="w-24 h-24 bg-yellow-400 rounded-full opacity-30 absolute -top-12 -left-12"
+            ></div>
             <!-- 主标记点 -->
-            <div class="w-16 h-16 bg-yellow-400 rounded-full shadow-xl border-4 border-white absolute -top-8 -left-8"></div>
+            <div
+              class="w-16 h-16 bg-yellow-400 rounded-full shadow-xl border-4 border-white absolute -top-8 -left-8"
+            ></div>
           </div>
         </div>
 
         <!-- 提示气泡 -->
-        <div class="absolute top-1/3 left-1/2 transform -translate-x-1/2 bg-white rounded-2xl px-4 py-2 shadow-lg flex items-center gap-2">
+        <div
+          class="absolute top-1/3 left-1/2 transform -translate-x-1/2 bg-white rounded-2xl px-4 py-2 shadow-lg flex items-center gap-2"
+        >
           <span class="text-sm font-medium text-gray-800">在此设置集合点</span>
           <span class="text-teal-500">✏️</span>
         </div>
@@ -385,10 +407,7 @@
                   {{ selectedMeetingPoint.address || '北京市昌平区十三陵镇十三陵水库路 168 号院' }}
                 </p>
               </div>
-              <button
-                @click.stop="toggleFavoriteMeetingPoint"
-                class="ml-3 text-3xl flex-shrink-0"
-              >
+              <button @click.stop="toggleFavoriteMeetingPoint" class="ml-3 text-3xl flex-shrink-0">
                 {{ isMeetingPointFavorited ? '⭐' : '☆' }}
               </button>
             </div>
@@ -424,18 +443,12 @@
     </div>
 
     <!-- 搜索地点页面 -->
-    <div
-      v-if="showMeetingPointSearch"
-      class="fixed inset-0 bg-white z-[60]"
-    >
+    <div v-if="showMeetingPointSearch" class="fixed inset-0 bg-white z-[60]">
       <div class="h-full flex flex-col">
         <!-- 顶部搜索栏 -->
         <div class="bg-white border-b border-gray-100 p-4">
           <div class="flex items-center gap-3">
-            <button
-              @click="showMeetingPointSearch = false"
-              class="text-2xl text-gray-700"
-            >
+            <button @click="showMeetingPointSearch = false" class="text-2xl text-gray-700">
               ←
             </button>
             <div class="flex-1 relative">
@@ -453,7 +466,10 @@
 
         <!-- 搜索结果 -->
         <div class="flex-1 overflow-y-auto p-4">
-          <div v-if="filteredMeetingPointSearchResults.length === 0" class="text-center py-12 text-gray-400">
+          <div
+            v-if="filteredMeetingPointSearchResults.length === 0"
+            class="text-center py-12 text-gray-400"
+          >
             <div class="text-5xl mb-3">🔍</div>
             <p>{{ meetingPointSearchQuery ? '未找到相关地点' : '输入关键词搜索地点' }}</p>
           </div>
@@ -465,7 +481,9 @@
               class="bg-white border border-gray-200 rounded-2xl p-4 hover:border-teal-500 hover:shadow-md transition cursor-pointer"
             >
               <div class="flex items-start gap-3">
-                <div class="w-10 h-10 bg-teal-50 rounded-full flex items-center justify-center flex-shrink-0">
+                <div
+                  class="w-10 h-10 bg-teal-50 rounded-full flex items-center justify-center flex-shrink-0"
+                >
                   <span class="text-xl">📍</span>
                 </div>
                 <div class="flex-1 min-w-0">
@@ -484,10 +502,7 @@
     </div>
 
     <!-- 我的收藏页面 -->
-    <div
-      v-if="showFavoriteMeetingPoints"
-      class="fixed inset-0 bg-white z-[60]"
-    >
+    <div v-if="showFavoriteMeetingPoints" class="fixed inset-0 bg-white z-[60]">
       <div class="h-full flex flex-col">
         <!-- 顶部标题栏 -->
         <div class="bg-white border-b border-gray-100">
@@ -518,7 +533,9 @@
             >
               <div class="flex items-start justify-between gap-3">
                 <div class="flex items-start gap-3 flex-1 min-w-0">
-                  <div class="w-12 h-12 bg-teal-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <div
+                    class="w-12 h-12 bg-teal-50 rounded-xl flex items-center justify-center flex-shrink-0"
+                  >
                     <span class="text-2xl">📍</span>
                   </div>
                   <div class="flex-1 min-w-0">
@@ -602,7 +619,7 @@ const form = ref({
   meetingAddress: '北京市朝阳区科荟路33号',
   difficulty: 'easy',
   maxParticipants: 4,
-  description: ''
+  description: '',
 })
 
 // 加载活动数据（编辑模式）
@@ -664,7 +681,7 @@ onMounted(async () => {
 const difficultyLevels = [
   { value: 'easy', label: '简单' },
   { value: 'moderate', label: '中等' },
-  { value: 'hard', label: '困难' }
+  { value: 'hard', label: '困难' },
 ]
 
 // 照片上传（最多6张）
@@ -677,7 +694,7 @@ const handlePhotoUpload = (event: Event) => {
     const remainingSlots = 6 - uploadedPhotos.value.length
     const filesToUpload = Array.from(files).slice(0, remainingSlots)
 
-    filesToUpload.forEach(file => {
+    filesToUpload.forEach((file) => {
       // 验证文件类型
       if (!file.type.startsWith('image/')) {
         toast.warning('请上传图片文件')
@@ -755,7 +772,7 @@ const calendarDates = computed(() => {
       isCurrentMonth: false,
       disabled: true,
       isPast: true,
-      key: `prev-${prevMonthLastDay - i}`
+      key: `prev-${prevMonthLastDay - i}`,
     })
   }
 
@@ -764,8 +781,7 @@ const calendarDates = computed(() => {
     const date = new Date(year, month - 1, day)
     date.setHours(0, 0, 0, 0)
     const isPast = date < today
-    const isSelected = selectedDate.value &&
-      date.getTime() === selectedDate.value.getTime()
+    const isSelected = selectedDate.value && date.getTime() === selectedDate.value.getTime()
 
     dates.push({
       day,
@@ -774,7 +790,7 @@ const calendarDates = computed(() => {
       disabled: false,
       isPast,
       isSelected,
-      key: `current-${day}`
+      key: `current-${day}`,
     })
   }
 
@@ -786,7 +802,7 @@ const calendarDates = computed(() => {
       isCurrentMonth: false,
       disabled: true,
       isPast: false,
-      key: `next-${day}`
+      key: `next-${day}`,
     })
   }
 
@@ -864,7 +880,7 @@ interface MeetingPointLocation {
 
 const selectedMeetingPoint = ref<Partial<MeetingPointLocation>>({
   name: '松林坡停车场入口',
-  address: '北京市昌平区十三陵镇十三陵水库路 168 号院'
+  address: '北京市昌平区十三陵镇十三陵水库路 168 号院',
 })
 
 // 模拟搜索结果
@@ -874,43 +890,43 @@ const meetingPointSearchResults = ref<MeetingPointLocation[]>([
     name: '奥林匹克森林公园南门',
     address: '北京市朝阳区科荟路33号',
     distance: '距离 2.5 km',
-    category: '公园'
+    category: '公园',
   },
   {
     id: '2',
     name: '松林坡停车场入口',
     address: '北京市昌平区十三陵镇十三陵水库路 168 号院',
     distance: '距离 5.3 km',
-    category: '停车场'
+    category: '停车场',
   },
   {
     id: '3',
     name: '香山公园东门',
     address: '北京市海淀区买卖街40号',
     distance: '距离 8.7 km',
-    category: '公园'
+    category: '公园',
   },
   {
     id: '4',
     name: '颐和园北宫门',
     address: '北京市海淀区新建宫门路19号',
     distance: '距离 6.2 km',
-    category: '景区'
+    category: '景区',
   },
   {
     id: '5',
     name: '八达岭长城游客中心',
     address: '北京市延庆区G6京藏高速58号出口',
     distance: '距离 45.8 km',
-    category: '景区'
+    category: '景区',
   },
   {
     id: '6',
     name: '百望山森林公园',
     address: '北京市海淀区黑山扈北口19号',
     distance: '距离 7.1 km',
-    category: '公园'
-  }
+    category: '公园',
+  },
 ])
 
 // 收藏的集合地点
@@ -920,15 +936,15 @@ const favoriteMeetingPoints = ref<MeetingPointLocation[]>([
     name: '奥林匹克森林公园南门',
     address: '北京市朝阳区科荟路33号',
     distance: '距离 2.5 km',
-    category: '公园'
+    category: '公园',
   },
   {
     id: '3',
     name: '香山公园东门',
     address: '北京市海淀区买卖街40号',
     distance: '距离 8.7 km',
-    category: '公园'
-  }
+    category: '公园',
+  },
 ])
 
 // 过滤搜索结果
@@ -937,26 +953,23 @@ const filteredMeetingPointSearchResults = computed(() => {
     return meetingPointSearchResults.value
   }
   const query = meetingPointSearchQuery.value.toLowerCase()
-  return meetingPointSearchResults.value.filter(location =>
-    location.name.toLowerCase().includes(query) ||
-    location.address.toLowerCase().includes(query) ||
-    location.category?.toLowerCase().includes(query)
+  return meetingPointSearchResults.value.filter(
+    (location) =>
+      location.name.toLowerCase().includes(query) ||
+      location.address.toLowerCase().includes(query) ||
+      location.category?.toLowerCase().includes(query)
   )
 })
 
 // 当前地点是否已收藏
 const isMeetingPointFavorited = computed(() => {
-  return favoriteMeetingPoints.value.some(
-    loc => loc.name === selectedMeetingPoint.value.name
-  )
+  return favoriteMeetingPoints.value.some((loc) => loc.name === selectedMeetingPoint.value.name)
 })
 
 // 切换收藏状态
 const toggleFavoriteMeetingPoint = () => {
   const current = selectedMeetingPoint.value
-  const index = favoriteMeetingPoints.value.findIndex(
-    loc => loc.name === current.name
-  )
+  const index = favoriteMeetingPoints.value.findIndex((loc) => loc.name === current.name)
 
   if (index >= 0) {
     // 取消收藏
@@ -968,7 +981,7 @@ const toggleFavoriteMeetingPoint = () => {
       name: current.name || '',
       address: current.address || '',
       distance: '距离 -- km',
-      category: '自定义'
+      category: '自定义',
     })
   }
 }
@@ -977,7 +990,7 @@ const toggleFavoriteMeetingPoint = () => {
 const selectSearchedMeetingPoint = (location: MeetingPointLocation) => {
   selectedMeetingPoint.value = {
     name: location.name,
-    address: location.address
+    address: location.address,
   }
   showMeetingPointSearch.value = false
 }
@@ -986,14 +999,14 @@ const selectSearchedMeetingPoint = (location: MeetingPointLocation) => {
 const selectFavoriteMeetingPoint = (location: MeetingPointLocation) => {
   selectedMeetingPoint.value = {
     name: location.name,
-    address: location.address
+    address: location.address,
   }
   showFavoriteMeetingPoints.value = false
 }
 
 // 删除收藏
 const removeFavoriteMeetingPoint = (id: string) => {
-  const index = favoriteMeetingPoints.value.findIndex(loc => loc.id === id)
+  const index = favoriteMeetingPoints.value.findIndex((loc) => loc.id === id)
   if (index >= 0) {
     favoriteMeetingPoints.value.splice(index, 1)
   }
@@ -1066,7 +1079,8 @@ const handleSubmit = async () => {
     const endTime = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
 
     // 处理照片数组
-    const defaultCoverImage = 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&h=600&fit=crop'
+    const defaultCoverImage =
+      'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&h=600&fit=crop'
     const photos = uploadedPhotos.value.length > 0 ? uploadedPhotos.value : [defaultCoverImage]
     const coverImageUrl = photos[0] // 第一张作为封面
 
@@ -1079,7 +1093,7 @@ const handleSubmit = async () => {
       difficulty: form.value.difficulty as 'easy' | 'moderate' | 'hard',
       max_participants: form.value.maxParticipants,
       cover_image_url: coverImageUrl,
-      photos // 照片数组
+      photos, // 照片数组
     }
 
     let success = false

@@ -1,19 +1,28 @@
 <template>
-  <div id="app" class="app pb-20">
+  <div id="app" class="app" :class="{ 'pb-20': shouldShowTabBar }">
     <!-- 路由视图 -->
     <RouterView />
-    <!-- 底部导航栏 -->
-    <TabBar />
+    <!-- 底部导航栏 - 只在特定页面显示 -->
+    <TabBar v-if="shouldShowTabBar" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import { RouterView } from 'vue-router'
+import { onMounted, computed } from 'vue'
+import { RouterView, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import TabBar from '@/components/common/TabBar.vue'
 
 const userStore = useUserStore()
+const route = useRoute()
+
+// 不需要显示TabBar的页面列表
+const noTabBarPages = ['/login', '/register']
+
+// 判断是否应该显示TabBar
+const shouldShowTabBar = computed(() => {
+  return !noTabBarPages.includes(route.path)
+})
 
 onMounted(() => {
   // 从 localStorage 恢复用户会话

@@ -46,9 +46,7 @@
         </div>
 
         <!-- 申请时间 -->
-        <div class="time">
-          申请时间: {{ formatTime(app.created_at) }}
-        </div>
+        <div class="time">申请时间: {{ formatTime(app.created_at) }}</div>
 
         <!-- 操作按钮 -->
         <div class="actions">
@@ -95,6 +93,51 @@
         </div>
       </div>
     </div>
+
+    <!-- 拒绝申请确认弹窗 -->
+    <div
+      v-if="showRejectConfirm"
+      @click="showRejectConfirm = false"
+      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+    >
+      <div @click.stop class="bg-white rounded-3xl w-full max-w-sm p-6 animate-scale-in">
+        <div class="text-center mb-6">
+          <div
+            class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4"
+          >
+            <svg
+              class="w-8 h-8 text-orange-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-gray-900 mb-2">确定要拒绝此申请吗？</h3>
+          <p class="text-gray-600 text-sm">拒绝后用户将收到通知，可以重新申请。</p>
+        </div>
+        <div class="flex gap-3">
+          <button
+            @click="showRejectConfirm = false"
+            class="flex-1 py-3 rounded-xl bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition"
+          >
+            取消
+          </button>
+          <button
+            @click="confirmReject"
+            class="flex-1 py-3 rounded-xl bg-orange-500 text-white font-semibold hover:bg-orange-600 transition"
+          >
+            确认拒绝
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -109,10 +152,14 @@ const props = defineProps<{
 }>()
 
 const applicationStore = useApplicationStore()
-const { pendingApplications, approvedParticipants, participantCount, loading } = storeToRefs(applicationStore)
+const { pendingApplications, approvedParticipants, participantCount, loading } = storeToRefs(
+  applicationStore
+)
 import toast from '../../utils/toast'
 
 const reviewing = ref<string | null>(null)
+const showRejectConfirm = ref(false)
+const applicationToReject = ref<string | null>(null)
 
 // 加载数据
 onMounted(async () => {
@@ -132,7 +179,7 @@ const handleApprove = async (applicationId: string) => {
     if (props.showParticipants) {
       await applicationStore.fetchApprovedParticipants(props.activityId)
     }
-  } catch (error: any) {
+  } catch (error) {
     toast.error(error.message || '审核失败')
   } finally {
     reviewing.value = null
@@ -140,18 +187,26 @@ const handleApprove = async (applicationId: string) => {
 }
 
 // 拒绝申请
-const handleReject = async (applicationId: string) => {
-  // TODO: 后续可以改为自定义确认对话框
-  if (!confirm('确定要拒绝此申请吗?')) return
+const handleReject = (applicationId: string) => {
+  applicationToReject.value = applicationId
+  showRejectConfirm.value = true
+}
+
+// 确认拒绝申请
+const confirmReject = async () => {
+  if (!applicationToReject.value) return
+
+  showRejectConfirm.value = false
 
   try {
-    reviewing.value = applicationId
-    await applicationStore.reviewApplication(applicationId, 'reject')
+    reviewing.value = applicationToReject.value
+    await applicationStore.reviewApplication(applicationToReject.value, 'reject')
     toast.info('已拒绝申请')
-  } catch (error: any) {
+  } catch (error) {
     toast.error(error.message || '审核失败')
   } finally {
     reviewing.value = null
+    applicationToReject.value = null
   }
 }
 
@@ -177,7 +232,7 @@ const hikingLevelText = (level?: string) => {
     beginner: '入门',
     intermediate: '进阶',
     advanced: '高级',
-    expert: '专家'
+    expert: '专家',
   }
   return levels[level || 'beginner'] || '入门'
 }
@@ -187,7 +242,7 @@ const genderText = (gender?: string) => {
   const genders: Record<string, string> = {
     male: '男',
     female: '女',
-    other: '其他'
+    other: '其他',
   }
   return genders[gender || ''] || ''
 }
@@ -239,8 +294,12 @@ const genderText = (gender?: string) => {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* 申请卡片 */

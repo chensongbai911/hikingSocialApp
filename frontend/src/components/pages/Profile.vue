@@ -157,7 +157,7 @@
       <!-- 隐私设置入口 -->
       <button
         @click="goToPrivacySettings"
-        class="w-full flex items-center justify-between bg-white rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow"
+        class="w-full flex items-center justify-between bg-white rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow mb-3"
       >
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 bg-teal-50 rounded-full flex items-center justify-center">
@@ -173,6 +173,74 @@
           <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
         </svg>
       </button>
+
+      <!-- 退出登录按钮 -->
+      <button
+        @click="handleLogout"
+        class="w-full flex items-center justify-center gap-2 bg-white rounded-2xl p-5 shadow-sm hover:shadow-md transition-all hover:bg-red-50 group"
+      >
+        <svg
+          class="w-5 h-5 text-gray-500 group-hover:text-red-500 transition-colors"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+          />
+        </svg>
+        <span class="text-gray-700 font-medium group-hover:text-red-500 transition-colors"
+          >退出登录</span
+        >
+      </button>
+    </div>
+
+    <!-- 退出登录确认弹窗 -->
+    <div
+      v-if="showLogoutConfirm"
+      @click="showLogoutConfirm = false"
+      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+    >
+      <div @click.stop class="bg-white rounded-3xl w-full max-w-sm p-6 animate-scale-in">
+        <div class="text-center mb-6">
+          <div
+            class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4"
+          >
+            <svg
+              class="w-8 h-8 text-orange-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+              />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-gray-900 mb-2">确认退出登录？</h3>
+          <p class="text-gray-600 text-sm">退出后需要重新登录才能使用完整功能。</p>
+        </div>
+        <div class="flex gap-3">
+          <button
+            @click="showLogoutConfirm = false"
+            class="flex-1 py-3 rounded-xl bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition"
+          >
+            取消
+          </button>
+          <button
+            @click="confirmLogout"
+            class="flex-1 py-3 rounded-xl bg-orange-500 text-white font-semibold hover:bg-orange-600 transition"
+          >
+            确认退出
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- 照片预览弹窗 -->
@@ -232,6 +300,46 @@
         </div>
       </div>
     </div>
+
+    <!-- 删除照片确认弹窗 -->
+    <div
+      v-if="showDeletePhotoConfirm"
+      @click="showDeletePhotoConfirm = false"
+      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+    >
+      <div @click.stop class="bg-white rounded-3xl w-full max-w-sm p-6 animate-scale-in">
+        <div class="text-center mb-6">
+          <div
+            class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4"
+          >
+            <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-gray-900 mb-2">确定要删除这张照片吗？</h3>
+          <p class="text-gray-600 text-sm">删除后无法恢复，其他用户也将无法查看。</p>
+        </div>
+        <div class="flex gap-3">
+          <button
+            @click="showDeletePhotoConfirm = false"
+            class="flex-1 py-3 rounded-xl bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition"
+          >
+            取消
+          </button>
+          <button
+            @click="confirmDeletePhoto"
+            class="flex-1 py-3 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600 transition"
+          >
+            确认删除
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -256,6 +364,9 @@ const isLoading = ref(true)
 // 照片预览相关状态
 const showPreview = ref(false)
 const currentPreviewIndex = ref(0)
+const showDeletePhotoConfirm = ref(false)
+const photoToDelete = ref<string | null>(null)
+const showLogoutConfirm = ref(false)
 
 // 从store获取用户数据
 const currentUser = computed(() => userStore.currentUser)
@@ -363,17 +474,22 @@ const addPhoto = () => {
 }
 
 // 删除照片
-const deletePhoto = async (photoId: string) => {
-  try {
-    // 确认删除
-    if (!confirm('确定要删除这张照片吗？')) {
-      return
-    }
+const deletePhoto = (photoId: string) => {
+  photoToDelete.value = photoId
+  showDeletePhotoConfirm.value = true
+}
 
+// 确认删除照片
+const confirmDeletePhoto = async () => {
+  if (!photoToDelete.value) return
+
+  showDeletePhotoConfirm.value = false
+
+  try {
     toast.info('正在删除照片...')
 
     // 调用API删除
-    const success = await userStore.deletePhoto(photoId)
+    const success = await userStore.deletePhoto(photoToDelete.value)
 
     if (success) {
       toast.success('照片已删除')
@@ -381,6 +497,29 @@ const deletePhoto = async (photoId: string) => {
   } catch (error) {
     console.error('删除照片失败:', error)
     toast.error('删除失败，请重试')
+  } finally {
+    photoToDelete.value = null
+  }
+}
+
+// 退出登录
+const handleLogout = () => {
+  showLogoutConfirm.value = true
+}
+
+// 确认退出登录
+const confirmLogout = async () => {
+  showLogoutConfirm.value = false
+
+  try {
+    toast.info('正在退出...')
+    await userStore.logout()
+    toast.success('已退出登录')
+    // 跳转到登录页
+    router.push('/login')
+  } catch (error) {
+    console.error('退出登录失败:', error)
+    toast.error('退出失败，请重试')
   }
 }
 
