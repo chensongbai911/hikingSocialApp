@@ -9,6 +9,16 @@ import { cache } from '@/utils/helpers'
 export const useUserStore = defineStore('user', () => {
   const currentUser = ref<User | null>(null)
   const token = ref<string | null>(localStorage.getItem('token'))
+
+  // 初始化时从本地缓存恢复用户信息，避免刷新后 token 还在但 currentUser 为空导致路由拦截/401
+  const cachedUser = localStorage.getItem('currentUser')
+  if (!currentUser.value && cachedUser) {
+    try {
+      currentUser.value = JSON.parse(cachedUser)
+    } catch (e) {
+      localStorage.removeItem('currentUser')
+    }
+  }
   const loading = ref(false)
   const error = ref<string | null>(null)
 
@@ -100,6 +110,13 @@ export const useUserStore = defineStore('user', () => {
     } finally {
       loading.value = false
     }
+  }
+
+  // 应用启动时，若存在 token 但 currentUser 为空，尝试拉取一次用户信息，避免 token 失效时无限 401 清空
+  if (token.value && !currentUser.value) {
+    fetchCurrentUser().catch(() => {
+      // 若 token 已失效，fetchCurrentUser 内部会返回 false，这里保持静默
+    })
   }
 
   // 更新个人资料
