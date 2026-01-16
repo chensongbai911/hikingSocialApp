@@ -1,12 +1,10 @@
 <template>
   <div class="min-h-screen bg-gray-50">
-    <!-- 顶部标题栏 -->
     <div class="bg-white p-4 sticky top-0 z-10">
       <div class="flex items-center justify-between mb-4">
         <h1 class="text-2xl font-bold text-gray-800">消息中心</h1>
+        <span v-if="totalUnread > 0" class="text-xs px-2 py-1 bg-red-100 text-red-600 rounded-full">未读 {{ totalUnread }}</span>
       </div>
-
-      <!-- 搜索框 -->
       <div class="relative">
         <input
           v-model="searchQuery"
@@ -15,85 +13,55 @@
           class="w-full pl-12 pr-4 py-3 bg-gray-50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500"
         />
         <svg class="w-6 h-6 text-teal-500 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
       </div>
-    </div>
-
-    <!-- 通知卡片区域 -->
-    <div class="p-4 grid grid-cols-2 gap-4">
-      <!-- 系统通知卡片 -->
-      <div
-        @click="router.push('/messages/system')"
-        class="bg-white rounded-2xl p-4 flex flex-col items-center justify-center space-y-3 cursor-pointer active:scale-95 transition-transform"
-      >
-        <div class="relative">
-          <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center">
-            <svg class="w-8 h-8 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
-            </svg>
-          </div>
-        </div>
-        <div class="text-center">
-          <div class="font-medium text-gray-800">系统通知</div>
-        </div>
-      </div>
-
-      <!-- 活动提醒卡片 -->
-      <div
-        @click="router.push('/messages/activity')"
-        class="bg-white rounded-2xl p-4 flex flex-col items-center justify-center space-y-3 cursor-pointer active:scale-95 transition-transform"
-      >
-        <div class="relative">
-          <div class="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center">
-            <svg class="w-8 h-8 text-orange-500" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1L6 8.3V13h2V9.6l1.8-.7"/>
-            </svg>
-          </div>
-        </div>
-        <div class="text-center">
-          <div class="font-medium text-gray-800">活动提醒</div>
-        </div>
+      <div class="flex justify-end mt-2 space-x-2 text-sm">
+        <button
+          class="px-3 py-1 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200"
+          @click="() => { if (!loading) loadConversations(true) }"
+        >刷新</button>
       </div>
     </div>
 
-    <!-- 最近私聊标题 -->
     <div class="px-4 py-2">
       <h2 class="text-lg font-bold text-teal-600">最近私聊</h2>
     </div>
 
-    <!-- 聊天列表 -->
-    <div class="bg-white">
+    <div class="bg-white" @scroll.passive="onScroll">
+      <div v-if="loading && chats.length === 0" class="p-4 space-y-3">
+        <div v-for="n in 6" :key="n" class="flex items-center animate-pulse space-x-4">
+          <div class="w-14 h-14 bg-gray-200 rounded-full"></div>
+          <div class="flex-1 space-y-2">
+            <div class="h-4 bg-gray-200 rounded w-1/3"></div>
+            <div class="h-3 bg-gray-100 rounded w-2/3"></div>
+          </div>
+          <div class="w-8 h-4 bg-gray-100 rounded"></div>
+        </div>
+      </div>
+
       <div
         v-for="chat in filteredChats"
         :key="chat.id"
         @click="openChat(chat)"
         class="flex items-center p-4 border-b border-gray-100 active:bg-gray-50 cursor-pointer"
       >
-        <!-- 头像 -->
         <div class="relative flex-shrink-0">
-          <img
-            :src="chat.avatar"
-            :alt="chat.name"
-            class="w-14 h-14 rounded-full object-cover"
-          />
-          <!-- 在线状态 -->
+          <img :src="chat.avatar || fallbackAvatar" :alt="chat.name" class="w-14 h-14 rounded-full object-cover" />
           <div
             v-if="chat.isOnline"
             class="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-white rounded-full"
           ></div>
         </div>
 
-        <!-- 聊天信息 -->
         <div class="ml-4 flex-1 min-w-0">
           <div class="flex items-center justify-between mb-1">
-            <h3 class="font-medium text-gray-800 truncate">{{ chat.name }}</h3>
-            <span class="text-sm text-gray-400 flex-shrink-0">{{ chat.time }}</span>
+            <h3 class="font-medium text-gray-800 truncate">{{ chat.name || '陌生人' }}</h3>
+            <span class="text-sm text-gray-400 flex-shrink-0">{{ formatTime(chat.lastTime) }}</span>
           </div>
-          <p class="text-sm text-gray-500 truncate">{{ chat.lastMessage }}</p>
+          <p class="text-sm text-gray-500 truncate">{{ chat.lastMessage || '暂无消息' }}</p>
         </div>
 
-        <!-- 未读数角标 -->
         <div
           v-if="chat.unreadCount > 0"
           class="ml-3 flex-shrink-0 w-6 h-6 bg-red-500 text-white text-xs font-medium rounded-full flex items-center justify-center"
@@ -102,91 +70,213 @@
         </div>
       </div>
 
-      <!-- 空状态 -->
-      <div
-        v-if="filteredChats.length === 0"
-        class="py-20 text-center text-gray-400"
-      >
+      <div v-if="!loading && filteredChats.length === 0" class="py-20 text-center text-gray-400">
         <svg class="w-20 h-20 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
         </svg>
         <p>暂无聊天记录</p>
+      </div>
+
+      <div v-if="loading" class="py-12 text-center text-gray-400">加载中...</div>
+      <div v-if="!loading && canLoadMore" class="py-4 text-center">
+        <button
+          class="px-4 py-2 bg-gray-100 rounded-full text-sm text-gray-600 hover:bg-gray-200"
+          @click="handleLoadMore"
+        >
+          {{ loadingMore ? '加载中...' : '加载更多' }}
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { getConversations, markConversationAsRead } from '@/api/message'
+import { socketService } from '@/services/socket'
+import { useUserStore } from '@/stores/user'
+import toast from '@/utils/toast'
+
+// 轻量节流，避免多次 loadMore 按钮快速点击
+const throttle = (fn: (...args: any[]) => void, delay = 600) => {
+  let last = 0
+  return (...args: any[]) => {
+    const now = Date.now()
+    if (now - last > delay) {
+      last = now
+      fn(...args)
+    }
+  }
+}
 
 const router = useRouter()
-const searchQuery = ref('')
+const userStore = useUserStore()
 
-interface Chat {
+const searchQuery = ref('')
+const loading = ref(false)
+const loadingMore = ref(false)
+const page = ref(1)
+const pageSize = ref(20)
+const total = ref(0)
+const fallbackAvatar = 'https://placehold.co/120x120'
+
+interface ChatItem {
   id: string
   name: string
   avatar: string
   lastMessage: string
-  time: string
+  lastTime: string | null
   unreadCount: number
   isOnline: boolean
+  otherUserId?: string
 }
 
-// 模拟聊天列表数据
-const chats = ref<Chat[]>([
-  {
-    id: '1',
-    name: '李华 (徒步达人)',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
-    lastMessage: '周六的香山徒步，我们要在南门集...',
-    time: '14:20',
-    unreadCount: 3,
-    isOnline: true
-  },
-  {
-    id: '2',
-    name: '小美',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
-    lastMessage: '好的，那我们就这么说定了，不见不散！',
-    time: '昨天',
-    unreadCount: 0,
-    isOnline: false
-  },
-  {
-    id: '3',
-    name: '张三-领队',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop',
-    lastMessage: '记得带上手杖和防晒霜，山上紫外线强。',
-    time: '星期三',
-    unreadCount: 0,
-    isOnline: false
-  },
-  {
-    id: '4',
-    name: '王五',
-    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop',
-    lastMessage: '[图片]',
-    time: '星期一',
-    unreadCount: 1,
-    isOnline: false
-  }
-])
+const chats = ref<ChatItem[]>([])
+const totalUnread = computed(() => chats.value.reduce((sum, c) => sum + (c.unreadCount || 0), 0))
 
-// 搜索过滤
-const filteredChats = computed(() => {
-  if (!searchQuery.value.trim()) {
-    return chats.value
+const formatTime = (time: string | null) => {
+  if (!time) return ''
+  const date = new Date(time)
+  const now = new Date()
+  const diff = now.getTime() - date.getTime()
+  if (diff < 60000) return '刚刚'
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`
+  return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
+}
+
+const mapConversation = (raw: any): ChatItem => {
+  const userId = String(userStore.userId)
+  const other = String(raw.userId1) === userId ? raw.user2 : raw.user1
+  const unread = String(raw.userId1) === userId ? raw.user2UnreadCount : raw.user1UnreadCount
+  const lastMessage = raw.lastMessageContent || ''
+  return {
+    id: String(raw.id),
+    name: other?.nickname || '陌生人',
+    avatar: other?.avatarUrl || '',
+    lastMessage,
+    lastTime: raw.lastMessageAt || raw.updatedAt || raw.createdAt || null,
+    unreadCount: unread || 0,
+    isOnline: false,
+    otherUserId: other?.id ? String(other.id) : undefined,
   }
-  const query = searchQuery.value.toLowerCase()
-  return chats.value.filter(chat =>
-    chat.name.toLowerCase().includes(query) ||
-    chat.lastMessage.toLowerCase().includes(query)
+}
+
+const loadConversations = async (reset = true) => {
+  if (reset) {
+    page.value = 1
+    chats.value = []
+  }
+  if (reset) loading.value = true
+  else loadingMore.value = true
+  try {
+    const res = await getConversations(page.value, pageSize.value)
+    const list = res?.conversations || res || []
+    total.value = res?.total ?? res?.data?.total ?? total.value
+    const mapped = list.map(mapConversation)
+    chats.value = reset
+      ? mapped
+      : [...chats.value, ...mapped].sort(
+          (a, b) => (b.lastTime ? new Date(b.lastTime).getTime() : 0) - (a.lastTime ? new Date(a.lastTime).getTime() : 0)
+        )
+    if (list.length > 0) page.value += 1
+  } catch (err: any) {
+    toast.error(err?.message || '加载会话失败')
+  } finally {
+    loading.value = false
+    loadingMore.value = false
+  }
+}
+
+const filteredChats = computed(() => {
+  if (!searchQuery.value.trim()) return chats.value
+  const q = searchQuery.value.toLowerCase()
+  return chats.value.filter((c) =>
+    c.name.toLowerCase().includes(q) || (c.lastMessage || '').toLowerCase().includes(q)
   )
 })
 
-// 打开聊天窗口
-const openChat = (chat: Chat) => {
+const canLoadMore = computed(() => chats.value.length < (total.value || chats.value.length))
+
+const handleLoadMore = throttle(() => {
+  if (!loadingMore.value) loadConversations(false)
+}, 500)
+
+const handleRefresh = throttle(() => {
+  if (!loading.value) loadConversations(true)
+}, 500)
+
+const openChat = (chat: ChatItem) => {
+  chats.value = chats.value.map((c) => (c.id === chat.id ? { ...c, unreadCount: 0 } : c))
+  markConversationAsRead(chat.id).catch(() => {})
   router.push(`/chat/${chat.id}`)
 }
+
+const upsertChat = (conversationId: string, payload: Partial<ChatItem>) => {
+  const idx = chats.value.findIndex((c) => c.id === conversationId)
+  const existed = idx >= 0
+  if (existed) {
+    const current = chats.value[idx]
+    chats.value.splice(idx, 1, { ...current, ...payload })
+  } else {
+    chats.value.unshift({
+      id: conversationId,
+      name: payload.name || '陌生人',
+      avatar: payload.avatar || '',
+      lastMessage: payload.lastMessage || '',
+      lastTime: payload.lastTime || new Date().toISOString(),
+      unreadCount: payload.unreadCount ?? 1,
+      isOnline: payload.isOnline ?? false,
+      otherUserId: payload.otherUserId,
+    })
+  }
+  chats.value = [...chats.value].sort((a, b) => (b.lastTime ? new Date(b.lastTime).getTime() : 0) - (a.lastTime ? new Date(a.lastTime).getTime() : 0))
+  return existed
+}
+
+const socketOff: Array<() => void> = []
+
+const onScroll = (e: Event) => {
+  const el = e.target as HTMLElement
+  if (!el) return
+  const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 120
+  if (nearBottom && canLoadMore.value && !loadingMore.value) {
+    handleLoadMore()
+  }
+}
+
+onMounted(async () => {
+  await loadConversations()
+
+  socketOff.push(
+    socketService.onMessageReceived((data: any) => {
+      const conversationId = String(data.conversationId || data.conversation_id)
+      const otherUser = data.senderId || data.sender_id
+      const isSelf = String(otherUser) === String(userStore.userId)
+      const existed = upsertChat(conversationId, {
+        lastMessage: data.message?.content || data.content || '[新消息]',
+        lastTime: data.message?.created_at || data.createdAt || new Date().toISOString(),
+        unreadCount: isSelf ? 0 : ((chats.value.find((c) => c.id === conversationId)?.unreadCount || 0) + 1),
+        name: data.senderNickname || data.sender_nickname || undefined,
+        avatar: data.senderAvatar || data.sender_avatar || undefined,
+        otherUserId: otherUser ? String(otherUser) : undefined,
+      })
+      if (!existed) loadConversations()
+    })
+  )
+
+  socketOff.push(
+    socketService.onOnlineStatusChange((data: any) => {
+      const targetId = String(data.userId || data.id)
+      chats.value = chats.value.map((c) =>
+        c.otherUserId === targetId ? { ...c, isOnline: data.type === 'online' || data.status === 'online' } : c
+      )
+    })
+  )
+})
+
+onUnmounted(() => {
+  socketOff.forEach((off) => off())
+})
 </script>

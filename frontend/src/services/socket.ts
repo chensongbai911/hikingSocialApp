@@ -30,7 +30,9 @@ export class SocketService {
   private socket: Socket | null = null
   private userId: string | null = null
   private messageCallbacks: Set<(message: SocketMessage) => void> = new Set()
+  private recallCallbacks: Set<(data: any) => void> = new Set()
   private typingCallbacks: Set<(data: any) => void> = new Set()
+  private blacklistCallbacks: Set<(data: any) => void> = new Set()
   private readReceiptCallbacks: Set<(data: any) => void> = new Set()
   private onlineStatusCallbacks: Set<(data: any) => void> = new Set()
 
@@ -73,33 +75,24 @@ export class SocketService {
         })
 
         // 监听消息接收（旧命名）
-        this.socket.on('message:received', (message: any) => {
-          this.messageCallbacks.forEach((cb) => cb(message))
-        })
-        // 监听消息接收（后端标准化事件）
+        // 标准化：新消息
         this.socket.on('new_message', (data: any) => {
           this.messageCallbacks.forEach((cb) => cb(data))
         })
 
-        // 监听用户正在输入（旧命名）
-        this.socket.on('message:user-typing', (data) => {
-          this.typingCallbacks.forEach((cb) => cb(data))
-        })
-        // 监听用户正在输入（后端标准化事件）
+        // 正在输入
         this.socket.on('typing', (data) => {
           this.typingCallbacks.forEach((cb) => cb(data))
         })
 
-        // 监听消息撤回
+        // 消息撤回
         this.socket.on('message_recalled', (data) => {
-          // 可由页面层选择性订阅，此处兼容性回调到 messageCallbacks
-          this.messageCallbacks.forEach((cb) => cb(data))
+          this.recallCallbacks.forEach((cb) => cb(data))
         })
 
-        // 监听黑名单更新
+        // 黑名单更新
         this.socket.on('blacklist_updated', (data) => {
-          // 暂记录日志，页面可按需订阅扩展
-          console.log('blacklist_updated', data)
+          this.blacklistCallbacks.forEach((cb) => cb(data))
         })
 
         // 监听已读回执
@@ -134,53 +127,12 @@ export class SocketService {
   /**
    * 发送消息
    */
-  sendMessage(data: {
-    conversationId: string
-    targetUserId: string
-    content: string
-    contentType?: 'text' | 'image' | 'file'
-  }): void {
-    if (!this.socket) {
-      console.error('Socket not connected')
-      return
-    }
-
-    this.socket.emit('message:send', data)
-  }
-
   /**
-   * 标记消息为已读
+   * 发送正在输入状态（后端事件名：typing）
    */
-  markAsRead(conversationId: string, targetUserId: string): void {
-    if (!this.socket) {
-      console.error('Socket not connected')
-      return
-    }
-
-    this.socket.emit('message:read', {
-      conversationId,
-      targetUserId,
-    })
-  }
-
-  /**
-   * 发送正在输入状态
-   */
-  sendTypingStatus(
-    conversationId: string,
-    targetUserId: string,
-    isTyping: boolean
-  ): void {
-    if (!this.socket) {
-      console.error('Socket not connected')
-      return
-    }
-
-    this.socket.emit('message:typing', {
-      conversationId,
-      targetUserId,
-      isTyping,
-    })
+  sendTyping(conversationId: string, isTyping: boolean): void {
+    if (!this.socket) return
+    this.socket.emit('typing', { conversationId, isTyping })
   }
 
   /**
@@ -196,6 +148,14 @@ export class SocketService {
   }
 
   /**
+   * 监听撤回
+   */
+  onRecall(callback: (data: any) => void): () => void {
+    this.recallCallbacks.add(callback)
+    return () => this.recallCallbacks.delete(callback)
+  }
+
+  /**
    * 监听用户正在输入
    */
   onUserTyping(callback: (data: any) => void): () => void {
@@ -204,6 +164,14 @@ export class SocketService {
     return () => {
       this.typingCallbacks.delete(callback)
     }
+  }
+
+  /**
+   * 监听黑名单更新
+   */
+  onBlacklist(callback: (data: any) => void): () => void {
+    this.blacklistCallbacks.add(callback)
+    return () => this.blacklistCallbacks.delete(callback)
   }
 
   /**

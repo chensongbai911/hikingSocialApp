@@ -1,47 +1,58 @@
 <template>
   <div class="fixed inset-0 bg-white flex flex-col z-40">
-    <!-- 顶部导航栏 -->
     <div class="bg-white border-b border-gray-100 p-4 flex items-center space-x-3 flex-shrink-0">
       <button @click="router.back()" class="p-2 -ml-2">
         <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
         </svg>
       </button>
       <img
-        :src="chatUser.avatar"
+        :src="chatUser.avatar || 'https://placehold.co/48x48'"
         :alt="chatUser.name"
         class="w-10 h-10 rounded-full object-cover"
       />
-      <div class="flex-1">
-        <h2 class="font-medium text-gray-800">{{ chatUser.name }}</h2>
-        <p class="text-xs text-gray-500">{{ chatUser.isOnline ? '在线' : '离线' }}</p>
+      <div class="flex-1 min-w-0">
+        <h2 class="font-medium text-gray-800 truncate">{{ chatUser.name || '聊天' }}</h2>
+        <p class="text-xs text-gray-500 truncate">
+          <span v-if="isBlacklisted" class="text-red-500">已被对方拉黑</span>
+          <span v-else>{{ chatUser.isOnline ? '在线' : '离线' }}</span>
+        </p>
       </div>
+      <div class="flex items-center space-x-2" v-if="isLimited">
+        <span class="text-xs text-amber-700 bg-amber-100 px-2 py-1 rounded-full">剩余 {{ remainingMessages ?? 0 }} / 3</span>
+      </div>
+      <button @click="handleClear" class="p-2 text-gray-500 hover:text-red-500" title="清空对话">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
     </div>
 
-    <!-- 消息列表 -->
+    <div v-if="isBlacklisted" class="bg-red-50 text-red-600 text-sm px-4 py-2">对方已将你拉黑，无法发送消息</div>
+    <div v-else-if="isLimited" class="bg-amber-50 text-amber-700 text-sm px-4 py-2">
+      未互关，仅可再发送 {{ remainingMessages ?? 0 }} 条消息
+    </div>
+
     <div ref="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
       <div
         v-for="message in messages"
         :key="message.id"
-        :class="['flex', message.isOwn ? 'justify-end' : 'justify-start']"
+        :class="['flex', message.senderId === userStore.userId ? 'justify-end' : 'justify-start']"
       >
-        <div :class="['flex', message.isOwn ? 'flex-row-reverse' : 'flex-row', 'items-end space-x-2']">
-          <!-- 头像 -->
+        <div :class="['flex', message.senderId === userStore.userId ? 'flex-row-reverse' : 'flex-row', 'items-end space-x-2']">
           <img
-            v-if="!message.isOwn"
-            :src="chatUser.avatar"
+            v-if="message.senderId !== userStore.userId"
+            :src="chatUser.avatar || 'https://placehold.co/48x48'"
             :alt="chatUser.name"
             class="w-8 h-8 rounded-full object-cover flex-shrink-0"
           />
 
-          <!-- 消息气泡 -->
-          <div :class="['max-w-[70%]', message.isOwn ? 'mr-2' : 'ml-2']">
-            <!-- 文字消息 -->
+          <div :class="['max-w-[70%]', message.senderId === userStore.userId ? 'mr-2' : 'ml-2']">
             <div
-              v-if="message.type === 'text'"
+              v-if="message.contentType === 'text' && !message.isRecalled"
               :class="[
                 'px-4 py-2 rounded-2xl',
-                message.isOwn
+                message.senderId === userStore.userId
                   ? 'bg-teal-500 text-white rounded-br-sm'
                   : 'bg-white text-gray-800 rounded-bl-sm'
               ]"
@@ -49,66 +60,44 @@
               <p class="break-words">{{ message.content }}</p>
             </div>
 
-            <!-- 图片消息 -->
-            <div
-              v-else-if="message.type === 'image'"
-              class="rounded-2xl overflow-hidden"
-            >
+            <div v-else-if="message.contentType === 'image' && !message.isRecalled" class="rounded-2xl overflow-hidden">
               <img
-                :src="message.content"
+                :src="message.imageUrl || message.content"
                 alt="图片"
                 class="max-w-full h-auto cursor-pointer"
-                @click="previewImage(message.content)"
+                @click="previewImage(message.imageUrl || message.content)"
               />
             </div>
 
-            <!-- 语音消息 -->
-            <div
-              v-else-if="message.type === 'voice'"
-              :class="[
-                'px-4 py-3 rounded-2xl flex items-center space-x-3 cursor-pointer',
-                message.isOwn
-                  ? 'bg-teal-500 text-white'
-                  : 'bg-white text-gray-800'
-              ]"
-              @click="playVoice(message)"
-            >
-              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
-                <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
-              </svg>
-              <div class="flex-1">
-                <div class="flex items-center space-x-1">
-                  <div class="w-1 h-3 bg-current rounded-full"></div>
-                  <div class="w-1 h-4 bg-current rounded-full"></div>
-                  <div class="w-1 h-2 bg-current rounded-full"></div>
-                  <div class="w-1 h-5 bg-current rounded-full"></div>
-                  <div class="w-1 h-3 bg-current rounded-full"></div>
-                </div>
-              </div>
-              <span class="text-sm">{{ message.duration }}''</span>
-            </div>
+            <div v-else class="text-xs text-gray-400 px-3 py-2">消息已撤回</div>
 
-            <!-- 时间 -->
-            <p
-              :class="[
-                'text-xs mt-1',
-                message.isOwn ? 'text-right text-gray-400' : 'text-left text-gray-400'
-              ]"
-            >
-              {{ formatTime(message.timestamp) }}
-            </p>
+            <div class="flex items-center justify-between mt-1 text-xs text-gray-400">
+              <span>{{ formatTime(new Date(message.createdAt)) }}</span>
+              <div class="flex items-center space-x-2">
+                <button
+                  v-if="message.senderId === userStore.userId && !message.isRecalled"
+                  class="hover:text-red-500"
+                  @click="handleRecall(message.id)"
+                >撤回</button>
+                <button
+                  v-else-if="!message.isRecalled"
+                  class="hover:text-amber-600"
+                  @click="handleReport(message.id)"
+                >举报</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      <div v-if="typingUsers.size > 0" class="text-xs text-gray-500 mt-2">对方正在输入...</div>
     </div>
 
-    <!-- 输入区域 -->
     <div class="bg-white border-t border-gray-100 p-4 flex-shrink-0">
-      <!-- Emoji 选择器 -->
       <div
         v-if="showEmojiPicker"
         class="mb-3 p-3 bg-gray-50 rounded-2xl grid grid-cols-8 gap-2 max-h-48 overflow-y-auto"
+        @click.stop
       >
         <button
           v-for="emoji in emojis"
@@ -120,9 +109,7 @@
         </button>
       </div>
 
-      <!-- 输入栏 -->
       <div class="flex items-end space-x-1.5">
-        <!-- 语音按钮 -->
         <button
           @mousedown="startRecording"
           @mouseup="stopRecording"
@@ -136,12 +123,11 @@
           ]"
         >
           <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
-            <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
+            <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
           </svg>
         </button>
 
-        <!-- 文本输入框 -->
         <div class="flex-1 bg-gray-50 rounded-2xl flex items-center min-w-0">
           <textarea
             ref="textInput"
@@ -149,12 +135,11 @@
             placeholder="输入消息..."
             rows="1"
             class="flex-1 bg-transparent px-3 py-2.5 focus:outline-none resize-none max-h-32 overflow-y-auto text-sm"
-            @input="adjustTextareaHeight"
+            @input="handleInputChange"
             @keydown.enter.exact.prevent="handleSendMessage()"
             @focus="showEmojiPicker = false"
           ></textarea>
 
-          <!-- Emoji按钮 -->
           <button
             @click.stop="toggleEmojiPicker"
             :class="[
@@ -163,51 +148,42 @@
             ]"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </button>
 
-          <!-- 图片按钮 -->
           <button
             @click="triggerImageUpload"
             class="p-2 text-gray-600 hover:text-teal-500 transition-colors flex-shrink-0"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </button>
           <input
             ref="imageInput"
             type="file"
             accept="image/*"
-            multiple
             class="hidden"
             @change="handleImageUpload"
           />
         </div>
 
-        <!-- 发送按钮 -->
         <button
           @click="handleSendMessage()"
-          :disabled="!messageInput.trim()"
+          :disabled="sendDisabled"
           :class="[
             'p-2.5 rounded-full transition-all duration-200 flex-shrink-0',
-            messageInput.trim()
-              ? 'bg-teal-500 text-white hover:bg-teal-600'
-              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            !sendDisabled ? 'bg-teal-500 text-white hover:bg-teal-600' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
           ]"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
           </svg>
         </button>
       </div>
 
-      <!-- 录音提示 -->
-      <div
-        v-if="isRecording"
-        class="mt-3 text-center"
-      >
+      <div v-if="isRecording" class="mt-3 text-center">
         <div class="inline-flex items-center space-x-2 bg-red-50 text-red-600 px-4 py-2 rounded-full">
           <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
           <span class="text-sm font-medium">正在录音 {{ recordingDuration }}"</span>
@@ -216,23 +192,15 @@
       </div>
     </div>
 
-    <!-- 图片预览模态框 -->
     <div
       v-if="previewImageUrl"
       @click="previewImageUrl = null"
       class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
     >
-      <img
-        :src="previewImageUrl"
-        alt="预览"
-        class="max-w-full max-h-full object-contain"
-      />
-      <button
-        @click="previewImageUrl = null"
-        class="absolute top-4 right-4 p-2 bg-white/20 rounded-full text-white"
-      >
+      <img :src="previewImageUrl" alt="预览" class="max-w-full max-h-full object-contain" />
+      <button @click.stop="previewImageUrl = null" class="absolute top-4 right-4 p-2 bg-white/20 rounded-full text-white">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
     </div>
@@ -240,12 +208,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick, onUnmounted } from 'vue'
+import { ref, onMounted, nextTick, onUnmounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { sendMessage, getMessages, recallMessage, reportMessage, clearConversation, getConversationInfo, markConversationAsRead } from '@/api/message'
+import { uploadImage } from '@/api/upload'
+import { socketService } from '@/services/socket'
+import { useUserStore } from '@/stores/user'
+import toast from '@/utils/toast'
 
 const router = useRouter()
 const route = useRoute()
+const userStore = useUserStore()
 
+const conversationId = ref<string>(route.params.id as string)
 const messageInput = ref('')
 const messagesContainer = ref<HTMLDivElement>()
 const imageInput = ref<HTMLInputElement>()
@@ -254,116 +229,166 @@ const showEmojiPicker = ref(false)
 const isRecording = ref(false)
 const recordingDuration = ref(0)
 const previewImageUrl = ref<string | null>(null)
+const isLimited = ref(false)
+const remainingMessages = ref<number | undefined>(undefined)
+const isBlacklisted = ref(false)
+const typingUsers = ref<Set<string>>(new Set())
 
+let typingTimeout: number | null = null
 let recordingTimer: number | null = null
-let recordingStartTime: number = 0
+let recordingStartTime = 0
 
-interface Message {
+interface ChatMessage {
   id: string
-  type: 'text' | 'image' | 'voice'
   content: string
-  isOwn: boolean
-  timestamp: Date
-  duration?: number
+  contentType: 'text' | 'image' | 'file'
+  senderId: string
+  createdAt: string
+  isRecalled?: boolean
+  imageUrl?: string
+  fileUrl?: string
 }
 
-// 聊天用户信息（根据路由参数动态获取）
+const messages = ref<ChatMessage[]>([])
+
+const messageExists = (id: string) => messages.value.some((m) => m.id === id)
+
 const chatUser = ref({
-  id: route.params.id as string,
-  name: '李华 (徒步达人)',
-  avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
-  isOnline: true
+  id: '',
+  name: '对方',
+  avatar: '',
+  isOnline: true,
 })
 
-// 根据用户ID设置不同的聊天对象
-const setChatUser = () => {
-  const userId = route.params.id as string
-  const users: Record<string, any> = {
-    '1': {
-      id: '1',
-      name: '李华 (徒步达人)',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
-      isOnline: true
-    },
-    '2': {
-      id: '2',
-      name: '小美',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
-      isOnline: false
-    },
-    '3': {
-      id: '3',
-      name: '张三-领队',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop',
-      isOnline: false
-    },
-    '4': {
-      id: '4',
-      name: '王五',
-      avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop',
-      isOnline: false
-    }
+const emojis = ['😊', '😂', '❤️', '👍', '🙏', '😍', '😭', '🤔', '👏', '🎉', '🔥', '💪', '🌟', '✨', '🌈', '🌸', '🌺', '🌻', '🌞', '🌙', '⭐', '💫', '✅', '❌']
+
+const loadConversation = async () => {
+  const id = route.params.id as string
+  conversationId.value = id
+  try {
+    const info = await getConversationInfo(id)
+    const { otherUserId, isLimited: limited, remainingMessages: remain, isBlacklisted: black } = info || {}
+    chatUser.value.id = otherUserId || chatUser.value.id || id
+    isLimited.value = !!limited
+    remainingMessages.value = remain
+    isBlacklisted.value = !!black
+
+    const list = await getMessages(id)
+    const rawMessages = (list?.messages || list || []) as any[]
+    messages.value = rawMessages.map((m: any) => ({
+      id: String(m.id),
+      content: m.content || m.image_url || m.file_url || '',
+      contentType: (m.content_type || m.contentType || 'text') as 'text' | 'image' | 'file',
+      senderId: String(m.sender_id || m.senderId),
+      createdAt: m.created_at || m.createdAt,
+      isRecalled: m.is_recalled,
+      imageUrl: m.image_url,
+      fileUrl: m.file_url,
+    }))
+    await markConversationAsRead(conversationId.value)
+    scrollToBottom()
+  } catch (err: any) {
+    toast.error(err?.message || '加载失败')
   }
-  chatUser.value = users[userId] || users['1']
 }
 
-// 消息列表
-const messages = ref<Message[]>([
-  {
-    id: '1',
-    type: 'text',
-    content: '你好！周六的香山徒步活动确定了吗？',
-    isOwn: false,
-    timestamp: new Date(Date.now() - 3600000)
-  },
-  {
-    id: '2',
-    type: 'text',
-    content: '确定了！我们早上8点在南门集合',
-    isOwn: true,
-    timestamp: new Date(Date.now() - 3000000)
-  },
-  {
-    id: '3',
-    type: 'image',
-    content: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop',
-    isOwn: false,
-    timestamp: new Date(Date.now() - 1800000)
-  },
-  {
-    id: '4',
-    type: 'text',
-    content: '看这里的风景多美！😊',
-    isOwn: false,
-    timestamp: new Date(Date.now() - 1800000)
+const handleSendMessage = async (contentType: 'text' | 'image' = 'text', payload?: { imageUrl?: string }) => {
+  if (isBlacklisted.value) {
+    toast.warning('你已被对方拉黑，无法发送')
+    return
   }
-])
+  if (isLimited.value && remainingMessages.value !== undefined && remainingMessages.value <= 0) {
+    toast.warning('单向关注仅可发送3条消息')
+    return
+  }
+  const trimmed = messageInput.value.trim()
+  if (contentType === 'text' && !trimmed) return
 
-// Emoji列表
-const emojis = [
-  '😊', '😂', '❤️', '👍', '🙏', '😍', '😭', '🤔',
-  '👏', '🎉', '🔥', '💪', '🌟', '✨', '🌈', '🌸',
-  '🌺', '🌻', '🌞', '🌙', '⭐', '💫', '✅', '❌'
-]
+  try {
+    const res = await sendMessage(
+      conversationId.value,
+      contentType === 'text' ? trimmed : '',
+      contentType,
+      payload?.imageUrl,
+      undefined
+    )
+    const sent = res?.message || res?.data?.message || res
+    if (sent && !messageExists(String(sent.id))) {
+      messages.value.push({
+        id: String(sent.id),
+        content: sent.content || sent.image_url || sent.file_url || '',
+        contentType: (sent.content_type || contentType) as 'text' | 'image' | 'file',
+        senderId: String(sent.sender_id || userStore.userId),
+        createdAt: sent.created_at || new Date().toISOString(),
+        isRecalled: sent.is_recalled,
+        imageUrl: sent.image_url,
+        fileUrl: sent.file_url,
+      })
+    }
+    if (res?.remainingMessages !== undefined) {
+      remainingMessages.value = res.remainingMessages
+      isLimited.value = (remainingMessages.value || 0) < 3
+    }
+    if (contentType === 'text') messageInput.value = ''
+    adjustTextareaHeight()
+    scrollToBottom()
+  } catch (err: any) {
+    toast.error(err?.message || '发送失败')
+  }
+}
 
-onMounted(() => {
-  setChatUser()
-  scrollToBottom()
-
-  // 点击外部关闭emoji选择器
-  document.addEventListener('click', handleClickOutside)
+const sendDisabled = computed(() => {
+  const limitedEmpty = isLimited.value && remainingMessages.value !== undefined && remainingMessages.value <= 0
+  return isBlacklisted.value || limitedEmpty || !messageInput.value.trim()
 })
 
-onUnmounted(() => {
-  if (recordingTimer) {
-    clearInterval(recordingTimer)
+const handleImageUpload = async (e: Event) => {
+  const files = (e.target as HTMLInputElement).files
+  if (!files || !files.length) return
+  const file = files[0]
+  if (file.size > 10 * 1024 * 1024) {
+    toast.warning('图片大小不能超过10MB')
+    ;(e.target as HTMLInputElement).value = ''
+    return
   }
-  document.removeEventListener('click', handleClickOutside)
-})
+  try {
+    const uploadRes = await uploadImage(file)
+    const url = uploadRes?.data?.url || uploadRes?.url
+    if (!url) throw new Error('上传失败')
+    await handleSendMessage('image', { imageUrl: url })
+  } catch (err: any) {
+    toast.error(err?.message || '上传失败')
+  } finally {
+    ;(e.target as HTMLInputElement).value = ''
+  }
+}
 
-const handleClickOutside = () => {
-  if (showEmojiPicker.value) {
-    showEmojiPicker.value = false
+const handleRecall = async (messageId: string) => {
+  try {
+    await recallMessage(messageId)
+    messages.value = messages.value.map((m) => (m.id === messageId ? { ...m, isRecalled: true } : m))
+    toast.success('已撤回')
+  } catch (err: any) {
+    toast.error(err?.message || '撤回失败')
+  }
+}
+
+const handleReport = async (messageId: string) => {
+  try {
+    await reportMessage(messageId, 'inappropriate')
+    toast.success('已举报')
+  } catch (err: any) {
+    toast.error(err?.message || '举报失败')
+  }
+}
+
+const handleClear = async () => {
+  try {
+    await clearConversation(conversationId.value)
+    messages.value = []
+    toast.success('已清空并归档')
+  } catch (err: any) {
+    toast.error(err?.message || '清空失败')
   }
 }
 
@@ -378,7 +403,6 @@ const scrollToBottom = () => {
 const formatTime = (date: Date) => {
   const now = new Date()
   const diff = now.getTime() - date.getTime()
-
   if (diff < 60000) return '刚刚'
   if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`
   if (diff < 86400000) return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
@@ -393,143 +417,135 @@ const adjustTextareaHeight = () => {
   }
 }
 
-const handleSendMessage = () => {
-  if (!messageInput.value.trim()) return
-
-  const newMessage: Message = {
-    id: Date.now().toString(),
-    type: 'text',
-    content: messageInput.value.trim(),
-    isOwn: true,
-    timestamp: new Date()
-  }
-
-  messages.value.push(newMessage)
-  messageInput.value = ''
-  showEmojiPicker.value = false
-
-  // 重置textarea高度
-  if (textInput.value) {
-    textInput.value.style.height = 'auto'
-  }
-
-  scrollToBottom()
-
-  // 模拟对方回复
-  setTimeout(() => {
-    const autoReply: Message = {
-      id: (Date.now() + 1).toString(),
-      type: 'text',
-      content: '收到！👍',
-      isOwn: false,
-      timestamp: new Date()
-    }
-    messages.value.push(autoReply)
-    scrollToBottom()
-  }, 1000)
+const handleSendTyping = (typing: boolean) => {
+  socketService.sendTyping(conversationId.value, typing)
 }
 
-const toggleEmojiPicker = (e: Event) => {
-  e.stopPropagation()
-  showEmojiPicker.value = !showEmojiPicker.value
+const handleTypingInput = () => {
+  handleSendTyping(true)
+  if (typingTimeout) window.clearTimeout(typingTimeout)
+  typingTimeout = window.setTimeout(() => handleSendTyping(false), 1500)
 }
+
+const handleInputChange = () => {
+  adjustTextareaHeight()
+  handleTypingInput()
+}
+
+const handleClickOutside = () => {
+  if (showEmojiPicker.value) showEmojiPicker.value = false
+}
+
+const triggerImageUpload = () => imageInput.value?.click()
 
 const insertEmoji = (emoji: string) => {
   messageInput.value += emoji
-  textInput.value?.focus()
+  handleInputChange()
 }
 
-const triggerImageUpload = () => {
-  showEmojiPicker.value = false
-  imageInput.value?.click()
-}
-
-const handleImageUpload = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  const files = target.files
-
-  if (files && files.length > 0) {
-    Array.from(files).forEach(file => {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const newMessage: Message = {
-          id: Date.now().toString() + Math.random(),
-          type: 'image',
-          content: e.target?.result as string,
-          isOwn: true,
-          timestamp: new Date()
-        }
-        messages.value.push(newMessage)
-        scrollToBottom()
-      }
-      reader.readAsDataURL(file)
-    })
-
-    // 重置input
-    target.value = ''
-  }
+const toggleEmojiPicker = () => {
+  showEmojiPicker.value = !showEmojiPicker.value
 }
 
 const startRecording = () => {
   if (isRecording.value) return
-
   isRecording.value = true
-  recordingDuration.value = 0
   recordingStartTime = Date.now()
-
+  recordingDuration.value = 0
   recordingTimer = window.setInterval(() => {
     recordingDuration.value = Math.floor((Date.now() - recordingStartTime) / 1000)
-
-    // 最多录60秒
-    if (recordingDuration.value >= 60) {
-      stopRecording()
-    }
-  }, 100)
+    if (recordingDuration.value >= 60) stopRecording()
+  }, 200)
 }
 
 const stopRecording = () => {
   if (!isRecording.value) return
-
+  isRecording.value = false
   if (recordingTimer) {
     clearInterval(recordingTimer)
     recordingTimer = null
   }
-
-  // 至少录制1秒才发送
-  if (recordingDuration.value >= 1) {
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      type: 'voice',
-      content: 'voice_message',
-      isOwn: true,
-      timestamp: new Date(),
-      duration: recordingDuration.value
-    }
-    messages.value.push(newMessage)
-    scrollToBottom()
-  }
-
-  isRecording.value = false
   recordingDuration.value = 0
 }
 
 const cancelRecording = () => {
+  if (!isRecording.value) return
+  isRecording.value = false
   if (recordingTimer) {
     clearInterval(recordingTimer)
     recordingTimer = null
   }
-
-  isRecording.value = false
   recordingDuration.value = 0
-}
-
-const playVoice = (message: Message) => {
-  // 模拟播放语音
-  console.log('播放语音消息:', message.id, '时长:', message.duration)
-  // 这里可以集成真实的音频播放功能
 }
 
 const previewImage = (url: string) => {
   previewImageUrl.value = url
 }
+
+const socketUnsubscribers: Array<() => void> = []
+
+onMounted(async () => {
+  await loadConversation()
+  scrollToBottom()
+  document.addEventListener('click', handleClickOutside)
+
+  socketUnsubscribers.push(
+    socketService.onMessageReceived((data: any) => {
+      if (String(data.conversationId || data.conversation_id) !== conversationId.value) return
+      const incomingId = String(data.id || data.message?.id || Date.now())
+      if (messageExists(incomingId)) return
+      messages.value.push({
+        id: incomingId,
+        content: data.message?.content || data.content || data.message?.image_url || data.imageUrl || '',
+        contentType: (data.message?.content_type || data.contentType || 'text') as 'text' | 'image' | 'file',
+        senderId: String(data.message?.sender_id || data.senderId || data.sender_id),
+        createdAt: data.message?.created_at || data.createdAt || new Date().toISOString(),
+        isRecalled: data.message?.is_recalled,
+        imageUrl: data.message?.image_url || data.imageUrl,
+        fileUrl: data.message?.file_url || data.fileUrl,
+      })
+      if (String(data.message?.sender_id || data.senderId || data.sender_id) !== String(userStore.userId)) {
+        markConversationAsRead(conversationId.value).catch(() => {})
+      }
+      scrollToBottom()
+    })
+  )
+
+  socketUnsubscribers.push(
+    socketService.onRecall((data: any) => {
+      if (String(data.conversationId) !== conversationId.value) return
+      messages.value = messages.value.map((m) => (m.id === String(data.messageId) ? { ...m, isRecalled: true } : m))
+    })
+  )
+
+  socketUnsubscribers.push(
+    socketService.onBlacklist((data: any) => {
+      if (String(data.targetUserId) === userStore.userId || String(data.userId) === chatUser.value.id) {
+        isBlacklisted.value = data.action === 'added'
+      }
+    })
+  )
+
+  socketUnsubscribers.push(
+    socketService.onUserTyping((data: any) => {
+      if (String(data.conversationId) !== conversationId.value) return
+      const set = new Set(typingUsers.value)
+      if (data.isTyping && data.fromUserId !== userStore.userId) {
+        set.add(String(data.fromUserId))
+      } else {
+        set.delete(String(data.fromUserId))
+      }
+      typingUsers.value = set
+      if (typingTimeout) window.clearTimeout(typingTimeout)
+      typingTimeout = window.setTimeout(() => {
+        typingUsers.value = new Set()
+      }, 3000)
+    })
+  )
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+  socketUnsubscribers.forEach((off) => off())
+})
 </script>

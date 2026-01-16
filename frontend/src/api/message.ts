@@ -40,6 +40,14 @@ export const getMessages = async (
 }
 
 /**
+ * 获取对话信息（限制、黑名单等）
+ */
+export const getConversationInfo = async (conversationId: string) => {
+  const response = await request.get(`/messages/conversations/${conversationId}/info`)
+  return response.data.data
+}
+
+/**
  * 发送消息
  */
 export const sendMessage = async (
@@ -166,6 +174,7 @@ export default {
   getConversations,
   createConversation,
   getMessages,
+  getConversationInfo,
   sendMessage,
   markMessageAsRead,
   markConversationAsRead,

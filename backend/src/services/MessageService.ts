@@ -2,6 +2,8 @@ import { Message } from '../models/Message'
 import { Conversation } from '../models/Conversation'
 import { User } from '../models/User'
 import { Op, Sequelize } from 'sequelize'
+import { pool } from '../config/database'
+import { RowDataPacket, ResultSetHeader } from 'mysql2'
 
 /**
  * 消息服务 - 处理聊天消息的业务逻辑
@@ -45,38 +47,80 @@ export class MessageService {
     page: number = 1,
     limit: number = 20
   ): Promise<{
-    conversations: Conversation[]
+    conversations: any[]
     total: number
     totalPages: number
   }> {
     const offset = (page - 1) * limit
 
-    const { count, rows } = await Conversation.findAndCountAll({
-      where: {
-        [Op.or]: [{ userId1: userId }, { userId2: userId }],
-        deletedAt: null,
-      },
-      include: [
-        {
-          model: User,
-          as: 'user1',
-          attributes: ['id', 'nickname', 'avatarUrl', 'hikingLevel'],
-        },
-        {
-          model: User,
-          as: 'user2',
-          attributes: ['id', 'nickname', 'avatarUrl', 'hikingLevel'],
-        },
-      ],
-      order: [['lastMessageAt', 'DESC']],
-      limit,
-      offset,
-    })
+    try {
+      // 获取总数
+      const [countResult] = await pool.query<RowDataPacket[]>(
+        `SELECT COUNT(*) as count
+         FROM conversations
+         WHERE (user_id1 = ? OR user_id2 = ?) AND deleted_at IS NULL`,
+        [userId, userId]
+      )
+      const total = countResult[0]?.count || 0
 
-    return {
-      conversations: rows,
-      total: count,
-      totalPages: Math.ceil(count / limit),
+      // 获取对话列表
+      const [conversations] = await pool.query<RowDataPacket[]>(
+        `SELECT
+          c.id,
+          c.user_id1 as userId1,
+          c.user_id2 as userId2,
+          c.last_message_content as lastMessageContent,
+          c.last_message_at as lastMessageAt,
+          c.user1_unread_count as user1UnreadCount,
+          c.user2_unread_count as user2UnreadCount,
+          c.created_at as createdAt,
+          c.updated_at as updatedAt,
+          u1.id as user1_id,
+          u1.nickname as user1_nickname,
+          u1.avatar_url as user1_avatarUrl,
+          u2.id as user2_id,
+          u2.nickname as user2_nickname,
+          u2.avatar_url as user2_avatarUrl
+        FROM conversations c
+        LEFT JOIN users u1 ON c.user_id1 = u1.id
+        LEFT JOIN users u2 ON c.user_id2 = u2.id
+        WHERE (c.user_id1 = ? OR c.user_id2 = ?) AND c.deleted_at IS NULL
+        ORDER BY c.last_message_at DESC
+        LIMIT ? OFFSET ?`,
+        [userId, userId, limit, offset]
+      )
+
+      // 格式化数据
+      const formattedConversations = conversations.map((row: any) => ({
+        id: row.id,
+        userId1: row.userId1,
+        userId2: row.userId2,
+        lastMessageContent: row.lastMessageContent,
+        lastMessageAt: row.lastMessageAt,
+        user1UnreadCount: row.user1UnreadCount || 0,
+        user2UnreadCount: row.user2UnreadCount || 0,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        user1: row.user1_id ? {
+          id: row.user1_id,
+          nickname: row.user1_nickname,
+          avatarUrl: row.user1_avatarUrl,
+        } : null,
+        user2: row.user2_id ? {
+          id: row.user2_id,
+          nickname: row.user2_nickname,
+          avatarUrl: row.user2_avatarUrl,
+        } : null,
+      }))
+
+      return {
+        conversations: formattedConversations,
+        total,
+        totalPages: Math.ceil(total / limit),
+      }
+    } catch (error) {
+      console.error('getConversations error:', error)
+      throw error
     }
   }
 
@@ -274,22 +318,24 @@ export class MessageService {
    * 获取未读消息数量
    */
   async getUnreadCount(userId: string): Promise<number> {
-    const conversations = await Conversation.findAll({
-      where: {
-        [Op.or]: [{ userId1: userId }, { userId2: userId }],
-      },
-    })
+    try {
+      const [rows] = await pool.query<RowDataPacket[]>(
+        `SELECT
+          SUM(CASE
+            WHEN user_id1 = ? THEN user1_unread_count
+            WHEN user_id2 = ? THEN user2_unread_count
+            ELSE 0
+          END) as totalUnread
+        FROM conversations
+        WHERE (user_id1 = ? OR user_id2 = ?)`,
+        [userId, userId, userId, userId]
+      )
 
-    let totalUnread = 0
-    conversations.forEach((conv) => {
-      if (String(conv.userId1) === String(userId)) {
-        totalUnread += conv.user1UnreadCount || 0
-      } else {
-        totalUnread += conv.user2UnreadCount || 0
-      }
-    })
-
-    return totalUnread
+      return rows[0]?.totalUnread || 0
+    } catch (error) {
+      console.error('getUnreadCount error:', error)
+      return 0
+    }
   }
 
   /**

@@ -48,11 +48,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useMessageStore } from '@/stores/message'
 
 const route = useRoute()
-const unreadCount = ref(3) // Mock 未读消息数
+const messageStore = useMessageStore()
+
+const unreadCount = computed(() => messageStore.totalUnread || 0)
+
+// 轻量初始化：如果未读数为 0 且会话列表为空，主动拉取未读/会话
+if (!messageStore.unreadCount) {
+  messageStore.fetchUnreadCount().catch(() => {})
+}
+if (!messageStore.conversations?.length) {
+  messageStore.fetchConversations().catch(() => {})
+}
 
 const isActive = (path: string) => {
   return route.path === path || route.path.startsWith(path + '/')

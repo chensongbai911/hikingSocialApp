@@ -51,6 +51,22 @@ export const useMessageStore = defineStore('message', () => {
   const typingUsers = ref<Set<string>>(new Set())
 
   const userStore = useUserStore()
+  const currentUserId = computed(() => userStore.currentUser?.id || userStore.currentUser?.user_id || '')
+
+  const getUnreadForConversation = (conversation: Conversation) => {
+    if (!conversation) return 0
+    return conversation.userId1 === currentUserId.value
+      ? conversation.user1UnreadCount
+      : conversation.user2UnreadCount
+  }
+
+  const totalUnread = computed(() => {
+    const sumFromConversations = conversations.value.reduce(
+      (sum, c) => sum + (getUnreadForConversation(c) || 0),
+      0
+    )
+    return sumFromConversations > 0 ? sumFromConversations : unreadCount.value
+  })
 
   /**
    * 获取对话列表
@@ -66,6 +82,10 @@ export const useMessageStore = defineStore('message', () => {
         total: result.total || 0,
         totalPages: result.totalPages || 0,
       }
+      unreadCount.value = conversations.value.reduce(
+        (sum, c) => sum + (getUnreadForConversation(c) || 0),
+        0
+      )
     } catch (error) {
       console.error('Failed to fetch conversations:', error)
       throw error
@@ -173,6 +193,16 @@ export const useMessageStore = defineStore('message', () => {
       conversation.lastMessageContent =
         message.content?.substring(0, 100) || '[消息]'
       conversation.lastMessageAt = new Date().toISOString()
+      const isSelf = message.senderId === currentUserId.value
+      const isCurrent = message.conversationId === currentConversationId.value
+      if (!isSelf && !isCurrent) {
+        if (conversation.userId1 === currentUserId.value) {
+          conversation.user1UnreadCount += 1
+        } else {
+          conversation.user2UnreadCount += 1
+        }
+        unreadCount.value = totalUnread.value
+      }
     }
   }
 
@@ -204,6 +234,7 @@ export const useMessageStore = defineStore('message', () => {
         } else {
           conversation.user2UnreadCount = 0
         }
+        unreadCount.value = totalUnread.value
       }
     } catch (error) {
       console.error('Failed to mark conversation as read:', error)
@@ -339,6 +370,7 @@ export const useMessageStore = defineStore('message', () => {
     isLoading,
     unreadCount,
     typingUsers,
+    totalUnread,
 
     // Getters
     currentConversation: computed(() => {

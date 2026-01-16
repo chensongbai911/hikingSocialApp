@@ -237,6 +237,45 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
+  // 上传头像
+  const uploadAvatar = async (file: File): Promise<string | null> => {
+    try {
+      loading.value = true
+      error.value = null
+
+      const formData = new FormData()
+      formData.append('avatar', file)
+
+      const response = await userApi.uploadAvatar(formData)
+
+      if (response.code === 200 && response.data) {
+        // 获取头像URL（可能是相对路径）
+        let avatarUrl = response.data.avatar_url || response.data.url
+        
+        // 如果是相对路径，拼接完整URL
+        if (avatarUrl && avatarUrl.startsWith('/')) {
+          const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+          avatarUrl = `${baseURL}${avatarUrl}`
+        }
+
+        // 更新当前用户头像
+        if (currentUser.value) {
+          currentUser.value.avatar_url = avatarUrl
+          localStorage.setItem('currentUser', JSON.stringify(currentUser.value))
+        }
+        return avatarUrl
+      }
+
+      error.value = response.message || '头像上传失败'
+      return null
+    } catch (err: any) {
+      error.value = err.message || '头像上传失败'
+      return null
+    } finally {
+      loading.value = false
+    }
+  }
+
   // 立即初始化
   initUser()
 
@@ -258,6 +297,7 @@ export const useUserStore = defineStore('user', () => {
     updatePreferences,
     addLocalPhoto,
     deletePhoto,
+    uploadAvatar,
     logout,
     initUser,
   }

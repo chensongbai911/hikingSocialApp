@@ -22,16 +22,14 @@
       <div class="flex flex-col items-center mb-6">
         <div class="relative mb-4">
           <img
-            :src="userProfile.avatar"
+            :src="(userProfile.avatar || defaultAvatar) + '?t=' + Date.now()"
             :alt="userProfile.nickname"
-            class="w-28 h-28 rounded-full object-cover border-4 border-white shadow-lg"
+            class="w-28 h-28 rounded-full object-cover border-4 border-white shadow-lg cursor-pointer hover:opacity-80 transition-opacity"
+            @click="openAvatarUpload"
           />
-          <div class="absolute bottom-0 right-0 w-10 h-10 bg-teal-500 rounded-full flex items-center justify-center border-4 border-white">
+          <div class="absolute bottom-0 right-0 w-10 h-10 bg-teal-500 rounded-full flex items-center justify-center border-4 border-white cursor-pointer hover:bg-teal-600 transition-colors" @click="openAvatarUpload">
             <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-              <path d="M0 0h24v24H0z" fill="none"/>
-              <circle cx="12" cy="8" r="1.5"/>
-              <path d="M12 15c-1.5 0-2.7.4-3.6.9l-.9.6c-.3.2-.5.6-.5 1v.5h10v-.5c0-.4-.2-.8-.5-1l-.9-.6c-.9-.5-2.1-.9-3.6-.9z"/>
+              <path d="M3 9.5A1.5 1.5 0 004.5 8h15A1.5 1.5 0 0121 9.5v9a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 18.5v-9zm9-2a4 4 0 110 8 4 4 0 010-8z" fill="currentColor"/>
             </svg>
           </div>
         </div>
@@ -57,14 +55,14 @@
       </div>
 
       <!-- 地区信息 -->
-      <div v-if="userProfile.region || userProfile.city || userProfile.province" class="bg-white rounded-2xl shadow-sm p-5 mb-4">
+      <div class="bg-white rounded-2xl shadow-sm p-5 mb-4">
         <h3 class="text-sm font-semibold text-gray-500 mb-3">所在地</h3>
         <div class="flex items-center gap-2 text-gray-700">
           <svg class="w-5 h-5 text-teal-500" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
           </svg>
           <span>
-            {{ userProfile.region || `${userProfile.province || ''} ${userProfile.city || ''}`.trim() || '未设置' }}
+            {{ getLocationText() }}
           </span>
         </div>
       </div>
@@ -218,6 +216,11 @@ import toast from '@/utils/toast';
 const router = useRouter();
 const userStore = useUserStore();
 
+// 默认头像
+const defaultAvatar = 'https://api.dicebear.com/7.x/avataaars/svg?seed=default';
+const showAvatarUpload = ref(false);
+const avatarFile = ref<File | null>(null);
+
 // 照片预览相关状态
 const showPreview = ref(false);
 const currentPreviewIndex = ref(0);
@@ -367,6 +370,56 @@ const nextPhoto = () => {
 // 前往隐私设置
 const goToPrivacySettings = () => {
   router.push('/privacy-settings');
+};
+
+// 打开头像上传
+const openAvatarUpload = () => {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = async (e: Event) => {
+    const target = e.target as HTMLInputElement;
+    const file = target.files?.[0];
+    if (file) {
+      try {
+        avatarFile.value = file;
+        await uploadAndUpdateAvatar(file);
+      } catch (error) {
+        console.error('头像上传失败:', error);
+        toast.error('头像上传失败，请重试');
+      }
+    }
+  };
+  input.click();
+};
+
+// 上传并更新头像
+const uploadAndUpdateAvatar = async (file: File) => {
+  try {
+    toast.info('正在上传头像...');
+
+    // 调用 userStore 中的头像上传方法
+    const newAvatarUrl = await userStore.uploadAvatar(file);
+
+    if (newAvatarUrl) {
+      toast.success('头像已更新');
+      // 重新加载用户信息
+      await userStore.fetchCurrentUser();
+    } else {
+      toast.error('头像上传失败');
+    }
+  } catch (error) {
+    console.error('更新头像失败:', error);
+    throw error;
+  }
+};
+
+// 获取地区文本
+const getLocationText = () => {
+  const { region, province, city } = userProfile.value;
+  if (region) return region;
+  const location = [province, city].filter(Boolean).join(' ');
+  return location || '未设置';
 };
 
 // 加载用户资料

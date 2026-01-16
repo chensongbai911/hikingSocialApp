@@ -200,7 +200,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { userApi, activityApi } from '@/api'
 import toast from '@/utils/toast'
@@ -213,6 +213,10 @@ const user = ref<any>(null)
 const loading = ref(true)
 const isFollowing = ref(false)
 const followLoading = ref(false)
+
+// 防止重复请求的标记
+let isLoadingData = false
+let loadedUserId: string | null = null
 
 // 显示的徒步足迹（前3个）
 const displayedTrails = computed(() => {
@@ -300,8 +304,17 @@ onMounted(async () => {
     return
   }
 
+  // 防止重复加载同一用户
+  if (isLoadingData || loadedUserId === userId) {
+    console.log('防止重复加载:', userId)
+    return
+  }
+
   try {
+    isLoadingData = true
+    loadedUserId = userId
     loading.value = true
+
     // 从 API 获取用户详情（包含关注者、徒步次数等）
     const [detailRes, joinedRes, followStatusRes] = await Promise.all([
       userApi.getUserDetail(userId),
@@ -362,7 +375,14 @@ onMounted(async () => {
     router.back()
   } finally {
     loading.value = false
+    isLoadingData = false
   }
+})
+
+// 组件卸载时重置标记，允许下次访问重新加载
+onBeforeUnmount(() => {
+  loadedUserId = null
+  isLoadingData = false
 })
 </script>
 

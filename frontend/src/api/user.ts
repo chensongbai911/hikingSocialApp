@@ -107,6 +107,18 @@ export const userApi = {
   async getFollowStatus(userId: string): Promise<ApiResponse<{ is_following: boolean }>> {
     return api.get(`/users/${userId}/follow-status`)
   },
+
+  /**
+   * 上传头像
+   * POST /users/avatar
+   */
+  async uploadAvatar(formData: FormData): Promise<ApiResponse<{ avatar_url: string; url: string }>> {
+    return api.post('/users/avatar', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+  },
 }
 
 export default userApi
