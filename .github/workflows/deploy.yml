@@ -13,20 +13,36 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
+          # 尝试使用 SSH 方式拉取（避免服务器无法访问 GitHub 443 的问题）
+          if [ -n "${GITHUB_DEPLOY_KEY}" ]; then
+            echo "🔑 配置 GitHub SSH 部署密钥..."
+            mkdir -p ~/.ssh
+            echo "${GITHUB_DEPLOY_KEY}" > ~/.ssh/github_deploy_key
+            chmod 600 ~/.ssh/github_deploy_key
+            touch ~/.ssh/known_hosts
+            ssh-keyscan -p 22 github.com >> ~/.ssh/known_hosts || true
+            export GIT_SSH_COMMAND="ssh -i ~/.ssh/github_deploy_key -o StrictHostKeyChecking=no -p 22"
+            GIT_URL="git@github.com:${{ github.repository }}.git"
+          else
+            echo "⚠️ 未提供 GITHUB_DEPLOY_KEY，回退使用 https（可能被防火墙拦截）"
+            GIT_URL="https://github.com/${{ github.repository }}.git"
+          fi
+
     - name: Setup Node.js
       uses: actions/setup-node@v3
-      with:
-        node-version: '18'
+            git fetch origin || git fetch "$GIT_URL"
+            git reset --hard origin/master || git reset --hard FETCH_HEAD
         cache: 'npm'
         cache-dependency-path: backend/package-lock.json
 
     - name: Build backend
-      run: |
+            git clone "$GIT_URL" hikingSocialApp
         cd backend
         npm ci
 
         # 清理旧的构建文件
         rm -rf dist
+        GITHUB_DEPLOY_KEY: ${{ secrets.GITHUB_DEPLOY_KEY }}
 
         # 构建
         npm run build
