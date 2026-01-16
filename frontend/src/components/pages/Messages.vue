@@ -124,7 +124,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { getConversations, markConversationAsRead } from '@/api/message'
 import { socketService } from '@/services/socket'
 import { useUserStore } from '@/stores/user'
@@ -143,6 +143,7 @@ const throttle = (fn: (...args: any[]) => void, delay = 600) => {
 }
 
 const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
 
 const searchQuery = ref('')
@@ -291,6 +292,18 @@ const onScroll = (e: Event) => {
 
 onMounted(async () => {
   await loadConversations()
+
+  // 如果从 URL 中传入了 conversationId，自动打开该对话
+  const conversationId = route.query.conversationId as string
+  if (conversationId) {
+    // 等待对话列表加载完成后再打开
+    setTimeout(() => {
+      const chat = chats.value.find(c => c.id === conversationId)
+      if (chat) {
+        openChat(chat)
+      }
+    }, 300)
+  }
 
   socketOff.push(
     socketService.onMessageReceived((data: any) => {

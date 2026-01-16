@@ -33,23 +33,58 @@
     <!-- 用户信息卡片 -->
     <div class="relative px-4 -mt-16">
       <div class="bg-white rounded-3xl shadow-xl p-6">
-        <!-- 头像和基本信息 -->
-        <div class="flex items-center mb-4">
-          <img
-            :src="(user && user.avatar) || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'"
-            alt="Avatar"
-            class="w-16 h-16 rounded-full border-4 border-white shadow-md"
-          />
-          <div class="ml-4 flex-1">
-            <div class="flex items-center gap-2">
-              <h2 class="text-2xl font-bold text-gray-800">{{ (user && user.nickname) || '加载中...' }}</h2>
-              <span class="px-3 py-1 bg-teal-500 text-white text-xs rounded-full font-semibold">
-                {{ (user && user.hikingLevel) || '新手' }}
-              </span>
+        <!-- 头像和基本信息 - 响应式布局 -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-start justify-between gap-4 sm:gap-4 mb-4">
+          <div class="flex items-start flex-1 min-w-0">
+            <img
+              :src="(user && user.avatar) || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'"
+              alt="Avatar"
+              class="w-16 h-16 rounded-full border-4 border-white shadow-md flex-shrink-0"
+            />
+            <div class="ml-4 flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <h2 class="text-2xl font-bold text-gray-800 truncate">{{ (user && user.nickname) || '加载中...' }}</h2>
+                <span class="px-3 py-1 bg-teal-500 text-white text-xs rounded-full font-semibold flex-shrink-0">
+                  {{ (user && user.hikingLevel) || '新手' }}
+                </span>
+              </div>
+              <p class="text-gray-600 text-sm mt-1 truncate" v-if="user && (user.region || user.province || user.city)">
+                📍 {{ user.region || `${user.province || ''} ${user.city || ''}`.trim() }}
+              </p>
             </div>
-            <p class="text-gray-600 text-sm mt-1" v-if="user && (user.region || user.province || user.city)">
-              📍 {{ user.region || `${user.province || ''} ${user.city || ''}`.trim() }}
-            </p>
+          </div>
+
+          <!-- 关注/私信按钮（卡片右侧） - 响应式 -->
+          <div class="w-full sm:w-auto sm:flex-shrink-0 space-y-2">
+            <!-- 关注按钮 -->
+            <button
+              v-if="!isFollowing"
+              @click="toggleFollow"
+              :disabled="followLoading"
+              class="w-full px-4 py-2 bg-teal-500 text-white rounded-xl font-medium text-sm hover:bg-teal-600 transition active:scale-95 flex items-center justify-center gap-1"
+            >
+              <span v-if="followLoading">⏳</span>
+              <span v-else>+ 关注</span>
+            </button>
+
+            <!-- 私信按钮 -->
+            <button
+              v-if="isFollowing"
+              @click="openChat"
+              :disabled="chatLoading"
+              class="w-full px-4 py-2 bg-teal-500 text-white rounded-xl font-medium text-sm hover:bg-teal-600 transition active:scale-95 flex items-center justify-center gap-1"
+            </button>
+
+            <!-- 取消关注按钮 -->
+            <button
+              v-if="isFollowing"
+              @click="toggleFollow"
+              :disabled="followLoading"
+              class="w-full px-4 py-2 bg-gray-100 text-gray-600 rounded-xl font-medium text-sm hover:bg-gray-200 transition active:scale-95"
+              title="取消关注"
+            >
+              取消
+            </button>
           </div>
         </div>
 
@@ -182,52 +217,8 @@
       </div>
     </div>
 
-    <!-- 底部操作按钮 -->
-    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 shadow-lg">
-      <div class="flex gap-3 max-w-lg mx-auto">
-        <!-- 关注按钮（未关注时） -->
-        <button
-          v-if="!isFollowing"
-          class="flex-1 h-14 bg-teal-500 text-white rounded-2xl font-bold text-base hover:bg-teal-600 transition shadow-lg active:scale-95"
-          @click="toggleFollow"
-          :disabled="followLoading"
-        >
-          <span v-if="followLoading">处理中...</span>
-          <span v-else>+ 关注</span>
-        </button>
-
-        <!-- 私信按钮（已关注时） -->
-        <button
-          v-if="isFollowing"
-          class="flex-1 h-14 bg-teal-500 text-white rounded-2xl font-bold text-base hover:bg-teal-600 transition shadow-lg active:scale-95 flex items-center justify-center gap-2"
-          @click="openChat"
-          :disabled="chatLoading"
-        >
-          <span class="text-xl">💬</span>
-          <span v-if="chatLoading">加载中...</span>
-          <span v-else>发送私信</span>
-        </button>
-
-        <!-- 取消关注按钮（已关注时，辅助按钮） -->
-        <button
-          v-if="isFollowing"
-          class="flex-shrink-0 w-14 h-14 bg-gray-100 text-gray-700 rounded-2xl flex items-center justify-center text-xl hover:bg-gray-200 transition active:scale-95"
-          @click="toggleFollow"
-          :disabled="followLoading"
-          title="取消关注"
-        >
-          ✓
-        </button>
-
-        <!-- 邀请徒步按钮（未关注时，辅助按钮） -->
-        <button
-          v-if="!isFollowing"
-          class="flex-shrink-0 h-14 bg-gray-100 text-gray-700 rounded-2xl font-bold text-base hover:bg-gray-200 transition px-6 active:scale-95"
-        >
-          邀请徒步
-        </button>
-      </div>
-    </div>
+    <!-- 底部预留空间（不显示按钮，因为在卡片中已有） -->
+    <div class="h-8"></div>
   </div>
 </template>
 
@@ -299,17 +290,25 @@ const openChat = async () => {
     const targetUserId = user.value.id
 
     // 创建或获取对话
-    const conversation = await messageApi.createConversation(targetUserId)
+    try {
+      const conversation = await messageApi.createConversation(targetUserId)
 
-    if (conversation && conversation.id) {
-      // 跳转到消息页面，并传递对话 ID
-      toast.success('正在打开私信...')
-      await router.push({
-        path: '/messages',
-        query: { conversationId: conversation.id }
-      })
-    } else {
-      toast.error('创建对话失败')
+      if (conversation && conversation.id) {
+        // 短暂延迟确保对话已在服务器创建
+        await new Promise(resolve => setTimeout(resolve, 200))
+
+        // 跳转到消息页面
+        toast.success('正在打开私信...')
+        await router.push({
+          path: '/messages',
+          query: { conversationId: conversation.id }
+        })
+      } else {
+        toast.error('创建对话失败')
+      }
+    } catch (apiError: any) {
+      console.error('API 错误:', apiError)
+      throw apiError
     }
   } catch (error: any) {
     console.error('打开聊天失败:', error)

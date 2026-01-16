@@ -51,7 +51,7 @@ jobs:
         ls -lh deploy-package.tar.gz
 
     - name: Deploy to server
-      uses: appleboy/scp-action@master
+      uses: appleboy/scp-action@v0.1.7
       continue-on-error: true
       id: scp_deploy
       with:
@@ -61,15 +61,35 @@ jobs:
         port: 22
         source: "deploy-package.tar.gz"
         target: "/tmp/"
-        timeout: 10m
-        command_timeout: 10m
+        timeout: 15m
+        command_timeout: 15m
         overwrite: true
+        strip_components: 0
+        rm: false
+        use_insecure_cipher: true
       env:
         DEBUG: true
-
+    
+    - name: Retry deploy if failed (attempt 2)
+      if: steps.scp_deploy.outcome != 'success'
+      uses: appleboy/scp-action@v0.1.7
+      continue-on-error: true
+      id: scp_deploy_retry
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        port: 22
+        source: "deploy-package.tar.gz"
+        target: "/tmp/"
+        timeout: 15m
+        command_timeout: 15m
+        overwrite: true
+        use_insecure_cipher: true
+    
     - name: Extract package on server
-      if: steps.scp_deploy.outcome == 'success'
-      uses: appleboy/ssh-action@master
+      if: steps.scp_deploy.outcome == 'success' || steps.scp_deploy_retry.outcome == 'success'
+      uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.SERVER_HOST }}
         username: ${{ secrets.SERVER_USER }}
@@ -83,22 +103,19 @@ jobs:
           echo "✅ 解压完成"
           ls -lah /tmp/hikingSocialApp/
 
-    - name: Fallback - Deploy via rsync over SSH
-      if: steps.scp_deploy.outcome != 'success'
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.SERVER_HOST }}
-        username: ${{ secrets.SERVER_USER }}
-        key: ${{ secrets.SERVER_SSH_KEY }}
-        port: 22
-        script: |
-          echo "⚠️ SCP失败，使用备用部署方式..."
-          echo "此方法需要在服务器上配置 GitHub Actions runner 的 SSH 访问"
-          exit 1
+    - name: Fallback - Manual upload instruction
+      if: steps.scp_deploy.outcome != 'success' && steps.scp_deploy_retry.outcome != 'success'
+      run: |
+        echo "❌ 自动部署失败"
+        echo "建议手动部署："
+        echo "1. scp deploy-package.tar.gz user@server:/tmp/"
+        echo "2. ssh user@server"
+        echo "3. cd /tmp && tar -xzf deploy-package.tar.gz"
+        exit 1
 
     - name: Verify upload
-      if: steps.scp_deploy.outcome == 'success'
-      uses: appleboy/ssh-action@master
+      if: steps.scp_deploy.outcome == 'success' || steps.scp_deploy_retry.outcome == 'success'
+      uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.SERVER_HOST }}
         username: ${{ secrets.SERVER_USER }}

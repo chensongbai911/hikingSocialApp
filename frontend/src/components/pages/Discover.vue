@@ -215,25 +215,13 @@
 
             <!-- 卡片内容 -->
             <div class="absolute inset-0 flex flex-col justify-between p-4">
-              <!-- 顶部：等级徽章 + 关注按钮 -->
+              <!-- 顶部：等级徽章 -->
               <div class="flex justify-between items-start">
                 <span
                   class="px-3 py-1 bg-white/90 backdrop-blur text-xs font-semibold text-gray-700 rounded-full"
                 >
                   {{ user.hikingLevel }}
                 </span>
-                <button
-                  @click="toggleFollowUser(user.id, $event)"
-                  :disabled="user.followingLoading"
-                  :class="[
-                    'px-3 py-1 rounded-full text-xs font-semibold transition-all',
-                    user.isFollowing ? 'bg-white/90 text-gray-700' : 'bg-teal-500 text-white',
-                    'disabled:opacity-50 disabled:cursor-not-allowed',
-                  ]"
-                  class="backdrop-blur"
-                >
-                  {{ user.followingLoading ? '...' : user.isFollowing ? '已关注' : '关注' }}
-                </button>
               </div>
 
               <!-- 底部：用户信息 -->
