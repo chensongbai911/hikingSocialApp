@@ -74,6 +74,13 @@ jobs:
         tar -czf deploy-package.tar.gz -C deploy-package .
         ls -lh deploy-package.tar.gz
 
+    - name: Upload deploy artifact (for debugging/manual deploy)
+      uses: actions/upload-artifact@v4
+      with:
+        name: deploy-package
+        path: deploy-package.tar.gz
+        retention-days: 3
+
     - name: Deploy to server (Attempt 1)
       uses: appleboy/scp-action@v0.1.7
       continue-on-error: true
@@ -92,7 +99,7 @@ jobs:
         rm: false
         use_insecure_cipher: true
       env:
-        DEBUG: false
+        DEBUG: true
 
     - name: Retry deploy if failed (Attempt 2)
       if: steps.scp_deploy.outcome != 'success'
@@ -111,7 +118,7 @@ jobs:
         overwrite: true
         use_insecure_cipher: true
       env:
-        DEBUG: false
+        DEBUG: true
 
     - name: Retry deploy if failed (Attempt 3)
       if: steps.scp_deploy.outcome != 'success' && steps.scp_deploy_retry.outcome != 'success'
@@ -130,7 +137,7 @@ jobs:
         overwrite: true
         use_insecure_cipher: true
       env:
-        DEBUG: false
+        DEBUG: true
 
     - name: Extract package on server
       if: steps.scp_deploy.outcome == 'success' || steps.scp_deploy_retry.outcome == 'success' || steps.scp_deploy_retry2.outcome == 'success'
@@ -153,6 +160,8 @@ jobs:
       uses: appleboy/ssh-action@v1.0.3
       continue-on-error: true
       id: alternative_deploy
+      env:
+        DEPLOY_PAT: ${{ secrets.DEPLOY_PAT }}
       with:
         host: ${{ secrets.SERVER_HOST }}
         username: ${{ secrets.SERVER_USER }}
@@ -162,15 +171,21 @@ jobs:
           echo "🔄 尝试备用部署方法：直接从 Git 拉取..."
           cd /var/www/hikingSocialApp || mkdir -p /var/www/hikingSocialApp
 
+          REPO_URL="https://github.com/${{ github.repository }}.git"
+          if [ -n "$DEPLOY_PAT" ]; then
+            REPO_URL="https://${DEPLOY_PAT}@github.com/${{ github.repository }}.git"
+          fi
+
           if [ -d ".git" ]; then
             echo "更新现有仓库..."
+            git remote set-url origin "$REPO_URL"
             git fetch origin
             git reset --hard origin/master
           else
             echo "克隆新仓库..."
             cd /var/www
             rm -rf hikingSocialApp
-            git clone https://github.com/${{ github.repository }}.git hikingSocialApp
+            git clone "$REPO_URL" hikingSocialApp
             cd hikingSocialApp
           fi
 

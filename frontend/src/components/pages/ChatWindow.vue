@@ -1,5 +1,5 @@
 <template>
-  <div class="fixed inset-0 bg-white flex flex-col z-40" style="max-height: 100vh; max-height: 100dvh;">
+  <div class="fixed inset-0 bg-white flex flex-col z-50" style="max-height: 100vh; max-height: 100dvh;">
     <div class="bg-white border-b border-gray-100 p-4 flex items-center space-x-3 flex-shrink-0">
       <button @click="handleBack" class="p-2 -ml-2">
         <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
