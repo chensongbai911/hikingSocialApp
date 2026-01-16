@@ -211,8 +211,18 @@ const loadConversations = async (reset = true) => {
   try {
     const res = await getConversations(page.value, pageSize.value)
     const list = res?.conversations || res || []
+    const convMap = new Map<string, any>()
     total.value = res?.total ?? res?.data?.total ?? total.value
-    const mapped = list.map(mapConversation)
+    list
+      .map(mapConversation)
+      .forEach((c) => {
+        // 取最新时间的那条
+        const existed = convMap.get(c.id)
+        if (!existed || (c.lastTime && existed.lastTime && new Date(c.lastTime) > new Date(existed.lastTime))) {
+          convMap.set(c.id, c)
+        }
+      })
+    const mapped = Array.from(convMap.values())
     chats.value = reset
       ? mapped
       : [...chats.value, ...mapped].sort(
@@ -250,7 +260,11 @@ const handleRefresh = throttle(() => {
 const openChat = (chat: ChatItem) => {
   chats.value = chats.value.map((c) => (c.id === chat.id ? { ...c, unreadCount: 0 } : c))
   markConversationAsRead(chat.id).catch(() => {})
-  router.push(`/chat/${chat.id}`)
+  router.push({
+    name: 'ChatWindow',
+    params: { id: chat.id },
+    state: { from: 'messages' },
+  })
 }
 
 const upsertChat = (conversationId: string, payload: Partial<ChatItem>) => {

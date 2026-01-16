@@ -1,7 +1,7 @@
 <template>
   <div class="fixed inset-0 bg-white flex flex-col z-40">
     <div class="bg-white border-b border-gray-100 p-4 flex items-center space-x-3 flex-shrink-0">
-      <button @click="router.back()" class="p-2 -ml-2">
+      <button @click="handleBack" class="p-2 -ml-2">
         <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             stroke-linecap="round"
@@ -40,7 +40,10 @@
       </button>
     </div>
 
-    <div v-if="isBlacklisted" class="bg-red-50 text-red-600 text-sm px-4 py-2">
+    <div v-if="loadError" class="bg-red-50 text-red-600 text-sm px-4 py-2">
+      {{ loadError }}
+    </div>
+    <div v-else-if="isBlacklisted" class="bg-red-50 text-red-600 text-sm px-4 py-2">
       对方已将你拉黑，无法发送消息
     </div>
     <div v-else-if="isLimited" class="bg-amber-50 text-amber-700 text-sm px-4 py-2">
@@ -48,6 +51,8 @@
     </div>
 
     <div ref="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+      <div v-if="loading" class="text-center text-gray-400 py-8">加载中...</div>
+      <div v-else-if="!messages.length" class="text-center text-gray-400 py-8">暂时没有消息</div>
       <div
         v-for="message in messages"
         :key="message.id"
@@ -268,7 +273,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick, onUnmounted, computed } from 'vue'
+import { ref, onMounted, nextTick, onUnmounted, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import {
   sendMessage,
@@ -279,6 +284,7 @@ import {
   getConversationInfo,
   markConversationAsRead,
 } from '@/api/message'
+import { userApi } from '@/api/user'
 import { uploadApi } from '@/api/upload'
 import { socketService } from '@/services/socket'
 import { useUserStore } from '@/stores/user'
@@ -286,6 +292,7 @@ import toast from '@/utils/toast'
 
 const router = useRouter()
 const route = useRoute()
+const fromState = route?.state as any
 const userStore = useUserStore()
 
 const conversationId = ref<string>(route.params.id as string)
@@ -318,6 +325,9 @@ interface ChatMessage {
 }
 
 const messages = ref<ChatMessage[]>([])
+
+const loading = ref(true)
+const loadError = ref('')
 
 const messageExists = (id: string) => messages.value.some((m) => m.id === id)
 
@@ -358,11 +368,32 @@ const emojis = [
 const loadConversation = async () => {
   const id = route.params.id as string
   conversationId.value = id
+  if (!conversationId.value) {
+    toast.error('无效的对话')
+    router.push({ name: 'Messages' })
+    return
+  }
   try {
+    loading.value = true
+    loadError.value = ''
+
     const info = await getConversationInfo(id)
     const { otherUserId, isLimited: limited, remainingMessages: remain, isBlacklisted: black } =
       info || {}
     chatUser.value.id = otherUserId || chatUser.value.id || id
+
+    // 拉取对方用户信息填充头像和昵称
+    try {
+      const profile = await userApi.getUserProfile(chatUser.value.id)
+      const user = profile?.data || profile?.data?.data || profile
+      if (user) {
+        chatUser.value.name = user.nickname || user.name || chatUser.value.name
+        chatUser.value.avatar = user.avatar || user.avatar_url || chatUser.value.avatar
+      }
+    } catch (e) {
+      console.warn('获取对方资料失败，使用默认占位', e)
+    }
+
     isLimited.value = !!limited
     remainingMessages.value = remain
     isBlacklisted.value = !!black
@@ -382,7 +413,19 @@ const loadConversation = async () => {
     await markConversationAsRead(conversationId.value)
     scrollToBottom()
   } catch (err) {
-    toast.error(err?.message || '加载失败')
+    loadError.value = err?.message || '加载失败'
+    toast.error(loadError.value)
+  }
+  finally {
+    loading.value = false
+  }
+}
+
+const handleBack = () => {
+  if (fromState?.from === 'messages') {
+    router.push({ name: 'Messages' })
+  } else {
+    router.back()
   }
 }
 
@@ -656,6 +699,15 @@ onMounted(async () => {
     })
   )
 })
+
+watch(
+  () => route.params.id,
+  async (newId, oldId) => {
+    if (newId && newId !== oldId) {
+      await loadConversation()
+    }
+  }
+)
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
