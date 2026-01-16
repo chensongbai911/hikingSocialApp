@@ -58,7 +58,7 @@ export const sendMessage = async (
       fileUrl,
     }
   )
-  return response.data.data.message
+  return response.data.data
 }
 
 /**
@@ -84,6 +84,48 @@ export const markConversationAsRead = async (conversationId: string) => {
  */
 export const deleteMessage = async (messageId: string) => {
   const response = await request.delete(`/messages/${messageId}`)
+  return response.data
+}
+
+/**
+ * 撤回消息（2分钟内）
+ */
+export const recallMessage = async (messageId: string) => {
+  const response = await request.post(`/messages/${messageId}/recall`)
+  return response.data.data
+}
+
+/**
+ * 举报消息
+ */
+export const reportMessage = async (messageId: string, reason: string, extra?: any) => {
+  const response = await request.post(`/messages/${messageId}/report`, { reason, extra })
+  return response.data
+}
+
+/**
+ * 清空对话（归档后删除）
+ */
+export const clearConversation = async (conversationId: string) => {
+  const response = await request.delete(`/messages/conversations/${conversationId}`)
+  return response.data
+}
+
+/**
+ * 黑名单管理
+ */
+export const getBlacklist = async () => {
+  const response = await request.get('/messages/blacklist')
+  return response.data.data as string[]
+}
+
+export const addToBlacklist = async (targetUserId: string) => {
+  const response = await request.post(`/messages/blacklist/${targetUserId}`)
+  return response.data
+}
+
+export const removeFromBlacklist = async (targetUserId: string) => {
+  const response = await request.delete(`/messages/blacklist/${targetUserId}`)
   return response.data
 }
 
@@ -128,6 +170,12 @@ export default {
   markMessageAsRead,
   markConversationAsRead,
   deleteMessage,
+  recallMessage,
+  reportMessage,
+  clearConversation,
+  getBlacklist,
+  addToBlacklist,
+  removeFromBlacklist,
   getUnreadCount,
   searchMessages,
   getMessageStats,

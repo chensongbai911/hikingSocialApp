@@ -223,11 +223,7 @@ export class AuthService {
       [userId]
     );
 
-    return {
-      ...user,
-      preferences: preferences as any[],
-      photos: photos as any[]
-    };
+    return user;
   }
 
   /**
@@ -254,9 +250,9 @@ export class AuthService {
    * 生成JWT Token
    */
   private generateToken(payload: TokenPayload): string {
-    return jwt.sign(payload, this.jwtSecret, {
+    return jwt.sign(payload, this.jwtSecret as string, {
       expiresIn: this.jwtExpiration
-    });
+    } as any);
   }
 
   /**

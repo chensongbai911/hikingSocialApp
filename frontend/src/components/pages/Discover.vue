@@ -214,11 +214,25 @@
 
             <!-- 卡片内容 -->
             <div class="absolute inset-0 flex flex-col justify-between p-4">
-              <!-- 顶部：等级徽章 -->
-              <div class="flex justify-end">
+              <!-- 顶部：等级徽章 + 关注按钮 -->
+              <div class="flex justify-between items-start">
                 <span class="px-3 py-1 bg-white/90 backdrop-blur text-xs font-semibold text-gray-700 rounded-full">
                   {{ user.hikingLevel }}
                 </span>
+                <button
+                  @click="toggleFollowUser(user.id, $event)"
+                  :disabled="user.followingLoading"
+                  :class="[
+                    'px-3 py-1 rounded-full text-xs font-semibold transition-all',
+                    user.isFollowing
+                      ? 'bg-white/90 text-gray-700'
+                      : 'bg-teal-500 text-white',
+                    'disabled:opacity-50 disabled:cursor-not-allowed'
+                  ]"
+                  class="backdrop-blur"
+                >
+                  {{ user.followingLoading ? '...' : (user.isFollowing ? '已关注' : '关注') }}
+                </button>
               </div>
 
               <!-- 底部：用户信息 -->
@@ -249,6 +263,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDiscoveryStore } from '@/stores/discovery'
+import { userApi } from '@/api'
+import toast from '@/utils/toast'
 
 const router = useRouter()
 const discoveryStore = useDiscoveryStore()
@@ -287,6 +303,10 @@ const gradients = [
 const recommendedUsers = computed(() => discoveryStore.recommendedUsers)
 const loading = computed(() => discoveryStore.loading)
 
+// 关注状态管理
+const followingMap = ref<Map<string | number, boolean>>(new Map())
+const followingLoading = ref<Map<string | number, boolean>>(new Map())
+
 // 映射徒步等级
 const mapHikingLevel = (level: string | undefined): string => {
   const map: Record<string, string> = {
@@ -314,7 +334,9 @@ const filteredUsers = computed(() => {
     avatar: user.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=user${user.id}`,
     coverImage: user.avatar_url || '',
     gradient: gradients[index % gradients.length],
-    commonPreferences: user.common_preferences || 0
+    commonPreferences: user.common_preferences || 0,
+    isFollowing: followingMap.value.get(user.id) ?? false,
+    followingLoading: followingLoading.value.get(user.id) ?? false
   }))
 
   return transformedUsers.filter((user) => {
@@ -385,8 +407,59 @@ const loadRecommendedUsers = async () => {
   }
 }
 
-onMounted(() => {
-  loadRecommendedUsers()
+// 关注/取消关注用户
+const toggleFollowUser = async (userId: string | number, event: Event) => {
+  event.stopPropagation() // 阻止卡片点击事件
+
+  try {
+    followingLoading.value.set(userId, true)
+    const isFollowing = followingMap.value.get(userId) ?? false
+
+    if (isFollowing) {
+      // 取消关注
+      const res = await userApi.unfollowUser(String(userId))
+      if (res.code === 200) {
+        followingMap.value.set(userId, false)
+        toast.success('已取消关注')
+      } else {
+        toast.error(res.message || '取消关注失败')
+      }
+    } else {
+      // 关注
+      const res = await userApi.followUser(String(userId))
+      if (res.code === 200) {
+        followingMap.value.set(userId, true)
+        toast.success('关注成功')
+      } else {
+        toast.error(res.message || '关注失败')
+      }
+    }
+  } catch (error) {
+    console.error('关注操作失败:', error)
+    toast.error('操作失败，请重试')
+  } finally {
+    followingLoading.value.set(userId, false)
+  }
+}
+
+// 加载单个用户的关注状态
+const loadFollowStatus = async (userId: string | number) => {
+  try {
+    const res = await userApi.getFollowStatus(String(userId))
+    if (res.code === 200 && res.data) {
+      followingMap.value.set(userId, res.data.is_following)
+    }
+  } catch (error) {
+    console.error(`加载关注状态失败 (${userId}):`, error)
+  }
+}
+
+onMounted(async () => {
+  await loadRecommendedUsers()
+  // 加载所有用户的关注状态
+  for (const user of recommendedUsers.value) {
+    await loadFollowStatus(user.id)
+  }
 })
 </script>
 

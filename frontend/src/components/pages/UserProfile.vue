@@ -54,7 +54,7 @@
         </div>
 
         <!-- 用户统计 -->
-        <div class="grid grid-cols-3 gap-4 py-4 border-t border-b border-gray-100">
+        <div class="grid grid-cols-2 gap-4 py-4 border-t border-b border-gray-100">
           <div class="text-center">
             <div class="text-2xl font-bold text-gray-800">{{ (user && user.stats && user.stats.activities) || 0 }}</div>
             <div class="text-xs text-gray-500 mt-1">徒步次数</div>
@@ -62,10 +62,6 @@
           <div class="text-center">
             <div class="text-2xl font-bold text-gray-800">{{ (user && user.stats && user.stats.followers) || 0 }}</div>
             <div class="text-xs text-gray-500 mt-1">关注者</div>
-          </div>
-          <div class="text-center">
-            <div class="text-2xl font-bold text-gray-800">{{ (user && user.stats && user.stats.following) || 0 }}</div>
-            <div class="text-xs text-gray-500 mt-1">关注中</div>
           </div>
         </div>
       </div>
@@ -171,13 +167,30 @@
     <!-- 底部操作按钮 -->
     <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 shadow-lg">
       <div class="flex gap-3 max-w-lg mx-auto">
+        <!-- 消息按钮 -->
         <button
           class="flex-shrink-0 w-14 h-14 bg-white border-2 border-gray-200 rounded-2xl flex items-center justify-center text-2xl hover:border-teal-500 transition"
         >
           💬
         </button>
+
+        <!-- 关注按钮 -->
         <button
-          class="flex-1 h-14 bg-teal-500 text-white rounded-2xl font-bold text-base hover:bg-teal-600 transition shadow-lg"
+          class="h-14 rounded-2xl font-bold text-base transition shadow-lg"
+          :class="isFollowing
+            ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 px-6'
+            : 'flex-1 bg-teal-500 text-white hover:bg-teal-600'"
+          @click="toggleFollow"
+          :disabled="followLoading"
+        >
+          <span v-if="followLoading">处理中...</span>
+          <span v-else>{{ isFollowing ? '已关注' : '+ 关注' }}</span>
+        </button>
+
+        <!-- 邀请徒步按钮 -->
+        <button
+          v-if="!isFollowing"
+          class="h-14 bg-gray-100 text-gray-700 rounded-2xl font-bold text-base hover:bg-gray-200 transition px-6"
         >
           邀请徒步
         </button>
@@ -198,6 +211,8 @@ const route = useRoute()
 // 用户数据（从 API 获取）
 const user = ref<any>(null)
 const loading = ref(true)
+const isFollowing = ref(false)
+const followLoading = ref(false)
 
 // 显示的徒步足迹（前3个）
 const displayedTrails = computed(() => {
@@ -238,6 +253,43 @@ const goBack = () => {
   router.back()
 }
 
+// 关注/取消关注
+const toggleFollow = async () => {
+  if (!user.value || followLoading.value) return
+
+  try {
+    followLoading.value = true
+    const userId = user.value.id
+
+    if (isFollowing.value) {
+      // 取消关注
+      const res = await userApi.unfollowUser(userId)
+      if (res.code === 200) {
+        isFollowing.value = false
+        user.value.stats.followers = Math.max(0, user.value.stats.followers - 1)
+        toast.success('已取消关注')
+      } else {
+        toast.error(res.message || '取消关注失败')
+      }
+    } else {
+      // 关注
+      const res = await userApi.followUser(userId)
+      if (res.code === 200) {
+        isFollowing.value = true
+        user.value.stats.followers += 1
+        toast.success('关注成功')
+      } else {
+        toast.error(res.message || '关注失败')
+      }
+    }
+  } catch (error) {
+    console.error('关注操作失败:', error)
+    toast.error('操作失败，请重试')
+  } finally {
+    followLoading.value = false
+  }
+}
+
 // 加载用户数据
 onMounted(async () => {
   const userId = route.params.id as string
@@ -250,17 +302,21 @@ onMounted(async () => {
 
   try {
     loading.value = true
-    // 从 API 获取用户资料
-    const [profileRes, joinedRes, createdRes] = await Promise.all([
-      userApi.getUserProfile(userId),
+    // 从 API 获取用户详情（包含关注者、徒步次数等）
+    const [detailRes, joinedRes, followStatusRes] = await Promise.all([
+      userApi.getUserDetail(userId),
       activityApi.getUserJoinedActivities(userId, { page_size: 3 }),
-      activityApi.getActivities({ creator_id: userId, page_size: 3 })
+      userApi.getFollowStatus(userId)
     ])
 
-    if (profileRes.code === 200 && profileRes.data) {
-      const userData = profileRes.data
+    if (detailRes.code === 200 && detailRes.data) {
+      const userData = detailRes.data
       const joinedActivities = joinedRes.data?.items || []
-      const createdActivities = createdRes.data?.items || []
+
+      // 设置关注状态
+      if (followStatusRes.code === 200 && followStatusRes.data) {
+        isFollowing.value = followStatusRes.data.is_following
+      }
 
       // 转换为组件需要的格式
       user.value = {
@@ -277,9 +333,9 @@ onMounted(async () => {
         avatar: userData.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=user${userId}`,
         coverImage: userData.photos && userData.photos[0] ? userData.photos[0].photo_url : '',
         stats: {
-          activities: createdRes.data?.pagination?.total || 0,
-          followers: 0, // TODO: 需要关注API支持
-          following: 0   // TODO: 需要关注API支持
+          activities: userData.activities_count || 0,
+          followers: userData.followers_count || 0,
+          following: 0   // TODO: 后续可以添加 following 统计
         },
         hikingTrails: joinedActivities.map((act: any) => ({
           id: act.id,
@@ -287,14 +343,14 @@ onMounted(async () => {
           date: new Date(act.start_time).toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit' }).replace(/\//g, '.'),
           image: act.cover_image_url || 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=300&h=400&fit=crop'
         })),
-        publishedActivities: createdActivities.map((act: any) => ({
-          id: act.id,
-          title: act.title,
-          date: new Date(act.start_time).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' }),
-          location: act.location,
-          image: act.cover_image_url || 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=300&h=400&fit=crop',
-          status: act.status
-        }))
+        publishedActivities: userData.photos ? userData.photos.slice(0, 3).map((photo: any) => ({
+          id: photo.id,
+          title: `照片 ${photo.display_order}`,
+          date: new Date(photo.created_at).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' }),
+          location: userData.region || userData.city || userData.province || '地点未知',
+          image: photo.photo_url,
+          status: 'completed'
+        })) : []
       }
     } else {
       toast.error('获取用户信息失败')

@@ -57,7 +57,7 @@ async function initDestinations() {
         const tableName = tableMatch ? tableMatch[1] : '';
 
         console.log(`✓ [${i + 1}/${statements.length}] ${operation} ${tableName}`);
-      } catch (err) {
+      } catch (err: any) {
         // 如果是表已存在的错误，可以忽略
         if (err.code === 'ER_TABLE_EXISTS_ERROR') {
           console.log(`⚠ [${i + 1}/${statements.length}] 表已存在，跳过`);
@@ -73,7 +73,7 @@ async function initDestinations() {
     console.log('✓ 数据库初始化完成！');
     console.log('========================================\n');
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('\n✗ 初始化失败:', error.message);
     process.exit(1);
   } finally {

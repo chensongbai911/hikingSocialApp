@@ -49,7 +49,7 @@ export class ApplicationService {
       activityId,
       message: message || null,
       status: 'pending',
-    })
+    } as any)
 
     return application
   }
@@ -123,7 +123,7 @@ export class ApplicationService {
         activityId: application.activityId,
         status: 'joined',
         joinedAt: new Date(),
-      })
+      } as any)
     }
 
     return application

@@ -9,7 +9,7 @@ export class ApplicationController {
    * POST /api/v1/applications
    */
   applyToActivity = asyncHandler(async (req: Request, res: Response) => {
-    const userId = req.user!.id
+    const userId = typeof req.user!.id === 'string' ? parseInt(req.user!.id) : req.user!.id
     const { activity_id, message } = req.body
 
     const application = await ApplicationService.applyToActivity(userId, activity_id, message)
@@ -27,7 +27,7 @@ export class ApplicationController {
    */
   getPendingApplications = asyncHandler(async (req: Request, res: Response) => {
     const activityId = parseInt(req.params.id)
-    const organizerId = req.user!.id
+    const organizerId = typeof req.user!.id === 'string' ? parseInt(req.user!.id) : req.user!.id
 
     const applications = await ApplicationService.getPendingApplications(activityId, organizerId)
 
@@ -60,7 +60,7 @@ export class ApplicationController {
    */
   reviewApplication = asyncHandler(async (req: Request, res: Response) => {
     const applicationId = parseInt(req.params.id)
-    const reviewerId = req.user!.id
+    const reviewerId = typeof req.user!.id === 'string' ? parseInt(req.user!.id) : req.user!.id
     const { action } = req.body // 'approve' or 'reject'
 
     if (!['approve', 'reject'].includes(action)) {
@@ -81,7 +81,7 @@ export class ApplicationController {
    * GET /api/v1/applications/my
    */
   getMyApplications = asyncHandler(async (req: Request, res: Response) => {
-    const userId = req.user!.id
+    const userId = typeof req.user!.id === 'string' ? parseInt(req.user!.id) : req.user!.id
     const status = req.query.status as 'pending' | 'approved' | 'rejected' | undefined
 
     const applications = await ApplicationService.getUserApplications(userId, status)
@@ -105,7 +105,7 @@ export class ApplicationController {
         : null,
     }))
 
-    res.json(ApiResponse.success(data))
+    success(res, data)
   })
 
   /**

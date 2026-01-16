@@ -11,8 +11,8 @@ export class MessageService {
    * 获取或创建对话
    */
   async getOrCreateConversation(
-    userId1: number,
-    userId2: number
+    userId1: string,
+    userId2: string
   ): Promise<Conversation> {
     // 确保 userId1 < userId2 以保证唯一性
     const [minId, maxId] =
@@ -29,7 +29,9 @@ export class MessageService {
       conversation = await Conversation.create({
         userId1: minId,
         userId2: maxId,
-      })
+        user1UnreadCount: 0,
+        user2UnreadCount: 0,
+      } as any)
     }
 
     return conversation
@@ -39,7 +41,7 @@ export class MessageService {
    * 获取用户的对话列表
    */
   async getConversations(
-    userId: number,
+    userId: string,
     page: number = 1,
     limit: number = 20
   ): Promise<{
@@ -122,7 +124,7 @@ export class MessageService {
    */
   async sendMessage(
     conversationId: number,
-    senderId: number,
+    senderId: string,
     content: string,
     contentType: 'text' | 'image' | 'file' = 'text',
     imageUrl?: string,
@@ -135,8 +137,8 @@ export class MessageService {
     }
 
     if (
-      conversation.userId1 !== senderId &&
-      conversation.userId2 !== senderId
+      String(conversation.userId1) !== String(senderId) &&
+      String(conversation.userId2) !== String(senderId)
     ) {
       throw new Error('用户不是对话的参与者')
     }
@@ -150,7 +152,7 @@ export class MessageService {
       imageUrl: imageUrl || null,
       fileUrl: fileUrl || null,
       isRead: false,
-    })
+    } as any)
 
     // 更新对话的最后消息信息
     const otherUserId =
@@ -168,10 +170,10 @@ export class MessageService {
       [conversation.userId1 === senderId
         ? 'user2UnreadCount'
         : 'user1UnreadCount']: (conversation[
-        conversation.userId1 === senderId
-          ? 'user2UnreadCount'
-          : 'user1UnreadCount'
-      ] || 0) + 1,
+          conversation.userId1 === senderId
+            ? 'user2UnreadCount'
+            : 'user1UnreadCount'
+        ] || 0) + 1,
     })
 
     // 返回完整消息对象（包括发送者信息）
@@ -212,7 +214,7 @@ export class MessageService {
    */
   async markConversationAsRead(
     conversationId: number,
-    userId: number
+    userId: string
   ): Promise<void> {
     const conversation = await Conversation.findByPk(conversationId)
     if (!conversation) {
@@ -221,8 +223,8 @@ export class MessageService {
 
     // 检查用户是否是对话参与者
     if (
-      conversation.userId1 !== userId &&
-      conversation.userId2 !== userId
+      String(conversation.userId1) !== String(userId) &&
+      String(conversation.userId2) !== String(userId)
     ) {
       throw new Error('用户不是对话的参与者')
     }
@@ -264,14 +266,14 @@ export class MessageService {
 
     await message.update({
       deletedAt: new Date(),
-      content: null,
+      content: '',
     })
   }
 
   /**
    * 获取未读消息数量
    */
-  async getUnreadCount(userId: number): Promise<number> {
+  async getUnreadCount(userId: string): Promise<number> {
     const conversations = await Conversation.findAll({
       where: {
         [Op.or]: [{ userId1: userId }, { userId2: userId }],
@@ -280,7 +282,7 @@ export class MessageService {
 
     let totalUnread = 0
     conversations.forEach((conv) => {
-      if (conv.userId1 === userId) {
+      if (String(conv.userId1) === String(userId)) {
         totalUnread += conv.user1UnreadCount || 0
       } else {
         totalUnread += conv.user2UnreadCount || 0
@@ -345,7 +347,7 @@ export class MessageService {
 
     let totalUnread = 0
     conversations.forEach((conv) => {
-      if (conv.userId1 === userId) {
+      if (String(conv.userId1) === String(userId)) {
         totalUnread += conv.user1UnreadCount || 0
       } else {
         totalUnread += conv.user2UnreadCount || 0

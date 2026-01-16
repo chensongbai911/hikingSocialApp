@@ -28,7 +28,7 @@ export async function initializeTestUsers() {
       hikingLevel: 'intermediate',
       isActive: true,
       isVerified: true,
-    })
+    } as any)
     console.log('✅ 创建测试账户: user1@test.com')
 
     // 创建测试账户2
@@ -43,7 +43,7 @@ export async function initializeTestUsers() {
       hikingLevel: 'beginner',
       isActive: true,
       isVerified: true,
-    })
+    } as any)
     console.log('✅ 创建测试账户: user2@test.com')
 
     console.log('✅ 测试账户初始化完成')

@@ -1,5 +1,6 @@
 import express, { Router } from 'express';
 import { UserController } from '../controllers/UserController';
+import { UserDetailController } from '../controllers/UserDetailController';
 import { authMiddleware } from '../middleware/authMiddleware';
 
 const router: Router = express.Router();
@@ -14,6 +15,14 @@ const router: Router = express.Router();
 router.get('/profile', authMiddleware, UserController.getProfile);
 router.get('/:userId/profile', authMiddleware, UserController.getUserProfile);
 router.put('/profile', authMiddleware, UserController.updateProfile);
+
+// 用户详情（包含关注者、徒步次数等）
+router.get('/:userId/detail', authMiddleware, UserDetailController.getUserDetail);
+
+// 关注功能
+router.post('/:userId/follow', authMiddleware, UserDetailController.followUser);
+router.delete('/:userId/follow', authMiddleware, UserDetailController.unfollowUser);
+router.get('/:userId/follow-status', authMiddleware, UserDetailController.getFollowStatus);
 
 // 头像管理
 router.post('/avatar', authMiddleware, UserController.updateAvatar);

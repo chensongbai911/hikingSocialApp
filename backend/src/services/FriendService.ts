@@ -48,7 +48,7 @@ export class FriendService {
       status: 'pending',
       initiatedBy: userId,
       message: message || null,
-    })
+    } as any)
 
     // 创建反向记录
     await Friendship.create({
@@ -57,7 +57,7 @@ export class FriendService {
       status: 'pending',
       initiatedBy: userId,
       message: message || null,
-    })
+    } as any)
 
     return friendship1
   }
@@ -230,10 +230,7 @@ export class FriendService {
           model: UserPreference,
           where: userPreference
             ? {
-              [Op.or]: [
-                { preferredDifficultyLevels: { [Op.like]: `%${userPreference.preferredDifficultyLevels}%` } },
-                { activityTypes: { [Op.like]: `%${userPreference.activityTypes}%` } },
-              ],
+              preferenceValue: { [Op.like]: `%${userPreference.preferenceValue}%` },
             }
             : {},
           required: false,

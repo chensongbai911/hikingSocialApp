@@ -162,12 +162,3 @@ export interface ErrorResponse {
   message: string
   errors?: string[]
 }
-
-declare global {
-  namespace Express {
-    interface Request {
-      userId?: number
-      user?: UserAttributes
-    }
-  }
-}

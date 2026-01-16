@@ -72,14 +72,34 @@ export class SocketService {
           console.log('Socket disconnected:', reason)
         })
 
-        // 监听消息接收
-        this.socket.on('message:received', (message: SocketMessage) => {
+        // 监听消息接收（旧命名）
+        this.socket.on('message:received', (message: any) => {
           this.messageCallbacks.forEach((cb) => cb(message))
         })
+        // 监听消息接收（后端标准化事件）
+        this.socket.on('new_message', (data: any) => {
+          this.messageCallbacks.forEach((cb) => cb(data))
+        })
 
-        // 监听用户正在输入
+        // 监听用户正在输入（旧命名）
         this.socket.on('message:user-typing', (data) => {
           this.typingCallbacks.forEach((cb) => cb(data))
+        })
+        // 监听用户正在输入（后端标准化事件）
+        this.socket.on('typing', (data) => {
+          this.typingCallbacks.forEach((cb) => cb(data))
+        })
+
+        // 监听消息撤回
+        this.socket.on('message_recalled', (data) => {
+          // 可由页面层选择性订阅，此处兼容性回调到 messageCallbacks
+          this.messageCallbacks.forEach((cb) => cb(data))
+        })
+
+        // 监听黑名单更新
+        this.socket.on('blacklist_updated', (data) => {
+          // 暂记录日志，页面可按需订阅扩展
+          console.log('blacklist_updated', data)
         })
 
         // 监听已读回执

@@ -22,6 +22,20 @@ router.get(
   MessageController.getMessages
 )
 
+// 获取对话信息（限制/关系/黑名单）
+router.get(
+  '/conversations/:conversationId/info',
+  authMiddleware,
+  MessageController.getConversationInfo
+)
+
+// 清空对话（归档）
+router.delete(
+  '/conversations/:conversationId',
+  authMiddleware,
+  MessageController.clearConversation
+)
+
 // 标记对话的所有消息为已读
 router.put(
   '/conversations/:conversationId/read-all',
@@ -42,6 +56,25 @@ router.post(
   authMiddleware,
   MessageController.sendMessage
 )
+
+// 撤回消息
+router.post(
+  '/:messageId/recall',
+  authMiddleware,
+  MessageController.recallMessage
+)
+
+// 举报消息
+router.post(
+  '/:messageId/report',
+  authMiddleware,
+  MessageController.reportMessage
+)
+
+// 黑名单管理
+router.get('/blacklist', authMiddleware, MessageController.getBlacklist)
+router.post('/blacklist/:targetUserId', authMiddleware, MessageController.addToBlacklist)
+router.delete('/blacklist/:targetUserId', authMiddleware, MessageController.removeFromBlacklist)
 
 // 标记单条消息为已读
 router.put(

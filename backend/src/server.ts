@@ -1,4 +1,5 @@
 import express, { Express, Request, Response } from 'express';
+import http from 'http';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
@@ -24,7 +25,8 @@ import uploadRoutes from './routes/uploadRoutes';
 import applicationRoutes from './routes/applicationRoutes';
 import friendRoutes from './routes/friendRoutes';
 import destinationRoutes from './routes/destinationRoutes';
-// import messageRoutes from './routes/messageRoutes';
+import messageRoutes from './routes/messageRoutes';
+import { initSocket } from './realtime/socket';
 
 // 导入中间件
 import { errorHandler } from './middleware/errorHandler';
@@ -64,7 +66,7 @@ app.use(`${apiVersion}/upload`, uploadRoutes);
 app.use(`${apiVersion}/applications`, applicationRoutes);
 app.use(`${apiVersion}/friends`, friendRoutes);
 app.use(`${apiVersion}/destinations`, destinationRoutes);
-// app.use(`${apiVersion}/messages`, messageRoutes);
+app.use(`${apiVersion}/messages`, messageRoutes);
 
 // 健康检查端点
 app.get('/health', (req: Request, res: Response) => {
@@ -115,8 +117,10 @@ const startServer = async () => {
       process.exit(1);
     }
 
-    // 启动HTTP服务器
-    app.listen(PORT, () => {
+    // 启动HTTP服务器 + WebSocket
+    const httpServer = http.createServer(app)
+    initSocket(httpServer)
+    httpServer.listen(PORT, () => {
       console.log('='.repeat(50));
       console.log(`🚀 服务器启动成功！`);
       console.log(`📍 地址: http://localhost:${PORT}`);

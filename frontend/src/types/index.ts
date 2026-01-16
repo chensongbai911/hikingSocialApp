@@ -38,6 +38,13 @@ export interface User {
   photos?: UserPhoto[]
 }
 
+// 用户详情（包含统计信息）
+export interface UserDetail extends User {
+  followers_count: number
+  activities_count: number
+  is_following?: boolean
+}
+
 export interface UserPreference {
   id: string
   user_id: string
