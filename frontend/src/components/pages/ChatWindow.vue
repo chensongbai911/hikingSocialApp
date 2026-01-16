@@ -436,7 +436,7 @@ const loadConversation = async () => {
 
     const list = await getMessages(id)
     const rawMessages = (list?.messages || list || []) as any[]
-    
+
     // 从后端响应中获取分页信息
     if (list?.pagination) {
       totalPages.value = list.pagination.totalPages || 1
@@ -444,7 +444,7 @@ const loadConversation = async () => {
       totalPages.value = list.totalPages
     }
     currentPage.value = 1
-    
+
     messages.value = rawMessages.map((m: any) => ({
       id: String(m.id),
       content: m.content || m.image_url || m.file_url || '',
