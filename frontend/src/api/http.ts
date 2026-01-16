@@ -49,11 +49,22 @@ api.interceptors.response.use(
 
     // 处理401 - token过期或无效
     if (error.response?.status === 401) {
-      // 直接清空本地状态，不调用logout接口避免循环
+      // 尝试一次静默刷新用户信息（防止短暂失效或本地状态未拉取完成就被判未登录）
+      if (userStore.token && !userStore.currentUser) {
+        try {
+          await userStore.fetchCurrentUser()
+          // 如果拉取成功则重试原请求
+          if (userStore.currentUser) {
+            return api.request(error.config as any)
+          }
+        } catch (e) {
+          // 忽略，走后续清理
+        }
+      }
+
+      // 仍然 401，才清空本地并跳转登录
       userStore.setToken(null)
       userStore.setCurrentUser(null)
-
-      // 只在不是登录页面时才重定向
       if (!window.location.pathname.includes('/login')) {
         window.location.href = '/login'
       }

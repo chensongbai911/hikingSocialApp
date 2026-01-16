@@ -213,15 +213,15 @@ const loadConversations = async (reset = true) => {
     const list = res?.conversations || res || []
     const convMap = new Map<string, any>()
     total.value = res?.total ?? res?.data?.total ?? total.value
-    list
-      .map(mapConversation)
-      .forEach((c) => {
-        // 取最新时间的那条
-        const existed = convMap.get(c.id)
-        if (!existed || (c.lastTime && existed.lastTime && new Date(c.lastTime) > new Date(existed.lastTime))) {
-          convMap.set(c.id, c)
-        }
-      })
+
+    // 基于 otherUserId 做去重，若不存在 otherUserId 则退化为 conversation id
+    list.map(mapConversation).forEach((c) => {
+      const key = c.otherUserId ? `u_${c.otherUserId}` : `c_${c.id}`
+      const existed = convMap.get(key)
+      const newer = () => !existed || (c.lastTime && existed.lastTime && new Date(c.lastTime) > new Date(existed.lastTime))
+      if (newer()) convMap.set(key, c)
+    })
+
     const mapped = Array.from(convMap.values())
     chats.value = reset
       ? mapped
