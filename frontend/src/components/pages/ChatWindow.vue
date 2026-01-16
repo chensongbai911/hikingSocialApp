@@ -436,6 +436,15 @@ const loadConversation = async () => {
 
     const list = await getMessages(id)
     const rawMessages = (list?.messages || list || []) as any[]
+    
+    // 从后端响应中获取分页信息
+    if (list?.pagination) {
+      totalPages.value = list.pagination.totalPages || 1
+    } else if (list?.totalPages) {
+      totalPages.value = list.totalPages
+    }
+    currentPage.value = 1
+    
     messages.value = rawMessages.map((m: any) => ({
       id: String(m.id),
       content: m.content || m.image_url || m.file_url || '',
@@ -583,16 +592,16 @@ const loadMoreMessages = async () => {
   if (isLoadingMore.value || currentPage.value >= totalPages.value) {
     return
   }
-  
+
   try {
     isLoadingMore.value = true
     const nextPage = currentPage.value + 1
     const list = await getMessages(conversationId.value, nextPage)
-    
+
     if (list?.pagination) {
       totalPages.value = list.pagination.totalPages || 1
     }
-    
+
     const rawMessages = (list?.messages || list?.items || []) as any[]
     const newMessages = rawMessages.map((m: any) => ({
       id: String(m.id),
@@ -604,7 +613,7 @@ const loadMoreMessages = async () => {
       imageUrl: m.image_url,
       fileUrl: m.file_url,
     }))
-    
+
     // 新消息加到前面（因为是向上滚动加载）
     messages.value.unshift(...newMessages)
     currentPage.value = nextPage
@@ -618,7 +627,7 @@ const loadMoreMessages = async () => {
 const handleScroll = (e: Event) => {
   const el = e.target as HTMLDivElement
   if (!el) return
-  
+
   // 当滚动到顶部时，加载更多消息
   if (el.scrollTop < 100 && !isLoadingMore.value && currentPage.value < totalPages.value) {
     loadMoreMessages()
