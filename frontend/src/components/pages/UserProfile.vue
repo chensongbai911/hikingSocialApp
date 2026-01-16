@@ -47,8 +47,8 @@
                 {{ (user && user.hikingLevel) || '新手' }}
               </span>
             </div>
-            <p class="text-gray-600 text-sm mt-1">
-              📍 {{ (user && user.location) || '上海·浦东' }}
+            <p class="text-gray-600 text-sm mt-1" v-if="user && (user.region || user.province || user.city)">
+              📍 {{ user.region || `${user.province || ''} ${user.city || ''}`.trim() }}
             </p>
           </div>
         </div>
@@ -56,15 +56,15 @@
         <!-- 用户统计 -->
         <div class="grid grid-cols-3 gap-4 py-4 border-t border-b border-gray-100">
           <div class="text-center">
-            <div class="text-2xl font-bold text-gray-800">{{ (user && user.stats && user.stats.activities) || 24 }}</div>
+            <div class="text-2xl font-bold text-gray-800">{{ (user && user.stats && user.stats.activities) || 0 }}</div>
             <div class="text-xs text-gray-500 mt-1">徒步次数</div>
           </div>
           <div class="text-center">
-            <div class="text-2xl font-bold text-gray-800">{{ (user && user.stats && user.stats.followers) || 128 }}</div>
+            <div class="text-2xl font-bold text-gray-800">{{ (user && user.stats && user.stats.followers) || 0 }}</div>
             <div class="text-xs text-gray-500 mt-1">关注者</div>
           </div>
           <div class="text-center">
-            <div class="text-2xl font-bold text-gray-800">{{ (user && user.stats && user.stats.following) || 86 }}</div>
+            <div class="text-2xl font-bold text-gray-800">{{ (user && user.stats && user.stats.following) || 0 }}</div>
             <div class="text-xs text-gray-500 mt-1">关注中</div>
           </div>
         </div>
@@ -85,8 +85,8 @@
     <div class="px-4 mt-6">
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-lg font-bold text-gray-800">徒步足迹</h3>
-        <button class="text-teal-500 text-sm font-medium">
-          查看全部 {{ (user && user.hikingTrails && user.hikingTrails.length) || 24 }}
+        <button class="text-teal-500 text-sm font-medium" v-if="(user && user.hikingTrails && user.hikingTrails.length)">
+          查看全部 {{ user.hikingTrails.length }}
         </button>
       </div>
       <div class="grid grid-cols-3 gap-3">
@@ -270,14 +270,16 @@ onMounted(async () => {
         age: userData.age || 0,
         bio: userData.bio || '这个人很懒，什么都没写...',
         hikingLevel: userData.hiking_level || '新手',
-        location: '上海·浦东', // TODO: 从用户资料获取
+        province: userData.province || '',
+        city: userData.city || '',
+        region: userData.region || '',
         tags: (userData.preferences || []).map((p: any) => p.preference_value),
         avatar: userData.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=user${userId}`,
         coverImage: userData.photos && userData.photos[0] ? userData.photos[0].photo_url : '',
         stats: {
           activities: createdRes.data?.pagination?.total || 0,
-          followers: 128, // TODO: 需要关注API支持
-          following: 86   // TODO: 需要关注API支持
+          followers: 0, // TODO: 需要关注API支持
+          following: 0   // TODO: 需要关注API支持
         },
         hikingTrails: joinedActivities.map((act: any) => ({
           id: act.id,
