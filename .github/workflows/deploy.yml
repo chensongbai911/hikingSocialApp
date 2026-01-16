@@ -41,7 +41,7 @@ jobs:
           echo "🔧 部署后端..."
           echo "=========================================="
           cd backend
-          
+
           echo "📦 安装依赖..."
           npm install || (echo "❌ npm install 失败" && exit 1)
 
@@ -62,10 +62,10 @@ jobs:
           echo "🎨 部署前端..."
           echo "=========================================="
           cd /var/www/hikingSocialApp/frontend || (echo "❌ 前端目录不存在" && exit 1)
-          
+
           echo "📦 安装依赖..."
           npm install || (echo "❌ 前端依赖安装失败" && exit 1)
-          
+
           echo "🔨 构建项目..."
           npm run build || (echo "❌ 前端构建失败" && exit 1)
 
@@ -108,7 +108,7 @@ jobs:
           echo "请检查上面的错误日志"
         fi
 
-    - name: Notify on failure  
+    - name: Notify on failure
       if: failure()
       run: |
         echo "❌ 部署失败！"

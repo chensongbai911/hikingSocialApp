@@ -246,15 +246,14 @@ export class UserService {
         [userId]
       );
 
-      // 获取当前最大ID以生成新ID
+      // 获取全局最大ID以生成新ID（不受当前删除操作影响）
       const [idRows] = await connection.query<RowDataPacket[]>(
-        'SELECT id FROM user_preferences ORDER BY created_at DESC LIMIT 1'
+        'SELECT MAX(CAST(SUBSTRING(id, 6) AS UNSIGNED)) as maxNum FROM user_preferences'
       );
 
       let nextNum = 1;
-      if (idRows.length > 0) {
-        const lastId = idRows[0].id as string;
-        nextNum = parseInt(lastId.split('-')[1]) + 1;
+      if (idRows.length > 0 && idRows[0].maxNum) {
+        nextNum = idRows[0].maxNum + 1;
       }
 
       // 插入新偏好
