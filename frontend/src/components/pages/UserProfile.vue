@@ -73,6 +73,9 @@
               @click="openChat"
               :disabled="chatLoading"
               class="w-full px-4 py-2 bg-teal-500 text-white rounded-xl font-medium text-sm hover:bg-teal-600 transition active:scale-95 flex items-center justify-center gap-1"
+            >
+              <span v-if="chatLoading">⏳ 加载中</span>
+              <span v-else>💬 私信</span>
             </button>
 
             <!-- 取消关注按钮 -->
@@ -83,7 +86,8 @@
               class="w-full px-4 py-2 bg-gray-100 text-gray-600 rounded-xl font-medium text-sm hover:bg-gray-200 transition active:scale-95"
               title="取消关注"
             >
-              取消
+              <span v-if="followLoading">⏳</span>
+              <span v-else>取消关注</span>
             </button>
           </div>
         </div>

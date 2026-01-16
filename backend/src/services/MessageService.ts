@@ -15,28 +15,58 @@ export class MessageService {
   async getOrCreateConversation(
     userId1: string,
     userId2: string
-  ): Promise<Conversation> {
+  ): Promise<any> {
     // 确保 userId1 < userId2 以保证唯一性
     const [minId, maxId] =
       userId1 < userId2 ? [userId1, userId2] : [userId2, userId1]
 
-    let conversation = await Conversation.findOne({
-      where: {
-        userId1: minId,
-        userId2: maxId,
-      },
-    })
+    try {
+      // 先查询是否存在
+      const [existingConversation] = await pool.query<RowDataPacket[]>(
+        `SELECT id, user_id1 as userId1, user_id2 as userId2,
+                last_message_content as lastMessageContent,
+                last_message_at as lastMessageAt,
+                user1_unread_count as user1UnreadCount,
+                user2_unread_count as user2UnreadCount,
+                created_at as createdAt,
+                updated_at as updatedAt
+         FROM conversations
+         WHERE user_id1 = ? AND user_id2 = ? AND deleted_at IS NULL`,
+        [minId, maxId]
+      )
 
-    if (!conversation) {
-      conversation = await Conversation.create({
-        userId1: minId,
-        userId2: maxId,
-        user1UnreadCount: 0,
-        user2UnreadCount: 0,
-      } as any)
+      if (existingConversation.length > 0) {
+        return existingConversation[0]
+      }
+
+      // 如果不存在，创建新对话（让数据库自动生成 ID）
+      const insertResult = await pool.query<ResultSetHeader>(
+        `INSERT INTO conversations (user_id1, user_id2, user1_unread_count, user2_unread_count, created_at, updated_at)
+         VALUES (?, ?, 0, 0, NOW(), NOW())`,
+        [minId, maxId]
+      )
+
+      const conversationId = insertResult[0].insertId
+
+      // 返回新创建的对话
+      const [newConversation] = await pool.query<RowDataPacket[]>(
+        `SELECT id, user_id1 as userId1, user_id2 as userId2,
+                last_message_content as lastMessageContent,
+                last_message_at as lastMessageAt,
+                user1_unread_count as user1UnreadCount,
+                user2_unread_count as user2UnreadCount,
+                created_at as createdAt,
+                updated_at as updatedAt
+         FROM conversations
+         WHERE id = ?`,
+        [conversationId]
+      )
+
+      return newConversation[0]
+    } catch (error) {
+      console.error('获取或创建对话失败:', error)
+      throw error
     }
-
-    return conversation
   }
 
   /**

@@ -31,6 +31,7 @@ jobs:
         echo "📦 准备部署包..."
         mkdir -p deploy-package/backend
         mkdir -p deploy-package/frontend
+        mkdir -p deploy-package/nginx
 
         # 复制后端必要文件
         cp -r backend/dist deploy-package/backend/
@@ -41,6 +42,10 @@ jobs:
 
         # 复制前端文件（排除 node_modules）
         rsync -av --exclude='node_modules' --exclude='.git' --exclude='*.log' frontend/ deploy-package/frontend/
+
+        # 复制 Nginx 配置
+        cp nginx/hiking-app-single-server.conf deploy-package/nginx/
+        echo "✅ 已包含 Nginx 配置"
 
         echo "✅ 部署包准备完成"
         du -sh deploy-package/*
@@ -202,9 +207,29 @@ jobs:
           echo "🔨 构建项目..."
           npm run build || (echo "❌ 前端构建失败" && exit 1)
 
+          # 部署 Nginx 配置
+          echo "=========================================="
+          echo "🔧 部署 Nginx 配置..."
+          echo "=========================================="
+          NGINX_CONF="/etc/nginx/sites-available/default"
+          PROJECT_NGINX_CONF="$PROJECT_DIR/nginx/hiking-app-single-server.conf"
+
+          if [ -f "$PROJECT_NGINX_CONF" ]; then
+            echo "📋 备份现有 Nginx 配置..."
+            sudo cp "$NGINX_CONF" "$NGINX_CONF.backup.$(date +%Y%m%d_%H%M%S)" || true
+
+            echo "📝 部署新的 Nginx 配置..."
+            sudo cp "$PROJECT_NGINX_CONF" "$NGINX_CONF" || (echo "❌ Nginx 配置复制失败" && exit 1)
+
+            echo "✓ 验证 Nginx 配置..."
+            sudo nginx -t || (echo "❌ Nginx 配置验证失败，恢复备份" && sudo cp "$NGINX_CONF.backup."* "$NGINX_CONF" && exit 1)
+          else
+            echo "⚠️ 项目中找不到 Nginx 配置文件：$PROJECT_NGINX_CONF"
+          fi
+
           # 重启 Nginx
           echo "🔄 重启 Nginx..."
-          sudo systemctl reload nginx || true
+          sudo systemctl reload nginx || (echo "❌ Nginx 重启失败" && exit 1)
 
           echo "=========================================="
           echo "✅ 部署完成！"
@@ -218,29 +243,87 @@ jobs:
         sleep 8
         echo "🏥 健康检查..."
 
-        # 检查后端 API
+        # 注册测试用户和获取 token（用于 API 测试）
+        echo "📝 注册测试用户..."
+        TEST_USER="healthcheck_$(date +%s)"
+        REGISTER_RESPONSE=$(curl -s -X POST http://115.190.252.62:3000/api/v1/auth/register \
+          -H "Content-Type: application/json" \
+          -d "{\"email\":\"$TEST_USER@test.com\",\"password\":\"test123456\",\"nickname\":\"$TEST_USER\"}")
+
+        TEST_TOKEN=$(echo "$REGISTER_RESPONSE" | grep -o '"token":"[^"]*' | cut -d'"' -f4)
+        if [ -z "$TEST_TOKEN" ]; then
+          echo "⚠️ 无法获取测试 token，跳过 API 测试"
+        else
+          echo "✅ 获得测试 token"
+        fi
+
+        # 检查后端 API（直接连接）
+        echo "📌 检查后端直接访问 (localhost:3000)..."
         for i in {1..5}; do
-          echo "尝试连接后端 ($i/5)..."
-          if curl -s -f http://115.190.252.62:3000/api/v1/activities?page=1 -H "Accept: application/json" > /dev/null; then
-            echo "✅ 后端 API 健康检查通过"
+          if curl -s -f http://115.190.252.62:3000/api/v1/auth/login \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -d '{"email":"testuser@test.com","password":"test123"}' > /dev/null 2>&1; then
+            echo "✅ 后端直接访问正常"
             break
           else
             if [ $i -lt 5 ]; then
-              echo "⏳ 等待中..."
+              echo "⏳ 后端启动中... ($i/5)"
               sleep 3
             else
-              echo "⚠️ 后端可能还在启动，继续部署"
+              echo "⚠️ 后端可能还在启动"
+            fi
+          fi
+        done
+
+        # 检查 Nginx 代理（通过 IP 访问）
+        echo "📌 检查 Nginx 代理 (115.190.252.62:80)..."
+        for i in {1..5}; do
+          if curl -s -f http://115.190.252.62/health > /dev/null 2>&1; then
+            echo "✅ Nginx 代理正常"
+            break
+          else
+            if [ $i -lt 5 ]; then
+              echo "⏳ Nginx 初始化中... ($i/5)"
+              sleep 2
+            else
+              echo "❌ Nginx 代理异常，请检查配置"
             fi
           fi
         done
 
         # 检查前端
-        echo "检查前端..."
+        echo "📌 检查前端访问..."
         if curl -s -f http://115.190.252.62/ > /dev/null; then
           echo "✅ 前端可访问"
         else
           echo "⚠️ 前端可能还在启动"
         fi
+
+        # 验证关键 API 接口（如果有 token）
+        if [ -n "$TEST_TOKEN" ]; then
+          echo "📌 验证关键 API 接口..."
+
+          ENDPOINTS=(
+            "/api/v1/messages/unread-count"
+            "/api/v1/messages/conversations?page=1&limit=20"
+            "/api/v1/users/user-010/detail"
+          )
+
+          for endpoint in "${ENDPOINTS[@]}"; do
+            echo "检查 $endpoint..."
+            if curl -s -f "http://115.190.252.62$endpoint" \
+              -H "Authorization: Bearer $TEST_TOKEN" > /dev/null 2>&1; then
+              echo "✅ $endpoint OK"
+            else
+              HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://115.190.252.62$endpoint" \
+                -H "Authorization: Bearer $TEST_TOKEN")
+              echo "⚠️ $endpoint 返回 HTTP $HTTP_CODE"
+            fi
+          done
+        fi
+
+        echo "🏁 健康检查完成"
 
     - name: Notify status
       if: always()

@@ -152,7 +152,8 @@ export class MessageController {
 
       const { targetUserId } = req.body
 
-      if (!targetUserId || isNaN(targetUserId)) {
+      // 修复：targetUserId 是字符串格式（如 "user-004"），不应该用 isNaN 验证
+      if (!targetUserId || typeof targetUserId !== 'string' || targetUserId.trim() === '') {
         return validationError(res, '缺少目标用户ID')
       }
 
@@ -160,18 +161,23 @@ export class MessageController {
         return validationError(res, '不能与自己创建对话')
       }
 
-      const conversation = await messageService.getOrCreateConversation(
-        userId,
-        targetUserId
-      )
+      try {
+        const conversation = await messageService.getOrCreateConversation(
+          userId,
+          targetUserId
+        )
 
-      res.json({
-        code: 0,
-        message: '获取或创建对话成功',
-        data: {
-          conversation,
-        },
-      })
+        res.json({
+          code: 0,
+          message: '获取或创建对话成功',
+          data: {
+            conversation,
+          },
+        })
+      } catch (error: any) {
+        console.error('创建对话失败:', error)
+        return businessError(res, 2001, '创建对话失败: ' + (error.message || '未知错误'))
+      }
     } catch (error) {
       next(error)
     }
