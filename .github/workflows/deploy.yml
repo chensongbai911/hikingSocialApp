@@ -39,7 +39,14 @@ jobs:
           # 检查是否是 git 仓库
           if [ ! -d .git ]; then
             echo "📥 初始化 Git 仓库..."
+            # 清理可能存在的文件
+            if [ "$(ls -A)" ]; then
+              echo "⚠️  目录不为空，先备份现有文件..."
+              mv * ../hikingSocialApp_backup_$(date +%Y%m%d_%H%M%S) 2>/dev/null || true
+            fi
             git clone https://github.com/chensongbai911/hikingSocialApp.git . || (echo "❌ 克隆失败" && exit 1)
+          else
+            echo "📥 更新现有仓库..."
           fi
 
           # 拉取最新代码
@@ -73,7 +80,7 @@ jobs:
           echo "🎨 部署前端..."
           echo "=========================================="
           cd "$PROJECT_DIR/frontend"
-          
+
           if [ ! -d node_modules ]; then
             echo "📦 安装依赖..."
             npm install || (echo "❌ 前端依赖安装失败" && exit 1)
@@ -97,7 +104,7 @@ jobs:
       run: |
         sleep 8
         echo "🏥 健康检查..."
-        
+
         # 检查后端 API
         for i in {1..5}; do
           echo "尝试连接后端 ($i/5)..."
@@ -113,7 +120,7 @@ jobs:
             fi
           fi
         done
-        
+
         # 检查前端
         echo "检查前端..."
         if curl -s -f http://115.190.252.62/ > /dev/null; then
