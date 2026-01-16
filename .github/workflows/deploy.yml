@@ -13,7 +13,31 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
+
+    - name: Build backend
+      run: |
+        cd backend
+        npm ci
+        npm run build
+
     - name: Deploy to server
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        port: 22
+        source: "backend/dist,backend/package.json,backend/package-lock.json,backend/.env.example,backend/ecosystem.config.js,frontend"
+        target: "/tmp/hikingSocialApp"
+        strip_components: 0
+
+    - name: Execute deployment commands
       uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.SERVER_HOST }}
@@ -29,34 +53,30 @@ jobs:
           echo "=========================================="
 
           PROJECT_DIR="/var/www/hikingSocialApp"
+          TEMP_DIR="/tmp/hikingSocialApp"
 
           # 确保项目目录存在
           mkdir -p "$PROJECT_DIR" || (echo "❌ 无法创建项目目录" && exit 1)
 
-          # 进入项目目录
-          cd "$PROJECT_DIR"
-
-          # 检查是否是 git 仓库
-          if [ ! -d .git ]; then
-            echo "📥 初始化 Git 仓库..."
-            # 检查目录是否为空
-            if [ "$(ls -A)" ]; then
-              echo "⚠️  目录不为空，清理现有文件..."
-              # 删除所有文件和目录（除了隐藏文件）
-              rm -rf * 2>/dev/null || true
-              # 删除隐藏文件（除了. 和 ..）
-              rm -rf .[!.]* 2>/dev/null || true
-            fi
-            echo "📥 克隆代码仓库..."
-            git clone https://github.com/chensongbai911/hikingSocialApp.git . || (echo "❌ 克隆失败" && exit 1)
-          else
-            echo "📥 更新现有仓库..."
+          # 备份现有环境变量文件
+          if [ -f "$PROJECT_DIR/backend/.env" ]; then
+            echo "📦 备份环境变量文件..."
+            cp "$PROJECT_DIR/backend/.env" "/tmp/backend.env.backup"
           fi
 
-          # 拉取最新代码
-          echo "📥 拉取最新代码..."
-          git fetch origin master || (echo "❌ git fetch 失败" && exit 1)
-          git reset --hard origin/master || (echo "❌ git reset 失败" && exit 1)
+          # 同步代码（从临时目录到项目目录）
+          echo "📥 同步代码..."
+          rsync -av --delete "$TEMP_DIR/backend/" "$PROJECT_DIR/backend/" || (echo "❌ 后端同步失败" && exit 1)
+          rsync -av --delete "$TEMP_DIR/frontend/" "$PROJECT_DIR/frontend/" || (echo "❌ 前端同步失败" && exit 1)
+
+          # 恢复环境变量文件
+          if [ -f "/tmp/backend.env.backup" ]; then
+            cp "/tmp/backend.env.backup" "$PROJECT_DIR/backend/.env"
+            rm "/tmp/backend.env.backup"
+          fi
+
+          # 清理临时目录
+          rm -rf "$TEMP_DIR"
 
           # 后端部署
           echo "=========================================="
@@ -64,11 +84,8 @@ jobs:
           echo "=========================================="
           cd "$PROJECT_DIR/backend"
 
-          echo "📦 安装依赖..."
-          npm install || (echo "❌ npm install 失败" && exit 1)
-
-          echo "🔨 编译 TypeScript..."
-          npm run build || (echo "❌ 编译失败" && exit 1)
+          echo "📦 安装生产依赖..."
+          npm ci --production || npm install --production || (echo "❌ npm install 失败" && exit 1)
 
           # 重启后端服务
           echo "🔄 重启后端服务..."
