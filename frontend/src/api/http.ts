@@ -71,7 +71,7 @@ api.interceptors.response.use(
       // 检查是否是真正的认证失败(1xxx业务码)
       const businessCode = error.response?.data?.code
       const isAuthError = businessCode >= 1001 && businessCode <= 1999
-      
+
       console.log('[HTTP] 错误码:', businessCode, '是认证错误:', isAuthError)
 
       // 只有真正的认证错误才清空token

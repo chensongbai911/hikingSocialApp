@@ -97,7 +97,7 @@ export enum BusinessErrorCode {
   PREFERENCE_NOT_FOUND = 3009,
   PHOTO_NOT_FOUND = 3010,
   MAX_PHOTOS_EXCEEDED = 3011,
-  
+
   // 资源不存在 (4xxx) - 返回404
   USER_NOT_FOUND = 4001,
   RESOURCE_NOT_FOUND = 3012,
