@@ -363,7 +363,7 @@ jobs:
             echo "跳过 Nginx 配置部署"
           else
             echo "📝 检测 Nginx 配置目录结构..."
-            
+
             # 检查不同的 Nginx 配置目录
             if [ -d "/etc/nginx/sites-available" ]; then
               NGINX_CONF="/etc/nginx/sites-available/default"
@@ -376,34 +376,34 @@ jobs:
               echo "⚠️ 无法找到 Nginx 配置目录，跳过配置部署"
               NGINX_CONF=""
             fi
-            
+
             if [ -n "$NGINX_CONF" ]; then
               echo "✓ 使用 Nginx 配置路径：$NGINX_CONF"
-              
+
               # 创建配置目录
               sudo mkdir -p "$(dirname "$NGINX_CONF")" || true
-              
+
               # 备份现有配置（如果存在）
               if [ -f "$NGINX_CONF" ]; then
                 echo "📋 备份现有 Nginx 配置..."
                 sudo cp "$NGINX_CONF" "$NGINX_CONF.backup.$(date +%Y%m%d_%H%M%S)" || true
               fi
-              
+
               # 部署新配置
               echo "📝 部署新的 Nginx 配置..."
               sudo cp "$PROJECT_NGINX_CONF" "$NGINX_CONF" || (echo "❌ Nginx 配置复制失败" && exit 1)
-              
+
               # 对于 sites-available 模式，需要创建 symlink 到 sites-enabled
               if [ "$USE_SITES_STRUCTURE" = true ]; then
                 echo "📌 创建 sites-enabled symlink..."
                 sudo mkdir -p /etc/nginx/sites-enabled || true
                 sudo ln -sf "$NGINX_CONF" "$NGINX_ENABLED" || true
               fi
-              
+
               # 验证 Nginx 配置
               echo "✓ 验证 Nginx 配置..."
               sudo nginx -t || (echo "❌ Nginx 配置验证失败" && exit 1)
-              
+
               # 重启 Nginx
               echo "🔄 重启 Nginx..."
               sudo systemctl reload nginx || (echo "⚠️ systemctl reload 失败，尝试 service..." && sudo service nginx reload) || (echo "❌ Nginx 重启失败" && exit 1)
