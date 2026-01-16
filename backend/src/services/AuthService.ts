@@ -208,17 +208,17 @@ export class AuthService {
 
     // 获取用户偏好
     const [preferences] = await pool.query<RowDataPacket[]>(
-      `SELECT preference_type, preference_value 
-       FROM user_preferences 
+      `SELECT preference_type, preference_value
+       FROM user_preferences
        WHERE user_id = ?`,
       [userId]
     );
 
     // 获取用户照片
     const [photos] = await pool.query<RowDataPacket[]>(
-      `SELECT id, photo_url, sort_order, created_at 
-       FROM user_photos 
-       WHERE user_id = ? 
+      `SELECT id, photo_url, sort_order, created_at
+       FROM user_photos
+       WHERE user_id = ?
        ORDER BY sort_order ASC, created_at DESC`,
       [userId]
     );
