@@ -142,7 +142,7 @@
       <div v-if="typingUsers.size > 0" class="text-xs text-gray-500 mt-2">对方正在输入...</div>
     </div>
 
-    <div class="bg-white border-t border-gray-100 p-4 flex-shrink-0" style="padding-bottom: max(1rem, env(safe-area-inset-bottom));">
+    <div class="bg-white border-t border-gray-100 p-4 flex-shrink-0 pb-6">
       <div
         v-if="showEmojiPicker"
         class="mb-3 p-3 bg-gray-50 rounded-2xl grid grid-cols-8 gap-2 max-h-48 overflow-y-auto"

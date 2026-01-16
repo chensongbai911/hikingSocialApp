@@ -46,7 +46,7 @@
       <h2 class="text-lg font-bold text-teal-600">最近私聊</h2>
     </div>
 
-    <div class="bg-white" @scroll.passive="onScroll">
+    <div class="bg-white flex-1 overflow-y-auto" @scroll.passive="onScroll">
       <div v-if="loading && chats.length === 0" class="p-4 space-y-3">
         <div v-for="n in 6" :key="n" class="flex items-center animate-pulse space-x-4">
           <div class="w-14 h-14 bg-gray-200 rounded-full"></div>
@@ -110,14 +110,6 @@
       </div>
 
       <div v-if="loading" class="py-12 text-center text-gray-400">加载中...</div>
-      <div v-if="!loading && canLoadMore" class="py-4 text-center">
-        <button
-          class="px-4 py-2 bg-gray-100 rounded-full text-sm text-gray-600 hover:bg-gray-200"
-          @click="handleLoadMore"
-        >
-          {{ loadingMore ? '加载中...' : '加载更多' }}
-        </button>
-      </div>
     </div>
   </div>
 </template>
