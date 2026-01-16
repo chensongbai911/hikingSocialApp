@@ -14,10 +14,10 @@ export class ActivityPhoto extends Model {
                 comment: '活动ID'
             },
             photoUrl: {
-                type: DataTypes.STRING(500),
+                type: DataTypes.TEXT('long'),
                 allowNull: false,
                 field: 'photo_url',
-                comment: '照片URL'
+                comment: '照片URL（支持base64）'
             },
             isCover: {
                 type: DataTypes.BOOLEAN,

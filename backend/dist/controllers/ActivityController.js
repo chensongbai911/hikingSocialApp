@@ -161,8 +161,11 @@ export class ActivityController {
             if (difficulty !== undefined && !['easy', 'moderate', 'hard'].includes(difficulty)) {
                 return validationError(res, { difficulty: '难度值必须是easy、moderate或hard' });
             }
-            if (status !== undefined && !['pending', 'approved', 'ongoing', 'completed', 'cancelled'].includes(status)) {
-                return validationError(res, { status: '状态值不合法' });
+            // 只在明确提供 status 时才验证（排除 undefined 和空字符串）
+            if (status !== undefined && status !== null && status !== '') {
+                if (!['pending', 'approved', 'ongoing', 'completed', 'cancelled'].includes(status)) {
+                    return validationError(res, { status: '状态值不合法' });
+                }
             }
             if (max_participants !== undefined && (max_participants < 1 || max_participants > 100)) {
                 return validationError(res, { max_participants: '最大参与人数必须在1-100之间' });
@@ -190,8 +193,11 @@ export class ActivityController {
                 updateData.difficulty = difficulty;
             if (max_participants !== undefined)
                 updateData.max_participants = max_participants;
-            if (status !== undefined)
+            // 只在 status 有效时才添加
+            if (status !== undefined && status !== null && status !== '' &&
+                ['pending', 'approved', 'ongoing', 'completed', 'cancelled'].includes(status)) {
                 updateData.status = status;
+            }
             if (route_description !== undefined)
                 updateData.route_description = route_description;
             if (equipment_required !== undefined)

@@ -31,8 +31,9 @@ app.use(cors({
     origin: process.env.CORS_ORIGIN?.split(',') || '*',
     credentials: true,
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// 增加请求体大小限制，支持多图片上传（base64）
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // 请求日志
 app.use(requestLogger);
 // 静态文件服务 - uploads目录
