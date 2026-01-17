@@ -173,6 +173,8 @@ const formatTime = (time: string | null) => {
 
 const mapConversation = (raw: any): ChatItem => {
   const userId = String(userStore.userId)
+  console.log('[Messages mapConversation] 当前用户ID:', userId, '原始数据:', { userId1: raw.userId1, userId2: raw.userId2 })
+  
   const other = String(raw.userId1) === userId ? raw.user2 : raw.user1
   const unread = String(raw.userId1) === userId ? raw.user2UnreadCount : raw.user1UnreadCount
 
@@ -180,10 +182,11 @@ const mapConversation = (raw: any): ChatItem => {
   const otherName = other?.nickname || other?.name || '陌生人'
   const otherAvatar = other?.avatarUrl || other?.avatar_url || ''
   const lastMessage = raw.lastMessageContent || ''
+  const otherUserId = other?.id ? String(other.id) : undefined
 
   console.log('[Messages] 映射对话:', {
     conversationId: raw.id,
-    otherUser: other,
+    otherUserId: otherUserId,
     otherName,
     otherAvatar,
     lastMessage,
@@ -198,7 +201,7 @@ const mapConversation = (raw: any): ChatItem => {
     lastTime: raw.lastMessageAt || raw.updatedAt || raw.createdAt || null,
     unreadCount: unread || 0,
     isOnline: false,
-    otherUserId: other?.id ? String(other.id) : undefined,
+    otherUserId: otherUserId,
   }
 }
 
@@ -225,16 +228,19 @@ const loadConversations = async (reset = true) => {
 
     console.log('[Messages] 原始对话数:', list.length, '列表:', list)
 
-    // 基于 otherUserId 做去重，若不存在 otherUserId 则退化为 conversation id
+    // 基于 conversation id 做去重（同一个对话只保留最新的）
     list.map(mapConversation).forEach((c) => {
-      const key = c.otherUserId ? `u_${c.otherUserId}` : `c_${c.id}`
+      const key = `c_${c.id}`  // 使用对话 ID 作为 key
       const existed = convMap.get(key)
       const newer = () => !existed || (c.lastTime && existed.lastTime && new Date(c.lastTime) > new Date(existed.lastTime))
-      if (newer()) convMap.set(key, c)
+      if (newer()) {
+        convMap.set(key, c)
+        console.log('[Messages] 添加对话:', { id: c.id, name: c.name, lastTime: c.lastTime })
+      }
     })
 
     const mapped = Array.from(convMap.values())
-    console.log('[Messages] 映射后对话数:', mapped.length, '列表:', mapped)
+    console.log('[Messages] 映射后对话数:', mapped.length, '对话列表:', mapped.map(c => ({ id: c.id, name: c.name, lastMessage: c.lastMessage })))
 
     chats.value = reset
       ? mapped
@@ -243,6 +249,7 @@ const loadConversations = async (reset = true) => {
             (b.lastTime ? new Date(b.lastTime).getTime() : 0) -
             (a.lastTime ? new Date(a.lastTime).getTime() : 0)
         )
+    console.log('[Messages] 最终对话列表:', chats.value.map(c => ({ id: c.id, name: c.name })))
     if (list.length > 0) page.value += 1
   } catch (err) {
     console.error('[Messages] 加载对话列表失败:', err)
