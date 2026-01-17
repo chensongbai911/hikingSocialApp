@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { pool } from '../config/database';
 import { BusinessErrorCode } from '../types/api.types';
+import { getFullUrl } from '../utils/urlHelper';
 export class AuthService {
     constructor() {
         this.jwtSecret = process.env.JWT_SECRET || 'hiking-app-secret-key-2024';
@@ -115,11 +116,22 @@ export class AuthService {
         }
     }
     /**
-     * 获取当前用户信息
+     * 获取当前用户信息（优化版本 - 使用并行查询）
      */
     async getCurrentUser(userId) {
-        const [users] = await pool.query(`SELECT id, email, nickname, gender, age, avatar_url, bio, hiking_level, province, city, region, created_at
-       FROM users WHERE id = ? AND deleted_at IS NULL`, [userId]);
+        // 使用 Promise.all 并行查询，大幅提升性能
+        const [[users], [preferences], [photos]] = await Promise.all([
+            pool.query(`SELECT id, email, nickname, gender, age, avatar_url, bio, hiking_level, province, city, region, created_at
+         FROM users WHERE id = ? AND deleted_at IS NULL`, [userId]),
+            pool.query(`SELECT id, preference_type, preference_value, created_at
+         FROM user_preferences
+         WHERE user_id = ?
+         ORDER BY created_at DESC`, [userId]),
+            pool.query(`SELECT id, photo_url, sort_order, created_at
+         FROM user_photos
+         WHERE user_id = ?
+         ORDER BY sort_order ASC, created_at DESC`, [userId])
+        ]);
         if (users.length === 0) {
             throw {
                 code: BusinessErrorCode.USER_NOT_FOUND,
@@ -127,16 +139,19 @@ export class AuthService {
             };
         }
         const user = users[0];
-        // 获取用户偏好
-        const [preferences] = await pool.query(`SELECT preference_type, preference_value
-       FROM user_preferences
-       WHERE user_id = ?`, [userId]);
-        // 获取用户照片
-        const [photos] = await pool.query(`SELECT id, photo_url, sort_order, created_at
-       FROM user_photos
-       WHERE user_id = ?
-       ORDER BY sort_order ASC, created_at DESC`, [userId]);
-        return user;
+        // 使用统一的 URL 工具函数处理头像和照片 URL
+        user.avatar_url = getFullUrl(user.avatar_url);
+        // 批量处理照片 URL
+        const photosWithFullUrl = photos.map((photo) => ({
+            ...photo,
+            photo_url: getFullUrl(photo.photo_url)
+        }));
+        // 返回包含偏好和照片的完整用户信息
+        return {
+            ...user,
+            preferences: preferences,
+            photos: photosWithFullUrl
+        };
     }
     /**
      * 验证Token

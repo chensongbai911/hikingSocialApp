@@ -2,6 +2,7 @@ import express from 'express';
 import { UserController } from '../controllers/UserController';
 import { UserDetailController } from '../controllers/UserDetailController';
 import { authMiddleware } from '../middleware/authMiddleware';
+import { uploadSingle } from '../middleware/uploadHandler';
 const router = express.Router();
 /**
  * 用户路由
@@ -18,8 +19,8 @@ router.get('/:userId/detail', authMiddleware, UserDetailController.getUserDetail
 router.post('/:userId/follow', authMiddleware, UserDetailController.followUser);
 router.delete('/:userId/follow', authMiddleware, UserDetailController.unfollowUser);
 router.get('/:userId/follow-status', authMiddleware, UserDetailController.getFollowStatus);
-// 头像管理
-router.post('/avatar', authMiddleware, UserController.updateAvatar);
+// 头像管理 - 使用文件上传
+router.post('/avatar', authMiddleware, uploadSingle('avatar'), UserController.updateAvatar);
 // 相册管理
 router.get('/photos', authMiddleware, UserController.getPhotos);
 router.post('/photos', authMiddleware, UserController.addPhoto);

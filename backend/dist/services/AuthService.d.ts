@@ -20,11 +20,14 @@ interface UserInfo {
     gender: string | null;
     age: number | null;
     avatar_url: string | null;
+    bio?: string | null;
     hiking_level: string;
     province: string | null;
     city: string | null;
     region: string | null;
     created_at: Date;
+    preferences?: any[];
+    photos?: any[];
 }
 export declare class AuthService {
     private jwtSecret;
@@ -54,7 +57,7 @@ export declare class AuthService {
         token: string;
     }>;
     /**
-     * 获取当前用户信息
+     * 获取当前用户信息（优化版本 - 使用并行查询）
      */
     getCurrentUser(userId: string): Promise<UserInfo>;
     /**

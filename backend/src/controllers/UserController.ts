@@ -42,10 +42,15 @@ export class UserController {
    */
   static async getUserProfile(req: Request, res: Response): Promise<void> {
     try {
-      const { userId } = req.params;
+      let { userId } = req.params
 
       if (!userId) {
-        return validationError(res, '缺少用户ID参数');
+        return validationError(res, '缺少用户ID参数')
+      }
+
+      // 兼容数字 ID：若用户 ID 是数字，转换为 user-00X 格式
+      if (/^\d+$/.test(userId)) {
+        userId = `user-${userId.padStart(3, '0')}`
       }
 
       const profile = await userService.getProfile(userId);

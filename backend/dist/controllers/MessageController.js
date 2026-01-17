@@ -65,6 +65,42 @@ export class MessageController {
         }
     }
     /**
+     * 获取对话信息与限制状态
+     * GET /api/v1/messages/conversations/:conversationId/info
+     */
+    static async getConversationInfo(req, res, next) {
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+            }
+            const conversationId = parseInt(req.params.conversationId);
+            if (!conversationId || isNaN(conversationId)) {
+                return validationError(res, '无效的对话ID');
+            }
+            // 取参与者 & 预检查
+            const precheck = await chatPolicyService.precheckSend(conversationId, String(userId));
+            const isBlack = await chatPolicyService.isBlacklisted(String(userId), String(precheck.receiverId));
+            res.json({
+                code: 0,
+                data: {
+                    conversationId,
+                    otherUserId: precheck.receiverId,
+                    isLimited: !precheck.isMutualFollow && (precheck.remainingMessages ?? 3) < 3,
+                    limitReason: precheck.isMutualFollow ? null : 'not_mutual_follow',
+                    messageCount: precheck.remainingMessages !== undefined ? 3 - (precheck.remainingMessages || 0) : 0,
+                    remainingMessages: precheck.remainingMessages,
+                    canSend: precheck.canSend,
+                    relationshipType: precheck.isMutualFollow ? 'mutual' : (precheck.canSend ? 'one_way' : 'none'),
+                    isBlacklisted: isBlack,
+                },
+            });
+        }
+        catch (error) {
+            next(error);
+        }
+    }
+    /**
      * 获取或创建对�?   * POST /api/v1/messages/conversations
      */
     static async createConversation(req, res, next) {
@@ -74,20 +110,27 @@ export class MessageController {
                 return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
             }
             const { targetUserId } = req.body;
-            if (!targetUserId || isNaN(targetUserId)) {
+            // 修复：targetUserId 是字符串格式（如 "user-004"），不应该用 isNaN 验证
+            if (!targetUserId || typeof targetUserId !== 'string' || targetUserId.trim() === '') {
                 return validationError(res, '缺少目标用户ID');
             }
             if (userId === targetUserId) {
                 return validationError(res, '不能与自己创建对话');
             }
-            const conversation = await messageService.getOrCreateConversation(userId, targetUserId);
-            res.json({
-                code: 0,
-                message: '获取或创建对话成功',
-                data: {
-                    conversation,
-                },
-            });
+            try {
+                const conversation = await messageService.getOrCreateConversation(userId, targetUserId);
+                res.json({
+                    code: 0,
+                    message: '获取或创建对话成功',
+                    data: {
+                        conversation,
+                    },
+                });
+            }
+            catch (error) {
+                console.error('创建对话失败:', error);
+                return businessError(res, 2001, '创建对话失败: ' + (error.message || '未知错误'));
+            }
         }
         catch (error) {
             next(error);
@@ -138,12 +181,37 @@ export class MessageController {
                 }
             }
             // 发送前策略校验：黑名单、关注关系、3条限制
-            const precheck = await chatPolicyService.precheckSend(conversationId, String(userId));
-            if (!precheck.canSend) {
-                const reason = precheck.reason || 'cannot_send';
+            let precheck;
+            try {
+                precheck = await chatPolicyService.precheckSend(conversationId, String(userId));
+            }
+            catch (err) {
+                const msg = err?.message || '';
+                if (msg.includes('对话不存在')) {
+                    return businessError(res, BusinessErrorCode.RESOURCE_NOT_FOUND, '对话不存在或已被删除');
+                }
+                console.error('precheckSend error:', err);
+                return businessError(res, BusinessErrorCode.FORBIDDEN, '无权发送此对话的消息');
+            }
+            if (!precheck || !precheck.canSend) {
+                const reason = precheck?.reason || 'cannot_send';
                 return businessError(res, BusinessErrorCode.FORBIDDEN, reason);
             }
-            const message = await messageService.sendMessage(conversationId, userId, content, contentType, imageUrl, fileUrl);
+            let message;
+            try {
+                message = await messageService.sendMessage(conversationId, userId, content, contentType, imageUrl, fileUrl);
+            }
+            catch (err) {
+                const msg = err?.message || '';
+                if (msg.includes('对话不存在')) {
+                    return businessError(res, BusinessErrorCode.RESOURCE_NOT_FOUND, '对话不存在或已被删除');
+                }
+                if (msg.includes('用户不是对话的参与者')) {
+                    return businessError(res, BusinessErrorCode.FORBIDDEN, '无权发送此对话的消息');
+                }
+                console.error('sendMessage error:', err);
+                throw err;
+            }
             // 单向关注限制：计数+1
             if (!precheck.isMutualFollow && precheck.remainingMessages !== undefined) {
                 await chatPolicyService.incrementLimit(conversationId, String(userId));
@@ -250,6 +318,8 @@ export class MessageController {
             const targetUserId = req.params.targetUserId;
             if (!targetUserId)
                 return validationError(res, '缺少目标用户');
+            // 确保黑名单/限制表存在，避免本地开发缺表导致 500
+            await chatPolicyService.ensureTablesReady();
             await pool.query('INSERT INTO user_blacklist (user_id, blocked_user_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE user_id = user_id', [String(userId), String(targetUserId)]);
             // 推送黑名单更新给双方
             emitToUser(String(userId), 'blacklist_updated', { userId: String(userId), targetUserId: String(targetUserId), action: 'added' });
@@ -272,6 +342,8 @@ export class MessageController {
             const targetUserId = req.params.targetUserId;
             if (!targetUserId)
                 return validationError(res, '缺少目标用户');
+            // 确保黑名单/限制表存在，避免本地开发缺表导致 500
+            await chatPolicyService.ensureTablesReady();
             await pool.query('DELETE FROM user_blacklist WHERE user_id = ? AND blocked_user_id = ?', [String(userId), String(targetUserId)]);
             // 推送黑名单更新给双方
             emitToUser(String(userId), 'blacklist_updated', { userId: String(userId), targetUserId: String(targetUserId), action: 'removed' });
@@ -291,6 +363,8 @@ export class MessageController {
             const userId = req.user?.id;
             if (!userId)
                 return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+            // 确保黑名单/限制表存在，避免本地开发缺表导致 500
+            await chatPolicyService.ensureTablesReady();
             const [rows] = await pool.query('SELECT blocked_user_id FROM user_blacklist WHERE user_id = ?', [String(userId)]);
             res.json({ code: 0, data: rows.map(r => r.blocked_user_id) });
         }
@@ -386,6 +460,8 @@ export class MessageController {
             if (!conversationId || isNaN(conversationId)) {
                 return validationError(res, '无效的对话ID');
             }
+            // 确保限制表存在，避免清空对话时缺表
+            await chatPolicyService.ensureTablesReady();
             // 校验参与者
             const [convRows] = await pool.query('SELECT id, user_id1, user_id2 FROM conversations WHERE id = ? LIMIT 1', [conversationId]);
             if (!convRows || convRows.length === 0) {

@@ -40,7 +40,7 @@ interface UserPhoto {
 }
 export declare class UserService {
     /**
-     * 获取用户完整资料
+     * 获取用户完整资料（优化版 - 使用单次查询）
      */
     getProfile(userId: string): Promise<UserProfile>;
     /**

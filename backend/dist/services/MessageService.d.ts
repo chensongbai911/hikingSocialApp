@@ -1,5 +1,4 @@
 import { Message } from '../models/Message';
-import { Conversation } from '../models/Conversation';
 /**
  * 消息服务 - 处理聊天消息的业务逻辑
  */
@@ -7,12 +6,12 @@ export declare class MessageService {
     /**
      * 获取或创建对话
      */
-    getOrCreateConversation(userId1: string, userId2: string): Promise<Conversation>;
+    getOrCreateConversation(userId1: string, userId2: string): Promise<any>;
     /**
      * 获取用户的对话列表
      */
     getConversations(userId: string, page?: number, limit?: number): Promise<{
-        conversations: Conversation[];
+        conversations: any[];
         total: number;
         totalPages: number;
     }>;
@@ -20,7 +19,7 @@ export declare class MessageService {
      * 获取对话的消息列表
      */
     getMessages(conversationId: number, page?: number, limit?: number): Promise<{
-        messages: Message[];
+        messages: any[];
         total: number;
         totalPages: number;
     }>;

@@ -29,9 +29,13 @@ export class UserController {
      */
     static async getUserProfile(req, res) {
         try {
-            const { userId } = req.params;
+            let { userId } = req.params;
             if (!userId) {
                 return validationError(res, '缺少用户ID参数');
+            }
+            // 兼容数字 ID：若用户 ID 是数字，转换为 user-00X 格式
+            if (/^\d+$/.test(userId)) {
+                userId = `user-${userId.padStart(3, '0')}`;
             }
             const profile = await userService.getProfile(userId);
             return success(res, profile, '获取用户资料成功');
@@ -105,12 +109,19 @@ export class UserController {
             if (!userId) {
                 return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
             }
-            const { avatar_url } = req.body;
+            // 从文件或 body 中获取头像 URL
+            let avatar_url = req.body?.avatar_url;
+            // 如果上传了文件，构建文件 URL
+            if (req.file) {
+                // 根据实际的服务器配置构建 URL
+                // 假设文件保存在 /uploads/avatars 目录
+                avatar_url = `/uploads/avatars/${req.file.filename}`;
+            }
             if (!avatar_url) {
-                return validationError(res, { avatar_url: '头像URL不能为空' });
+                return validationError(res, { avatar_url: '头像URL或文件不能为空' });
             }
             const result = await userService.updateAvatar(userId, avatar_url);
-            return success(res, result, '更新头像成功');
+            return success(res, { ...result, avatar_url, url: avatar_url }, '更新头像成功');
         }
         catch (error) {
             console.error('Update avatar error:', error);

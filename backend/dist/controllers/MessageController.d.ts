@@ -12,6 +12,11 @@ export declare class MessageController {
      */
     static getMessages(req: Request, res: Response, next: NextFunction): Promise<void>;
     /**
+     * 获取对话信息与限制状态
+     * GET /api/v1/messages/conversations/:conversationId/info
+     */
+    static getConversationInfo(req: Request, res: Response, next: NextFunction): Promise<void>;
+    /**
      * 获取或创建对�?   * POST /api/v1/messages/conversations
      */
     static createConversation(req: Request, res: Response, next: NextFunction): Promise<void>;

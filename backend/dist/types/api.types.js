@@ -20,11 +20,10 @@ export var HttpStatusCode;
 // 业务错误码
 export var BusinessErrorCode;
 (function (BusinessErrorCode) {
-    // 认证相关 (1xxx)
+    // 认证相关 (1xxx) - 仅用于token/登录认证失败
     BusinessErrorCode[BusinessErrorCode["INVALID_CREDENTIALS"] = 1001] = "INVALID_CREDENTIALS";
     BusinessErrorCode[BusinessErrorCode["TOKEN_EXPIRED"] = 1002] = "TOKEN_EXPIRED";
     BusinessErrorCode[BusinessErrorCode["TOKEN_INVALID"] = 1003] = "TOKEN_INVALID";
-    BusinessErrorCode[BusinessErrorCode["USER_NOT_FOUND"] = 1004] = "USER_NOT_FOUND";
     BusinessErrorCode[BusinessErrorCode["USER_ALREADY_EXISTS"] = 1005] = "USER_ALREADY_EXISTS";
     BusinessErrorCode[BusinessErrorCode["UNAUTHORIZED"] = 1006] = "UNAUTHORIZED";
     // 参数验证 (2xxx)
@@ -47,9 +46,11 @@ export var BusinessErrorCode;
     BusinessErrorCode[BusinessErrorCode["MAX_PHOTOS_EXCEEDED"] = 3011] = "MAX_PHOTOS_EXCEEDED";
     BusinessErrorCode[BusinessErrorCode["RESOURCE_NOT_FOUND"] = 3012] = "RESOURCE_NOT_FOUND";
     BusinessErrorCode[BusinessErrorCode["FORBIDDEN"] = 3013] = "FORBIDDEN";
-    // 资源限制 (4xxx)
-    BusinessErrorCode[BusinessErrorCode["RATE_LIMIT_EXCEEDED"] = 4001] = "RATE_LIMIT_EXCEEDED";
-    BusinessErrorCode[BusinessErrorCode["QUOTA_EXCEEDED"] = 4002] = "QUOTA_EXCEEDED";
+    // 资源不存在 (4xxx) - 返回404
+    BusinessErrorCode[BusinessErrorCode["USER_NOT_FOUND"] = 4001] = "USER_NOT_FOUND";
+    // 资源限制 (4xxx) - 返回429或422
+    BusinessErrorCode[BusinessErrorCode["RATE_LIMIT_EXCEEDED"] = 4101] = "RATE_LIMIT_EXCEEDED";
+    BusinessErrorCode[BusinessErrorCode["QUOTA_EXCEEDED"] = 4102] = "QUOTA_EXCEEDED";
     // 系统错误 (5xxx)
     BusinessErrorCode[BusinessErrorCode["DATABASE_ERROR"] = 5001] = "DATABASE_ERROR";
     BusinessErrorCode[BusinessErrorCode["NETWORK_ERROR"] = 5002] = "NETWORK_ERROR";

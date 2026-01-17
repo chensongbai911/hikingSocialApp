@@ -239,21 +239,21 @@ export class MessageController {
         }
       }
 
-      // 在策略校验前先确认对话存在且当前用户在对话内，避免 500
+      // 发送前策略校验：黑名单、关注关系、3条限制
+      let precheck: any
       try {
-        await chatPolicyService.getConversationParticipants(conversationId)
+        precheck = await chatPolicyService.precheckSend(conversationId, String(userId))
       } catch (err: any) {
         const msg = err?.message || ''
         if (msg.includes('对话不存在')) {
           return businessError(res, BusinessErrorCode.RESOURCE_NOT_FOUND, '对话不存在或已被删除')
         }
+        console.error('precheckSend error:', err)
         return businessError(res, BusinessErrorCode.FORBIDDEN, '无权发送此对话的消息')
       }
 
-      // 发送前策略校验：黑名单、关注关系、3条限制
-      const precheck = await chatPolicyService.precheckSend(conversationId, String(userId))
-      if (!precheck.canSend) {
-        const reason = precheck.reason || 'cannot_send'
+      if (!precheck || !precheck.canSend) {
+        const reason = precheck?.reason || 'cannot_send'
         return businessError(res, BusinessErrorCode.FORBIDDEN, reason)
       }
 
@@ -275,6 +275,7 @@ export class MessageController {
         if (msg.includes('用户不是对话的参与者')) {
           return businessError(res, BusinessErrorCode.FORBIDDEN, '无权发送此对话的消息')
         }
+        console.error('sendMessage error:', err)
         throw err
       }
 

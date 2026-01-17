@@ -12,6 +12,8 @@ router.get('/conversations', authMiddleware, MessageController.getConversations)
 router.post('/conversations', authMiddleware, MessageController.createConversation);
 // 获取对话的消息列表
 router.get('/conversations/:conversationId', authMiddleware, MessageController.getMessages);
+// 获取对话信息（限制/关系/黑名单）
+router.get('/conversations/:conversationId/info', authMiddleware, MessageController.getConversationInfo);
 // 清空对话（归档）
 router.delete('/conversations/:conversationId', authMiddleware, MessageController.clearConversation);
 // 标记对话的所有消息为已读

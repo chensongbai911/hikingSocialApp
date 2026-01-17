@@ -6,6 +6,11 @@ export interface SendPrecheckResult {
     isMutualFollow: boolean;
 }
 export declare class ChatPolicyService {
+    private tablesReady;
+    private ensureTablesPromise;
+    private ensureChatTables;
+    ensureTablesReady(): Promise<void>;
+    private queryWithAutoMigrate;
     getConversationParticipants(conversationId: number): Promise<{
         user1: string;
         user2: string;

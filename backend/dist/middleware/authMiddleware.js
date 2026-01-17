@@ -9,16 +9,21 @@ export const authMiddleware = (req, res, next) => {
     try {
         // 从Authorization header获取token
         const authHeader = req.headers.authorization;
+        console.log('[Auth] 请求路径:', req.method, req.path);
+        console.log('[Auth] Authorization header:', authHeader ? `${authHeader.substring(0, 30)}...` : '无');
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            console.warn('[Auth] 缺少或格式错误的Authorization header');
             return unauthorized(res, '缺少认证令牌');
         }
         const token = authHeader.substring(7); // 移除 "Bearer " 前缀
         if (!token) {
+            console.warn('[Auth] Token为空');
             return unauthorized(res, '缺少认证令牌');
         }
         // 验证token
         try {
             const decoded = authService.verifyToken(token);
+            console.log('[Auth] Token验证成功, userId:', decoded.id);
             req.user = {
                 id: decoded.id,
                 email: decoded.email
@@ -26,6 +31,7 @@ export const authMiddleware = (req, res, next) => {
             next();
         }
         catch (error) {
+            console.error('[Auth] Token验证失败:', error.message, error.code);
             if (error.code === BusinessErrorCode.TOKEN_EXPIRED) {
                 return businessError(res, BusinessErrorCode.TOKEN_EXPIRED);
             }

@@ -2,31 +2,86 @@ import { pool } from '../config/database';
 import { BusinessErrorCode } from '../types/api.types';
 export class UserService {
     /**
-     * 获取用户完整资料
+     * 获取用户完整资料（优化版 - 使用单次查询）
      */
     async getProfile(userId) {
-        // 获取用户基本信息（包括地区字段）
-        const [users] = await pool.query(`SELECT id, email, nickname, gender, age, avatar_url, bio, hiking_level, province, city, region, is_verified, created_at
-       FROM users WHERE id = ? AND deleted_at IS NULL`, [userId]);
-        if (users.length === 0) {
+        // 使用单次查询获取用户基本信息、偏好和照片
+        const [rows] = await pool.query(`SELECT
+        u.id, u.email, u.nickname, u.gender, u.age, u.avatar_url, u.bio,
+        u.hiking_level, u.province, u.city, u.region, u.is_verified, u.created_at,
+        p.id as pref_id, p.preference_type, p.preference_value, p.created_at as pref_created_at,
+        ph.id as photo_id, ph.photo_url, ph.sort_order, ph.created_at as photo_created_at
+       FROM users u
+       LEFT JOIN user_preferences p ON u.id = p.user_id
+       LEFT JOIN user_photos ph ON u.id = ph.user_id
+       WHERE u.id = ? AND u.deleted_at IS NULL
+       ORDER BY ph.sort_order ASC, ph.created_at DESC, p.created_at DESC`, [userId]);
+        if (rows.length === 0) {
             throw {
                 code: BusinessErrorCode.USER_NOT_FOUND,
                 message: '用户不存在'
             };
         }
-        const user = users[0];
-        // 获取用户偏好
-        const [preferences] = await pool.query(`SELECT id, preference_type, preference_value, created_at
-       FROM user_preferences WHERE user_id = ?
-       ORDER BY created_at DESC`, [userId]);
-        // 获取用户相册
-        const [photos] = await pool.query(`SELECT id, photo_url, sort_order, created_at
-       FROM user_photos WHERE user_id = ?
-       ORDER BY sort_order ASC, created_at DESC`, [userId]);
+        // 组装用户数据
+        const user = rows[0];
+        const preferences = [];
+        const photos = [];
+        const prefMap = new Map();
+        const photoMap = new Map();
+        for (const row of rows) {
+            // 收集偏好（去重）
+            if (row.pref_id && !prefMap.has(row.pref_id)) {
+                preferences.push({
+                    id: row.pref_id,
+                    preference_type: row.preference_type,
+                    preference_value: row.preference_value,
+                    created_at: row.pref_created_at
+                });
+                prefMap.set(row.pref_id, true);
+            }
+            // 收集照片（去重）
+            if (row.photo_id && !photoMap.has(row.photo_id)) {
+                photos.push({
+                    id: row.photo_id,
+                    photo_url: row.photo_url,
+                    sort_order: row.sort_order,
+                    created_at: row.photo_created_at
+                });
+                photoMap.set(row.photo_id, true);
+            }
+        }
+        // 获取完整URL的辅助函数
+        const getFullUrl = (path) => {
+            if (!path)
+                return null;
+            if (path.startsWith('http'))
+                return path;
+            const baseUrl = process.env.API_BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
+            return `${baseUrl}${path}`;
+        };
+        // 处理头像URL
+        const avatarUrl = getFullUrl(user.avatar_url);
+        // 处理照片URL
+        const photosWithFullUrl = photos.map(photo => ({
+            ...photo,
+            photo_url: getFullUrl(photo.photo_url)
+        }));
         return {
-            ...user,
-            preferences: preferences,
-            photos: photos
+            id: user.id,
+            email: user.email,
+            nickname: user.nickname,
+            gender: user.gender,
+            age: user.age,
+            avatar_url: avatarUrl,
+            bio: user.bio,
+            hiking_level: user.hiking_level,
+            province: user.province,
+            city: user.city,
+            region: user.region,
+            is_verified: user.is_verified,
+            created_at: user.created_at,
+            preferences,
+            photos: photosWithFullUrl
         };
     }
     /**
