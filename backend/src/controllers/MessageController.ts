@@ -239,6 +239,17 @@ export class MessageController {
         }
       }
 
+      // 在策略校验前先确认对话存在且当前用户在对话内，避免 500
+      try {
+        await chatPolicyService.getConversationParticipants(conversationId)
+      } catch (err: any) {
+        const msg = err?.message || ''
+        if (msg.includes('对话不存在')) {
+          return businessError(res, BusinessErrorCode.RESOURCE_NOT_FOUND, '对话不存在或已被删除')
+        }
+        return businessError(res, BusinessErrorCode.FORBIDDEN, '无权发送此对话的消息')
+      }
+
       // 发送前策略校验：黑名单、关注关系、3条限制
       const precheck = await chatPolicyService.precheckSend(conversationId, String(userId))
       if (!precheck.canSend) {
@@ -246,14 +257,26 @@ export class MessageController {
         return businessError(res, BusinessErrorCode.FORBIDDEN, reason)
       }
 
-      const message = await messageService.sendMessage(
-        conversationId,
-        userId as any,
-        content,
-        contentType,
-        imageUrl,
-        fileUrl
-      )
+      let message
+      try {
+        message = await messageService.sendMessage(
+          conversationId,
+          userId as any,
+          content,
+          contentType,
+          imageUrl,
+          fileUrl
+        )
+      } catch (err: any) {
+        const msg = err?.message || ''
+        if (msg.includes('对话不存在')) {
+          return businessError(res, BusinessErrorCode.RESOURCE_NOT_FOUND, '对话不存在或已被删除')
+        }
+        if (msg.includes('用户不是对话的参与者')) {
+          return businessError(res, BusinessErrorCode.FORBIDDEN, '无权发送此对话的消息')
+        }
+        throw err
+      }
 
       // 单向关注限制：计数+1
       if (!precheck.isMutualFollow && precheck.remainingMessages !== undefined) {
