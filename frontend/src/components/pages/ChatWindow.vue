@@ -84,8 +84,8 @@
         >
           <img
             v-if="message.senderId !== userStore.userId"
-            :src="chatUser.avatar || 'https://placehold.co/48x48'"
-            :alt="chatUser.name"
+            :src="message.sender?.avatarUrl || chatUser.avatar || 'https://placehold.co/48x48'"
+            :alt="message.sender?.nickname || chatUser.name"
             class="w-8 h-8 rounded-full object-cover flex-shrink-0"
           />
 
@@ -339,6 +339,11 @@ interface ChatMessage {
   isRecalled?: boolean
   imageUrl?: string
   fileUrl?: string
+  sender?: {
+    id: string
+    nickname: string
+    avatarUrl?: string
+  }
 }
 
 const messages = ref<ChatMessage[]>([])
@@ -456,6 +461,11 @@ const loadConversation = async () => {
       isRecalled: m.isRecalled || m.is_recalled,
       imageUrl: m.imageUrl || m.image_url,
       fileUrl: m.fileUrl || m.file_url,
+      sender: m.sender ? {
+        id: String(m.sender.id),
+        nickname: m.sender.nickname || m.sender.name || '用户',
+        avatarUrl: m.sender.avatarUrl || m.sender.avatar_url
+      } : undefined
     }))
     console.log('[ChatWindow] 转换后的消息:', messages.value)
     await markConversationAsRead(conversationId.value)
@@ -515,6 +525,15 @@ const handleSendMessage = async (
         isRecalled: sent.isRecalled || sent.is_recalled || false,
         imageUrl: sent.imageUrl || sent.image_url,
         fileUrl: sent.fileUrl || sent.file_url,
+        sender: sent.sender ? {
+          id: String(sent.sender.id),
+          nickname: sent.sender.nickname || userStore.currentUser?.nickname || '我',
+          avatarUrl: sent.sender.avatarUrl || sent.sender.avatar_url || userStore.currentUser?.avatarUrl
+        } : {
+          id: String(userStore.userId),
+          nickname: userStore.currentUser?.nickname || '我',
+          avatarUrl: userStore.currentUser?.avatarUrl
+        }
       }
       console.log('[ChatWindow] 添加新消息到列表:', newMessage)
       messages.value.push(newMessage)
@@ -625,6 +644,11 @@ const loadMoreMessages = async () => {
       isRecalled: m.isRecalled || m.is_recalled,
       imageUrl: m.imageUrl || m.image_url,
       fileUrl: m.fileUrl || m.file_url,
+      sender: m.sender ? {
+        id: String(m.sender.id),
+        nickname: m.sender.nickname || m.sender.name || '用户',
+        avatarUrl: m.sender.avatarUrl || m.sender.avatar_url
+      } : undefined
     }))
 
     // 新消息加到前面（因为是向上滚动加载）
