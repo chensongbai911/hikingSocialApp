@@ -437,6 +437,7 @@ const loadConversation = async () => {
 
     const list = await getMessages(id)
     const rawMessages = (list?.messages || list || []) as any[]
+    console.log('[ChatWindow] 获取消息列表:', { total: list?.total, count: rawMessages.length, messages: rawMessages })
 
     // 从后端响应中获取分页信息
     if (list?.pagination) {
@@ -448,14 +449,15 @@ const loadConversation = async () => {
 
     messages.value = rawMessages.map((m: any) => ({
       id: String(m.id),
-      content: m.content || m.image_url || m.file_url || '',
-      contentType: (m.content_type || m.contentType || 'text') as 'text' | 'image' | 'file',
-      senderId: String(m.sender_id || m.senderId),
-      createdAt: m.created_at || m.createdAt,
-      isRecalled: m.is_recalled,
-      imageUrl: m.image_url,
-      fileUrl: m.file_url,
+      content: m.content || m.imageUrl || m.image_url || m.fileUrl || m.file_url || '',
+      contentType: (m.contentType || m.content_type || 'text') as 'text' | 'image' | 'file',
+      senderId: String(m.senderId || m.sender_id),
+      createdAt: m.createdAt || m.created_at,
+      isRecalled: m.isRecalled || m.is_recalled,
+      imageUrl: m.imageUrl || m.image_url,
+      fileUrl: m.fileUrl || m.file_url,
     }))
+    console.log('[ChatWindow] 转换后的消息:', messages.value)
     await markConversationAsRead(conversationId.value)
     scrollToBottom()
   } catch (err) {
@@ -616,13 +618,13 @@ const loadMoreMessages = async () => {
     const rawMessages = (list?.messages || list?.items || []) as any[]
     const newMessages = rawMessages.map((m: any) => ({
       id: String(m.id),
-      content: m.content || m.image_url || m.file_url || '',
-      contentType: (m.content_type || m.contentType || 'text') as 'text' | 'image' | 'file',
-      senderId: String(m.sender_id || m.senderId),
-      createdAt: m.created_at || m.createdAt,
-      isRecalled: m.is_recalled,
-      imageUrl: m.image_url,
-      fileUrl: m.file_url,
+      content: m.content || m.imageUrl || m.image_url || m.fileUrl || m.file_url || '',
+      contentType: (m.contentType || m.content_type || 'text') as 'text' | 'image' | 'file',
+      senderId: String(m.senderId || m.sender_id),
+      createdAt: m.createdAt || m.created_at,
+      isRecalled: m.isRecalled || m.is_recalled,
+      imageUrl: m.imageUrl || m.image_url,
+      fileUrl: m.fileUrl || m.file_url,
     }))
 
     // 新消息加到前面（因为是向上滚动加载）
