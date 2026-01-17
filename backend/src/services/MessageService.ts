@@ -239,84 +239,127 @@ export class MessageService {
     contentType: 'text' | 'image' | 'file' = 'text',
     imageUrl?: string,
     fileUrl?: string
-  ): Promise<Message> {
+  ): Promise<any> {
     // 验证对话存在且用户是参与者
-    const conversation = await Conversation.findByPk(conversationId)
-    if (!conversation) {
+    const [conversations] = await pool.query<RowDataPacket[]>(
+      'SELECT id, user_id1, user_id2, user1_unread_count, user2_unread_count FROM conversations WHERE id = ? AND deleted_at IS NULL',
+      [conversationId]
+    )
+
+    if (conversations.length === 0) {
       throw new Error('对话不存在')
     }
 
+    const conversation = conversations[0]
+
     if (
-      String(conversation.userId1) !== String(senderId) &&
-      String(conversation.userId2) !== String(senderId)
+      String(conversation.user_id1) !== String(senderId) &&
+      String(conversation.user_id2) !== String(senderId)
     ) {
       throw new Error('用户不是对话的参与者')
     }
 
     // 创建消息
-    const message = await Message.create({
-      conversationId,
-      senderId,
-      content,
-      contentType,
-      imageUrl: imageUrl || null,
-      fileUrl: fileUrl || null,
-      isRead: false,
-    } as any)
+    const [insertResult] = await pool.query<ResultSetHeader>(
+      `INSERT INTO messages (conversation_id, sender_id, content, content_type, image_url, file_url, is_read, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, false, NOW(), NOW())`,
+      [conversationId, senderId, content || '', contentType, imageUrl || null, fileUrl || null]
+    )
+
+    const messageId = insertResult.insertId
 
     // 更新对话的最后消息信息
     const otherUserId =
-      conversation.userId1 === senderId
-        ? conversation.userId2
-        : conversation.userId1
+      conversation.user_id1 === senderId
+        ? conversation.user_id2
+        : conversation.user_id1
 
-    await conversation.update({
-      lastMessageId: message.id,
-      lastMessageAt: new Date(),
-      lastMessageContent:
-        contentType === 'text'
-          ? content.substring(0, 100)
-          : `[${contentType === 'image' ? '图片' : '文件'}]`,
-      [conversation.userId1 === senderId
-        ? 'user2UnreadCount'
-        : 'user1UnreadCount']: (conversation[
-          conversation.userId1 === senderId
-            ? 'user2UnreadCount'
-            : 'user1UnreadCount'
-        ] || 0) + 1,
-    })
+    const unreadCountField = conversation.user_id1 === senderId ? 'user2_unread_count' : 'user1_unread_count'
+    const currentUnreadCount = conversation.user_id1 === senderId ? conversation.user2_unread_count : conversation.user1_unread_count
+
+    const lastMessageContent =
+      contentType === 'text'
+        ? (content || '').substring(0, 100)
+        : `[${contentType === 'image' ? '图片' : '文件'}]`
+
+    await pool.query(
+      `UPDATE conversations
+       SET last_message_id = ?,
+           last_message_at = NOW(),
+           last_message_content = ?,
+           ${unreadCountField} = ?
+       WHERE id = ?`,
+      [messageId, lastMessageContent, (currentUnreadCount || 0) + 1, conversationId]
+    )
 
     // 返回完整消息对象（包括发送者信息）
-    const messageWithSender = await Message.findByPk(message.id, {
-      include: [
-        {
-          model: User,
-          as: 'sender',
-          attributes: ['id', 'nickname', 'avatarUrl'],
-        },
-      ],
-    })
+    const [messages] = await pool.query<RowDataPacket[]>(
+      `SELECT
+        m.id, m.conversation_id as conversationId, m.sender_id as senderId,
+        m.content, m.content_type as contentType, m.image_url as imageUrl,
+        m.file_url as fileUrl, m.is_read as isRead, m.read_at as readAt,
+        m.created_at as createdAt, m.updated_at as updatedAt,
+        u.id as sender_id, u.nickname as sender_nickname, u.avatar_url as sender_avatarUrl
+       FROM messages m
+       LEFT JOIN users u ON m.sender_id = u.id
+       WHERE m.id = ?`,
+      [messageId]
+    )
 
-    return messageWithSender!
+    if (messages.length === 0) {
+      throw new Error('消息创建失败')
+    }
+
+    const msg = messages[0]
+    return {
+      id: msg.id,
+      conversationId: msg.conversationId,
+      senderId: msg.senderId,
+      content: msg.content,
+      contentType: msg.contentType,
+      imageUrl: msg.imageUrl,
+      fileUrl: msg.fileUrl,
+      isRead: msg.isRead,
+      readAt: msg.readAt,
+      createdAt: msg.createdAt,
+      updatedAt: msg.updatedAt,
+      sender: {
+        id: msg.sender_id,
+        nickname: msg.sender_nickname,
+        avatarUrl: msg.sender_avatarUrl
+      }
+    }
   }
 
   /**
    * 标记消息为已读
    */
-  async markMessageAsRead(messageId: number): Promise<Message> {
-    const message = await Message.findByPk(messageId)
-    if (!message) {
+  async markMessageAsRead(messageId: number): Promise<any> {
+    const [messages] = await pool.query<RowDataPacket[]>(
+      'SELECT id, is_read FROM messages WHERE id = ?',
+      [messageId]
+    )
+
+    if (messages.length === 0) {
       throw new Error('消息不存在')
     }
 
-    if (!message.isRead) {
-      await message.update({
-        isRead: true,
-        readAt: new Date(),
-      })
+    const message = messages[0]
+
+    if (!message.is_read) {
+      await pool.query(
+        'UPDATE messages SET is_read = true, read_at = NOW(), updated_at = NOW() WHERE id = ?',
+        [messageId]
+      )
     }
 
-    return message
+    // 返回更新后的消息
+    const [updated] = await pool.query<RowDataPacket[]>(
+      'SELECT * FROM messages WHERE id = ?',
+      [messageId]
+    )
+
+    return updated[0]
   }
 
   /**
@@ -374,15 +417,19 @@ export class MessageService {
    * 删除消息（软删除）
    */
   async deleteMessage(messageId: number): Promise<void> {
-    const message = await Message.findByPk(messageId)
-    if (!message) {
+    const [messages] = await pool.query<RowDataPacket[]>(
+      'SELECT id FROM messages WHERE id = ?',
+      [messageId]
+    )
+
+    if (messages.length === 0) {
       throw new Error('消息不存在')
     }
 
-    await message.update({
-      deletedAt: new Date(),
-      content: '',
-    })
+    await pool.query(
+      'UPDATE messages SET deleted_at = NOW(), content = \'\', updated_at = NOW() WHERE id = ?',
+      [messageId]
+    )
   }
 
   /**

@@ -26,11 +26,11 @@ export declare class MessageService {
     /**
      * 发送消息
      */
-    sendMessage(conversationId: number, senderId: string, content: string, contentType?: 'text' | 'image' | 'file', imageUrl?: string, fileUrl?: string): Promise<Message>;
+    sendMessage(conversationId: number, senderId: string, content: string, contentType?: 'text' | 'image' | 'file', imageUrl?: string, fileUrl?: string): Promise<any>;
     /**
      * 标记消息为已读
      */
-    markMessageAsRead(messageId: number): Promise<Message>;
+    markMessageAsRead(messageId: number): Promise<any>;
     /**
      * 标记对话的所有消息为已读
      */
