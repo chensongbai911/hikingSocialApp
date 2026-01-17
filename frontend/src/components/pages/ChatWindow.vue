@@ -116,19 +116,19 @@
 
             <div v-else class="text-xs text-gray-400 px-3 py-2">消息已撤回</div>
 
-            <div class="flex items-center justify-between mt-1 text-xs text-gray-400">
-              <span>{{ formatTime(new Date(message.createdAt)) }}</span>
-              <div class="flex items-center space-x-2">
+            <div class="mt-1 text-xs text-gray-400">
+              <div class="flex items-center justify-between">
+                <span>{{ formatTime(new Date(message.createdAt)) }}</span>
                 <button
                   v-if="message.senderId === userStore.userId && !message.isRecalled"
-                  class="hover:text-red-500"
+                  class="hover:text-red-500 ml-3"
                   @click="handleRecall(message.id)"
                 >
                   撤回
                 </button>
                 <button
                   v-else-if="!message.isRecalled"
-                  class="hover:text-amber-600"
+                  class="hover:text-amber-600 ml-3"
                   @click="handleReport(message.id)"
                 >
                   举报
@@ -433,6 +433,7 @@ const loadConversation = async () => {
     isLimited.value = !!limited
     remainingMessages.value = remain
     isBlacklisted.value = !!black
+    console.log('[ChatWindow] 对话限制信息:', { isLimited: isLimited.value, remainingMessages: remainingMessages.value, isBlacklisted: isBlacklisted.value })
 
     const list = await getMessages(id)
     const rawMessages = (list?.messages || list || []) as any[]
@@ -483,7 +484,7 @@ const handleSendMessage = async (
     return
   }
   if (isLimited.value && remainingMessages.value !== undefined && remainingMessages.value <= 0) {
-    toast.warning('单向关注仅可发送3条消息')
+    toast.warning('未互关仅可发送3条消息，已达上限')
     return
   }
   const trimmed = messageInput.value.trim()
@@ -516,9 +517,10 @@ const handleSendMessage = async (
       console.log('[ChatWindow] 添加新消息到列表:', newMessage)
       messages.value.push(newMessage)
     }
+    // 同步剩余消息数
     if (res?.remainingMessages !== undefined) {
       remainingMessages.value = res.remainingMessages
-      isLimited.value = (remainingMessages.value || 0) < 3
+      console.log('[ChatWindow] 更新剩余消息数:', remainingMessages.value)
     }
     if (contentType === 'text') messageInput.value = ''
     adjustTextareaHeight()
@@ -533,7 +535,8 @@ const handleSendMessage = async (
 const sendDisabled = computed(() => {
   const limitedEmpty =
     isLimited.value && remainingMessages.value !== undefined && remainingMessages.value <= 0
-  return isBlacklisted.value || limitedEmpty || !messageInput.value.trim()
+  const noContent = !messageInput.value.trim()
+  return isBlacklisted.value || limitedEmpty || noContent
 })
 
 const handleImageUpload = async (e: Event) => {
