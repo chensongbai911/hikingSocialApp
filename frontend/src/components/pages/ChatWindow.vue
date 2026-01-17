@@ -402,9 +402,19 @@ const loadConversation = async () => {
     loading.value = true
     loadError.value = ''
 
-    const info = await getConversationInfo(id)
-    const { otherUserId, isLimited: limited, remainingMessages: remain, isBlacklisted: black } =
-      info || {}
+    console.log('[ChatWindow] 开始加载对话，ID:', id)
+
+    // 获取对话信息
+    let info: any = {}
+    try {
+      info = await getConversationInfo(id)
+      console.log('[ChatWindow] 获取对话信息成功:', info)
+    } catch (e: any) {
+      console.error('[ChatWindow] 获取对话信息失败，继续加载消息:', e)
+      // 继续加载消息，即使对话信息失败
+    }
+    
+    const { otherUserId, isLimited: limited, remainingMessages: remain, isBlacklisted: black } = info || {}
 
     const targetUserId = otherUserId || id
     chatUser.value.id = targetUserId
@@ -431,7 +441,7 @@ const loadConversation = async () => {
       chatUser.value.name = `用户${targetUserId.slice(-4)}`
       // 如果是404错误，不影响继续使用
       if (e?.code !== 4001 && e?.code !== 404) {
-        throw e
+        console.warn('[ChatWindow] 忽略用户资料获取错误，继续加载消息')
       }
     }
 
@@ -440,9 +450,13 @@ const loadConversation = async () => {
     isBlacklisted.value = !!black
     console.log('[ChatWindow] 对话限制信息:', { isLimited: isLimited.value, remainingMessages: remainingMessages.value, isBlacklisted: isBlacklisted.value })
 
+    // 加载消息列表
+    console.log('[ChatWindow] 开始加载消息列表，conversationId:', id)
     const list = await getMessages(id)
+    console.log('[ChatWindow] getMessages 返回值:', list)
+    
     const rawMessages = (list?.messages || list || []) as any[]
-    console.log('[ChatWindow] 获取消息列表:', { total: list?.total, count: rawMessages.length, messages: rawMessages })
+    console.log('[ChatWindow] 获取消息列表:', { total: list?.total, count: rawMessages.length, rawMessages })
 
     // 从后端响应中获取分页信息
     if (list?.pagination) {
@@ -467,15 +481,17 @@ const loadConversation = async () => {
         avatarUrl: m.sender.avatarUrl || m.sender.avatar_url
       } : undefined
     }))
-    console.log('[ChatWindow] 转换后的消息:', messages.value)
+    console.log('[ChatWindow] 转换后的消息数组，长度:', messages.value.length, '内容:', messages.value)
     await markConversationAsRead(conversationId.value)
     scrollToBottom()
-  } catch (err) {
+  } catch (err: any) {
+    console.error('[ChatWindow] 加载对话异常:', err)
     loadError.value = err?.message || '加载失败'
     toast.error(loadError.value)
   }
   finally {
     loading.value = false
+    console.log('[ChatWindow] 加载完成，messages.length:', messages.value.length, 'loading:', loading.value)
   }
 }
 

@@ -175,12 +175,12 @@ const mapConversation = (raw: any): ChatItem => {
   const userId = String(userStore.userId)
   const other = String(raw.userId1) === userId ? raw.user2 : raw.user1
   const unread = String(raw.userId1) === userId ? raw.user2UnreadCount : raw.user1UnreadCount
-  
+
   // 支持驼峰和下划线两种命名
   const otherName = other?.nickname || other?.name || '陌生人'
   const otherAvatar = other?.avatarUrl || other?.avatar_url || ''
   const lastMessage = raw.lastMessageContent || ''
-  
+
   console.log('[Messages] 映射对话:', {
     conversationId: raw.id,
     otherUser: other,
@@ -189,7 +189,7 @@ const mapConversation = (raw: any): ChatItem => {
     lastMessage,
     unread
   })
-  
+
   return {
     id: String(raw.id),
     name: otherName,
@@ -217,7 +217,7 @@ const loadConversations = async (reset = true) => {
   try {
     const res = await getConversations(page.value, pageSize.value)
     console.log('[Messages] 获取对话列表响应:', res)
-    
+
     // 处理不同的返回格式
     const list = res?.conversations || res?.data?.conversations || res || []
     const convMap = new Map<string, any>()
@@ -235,7 +235,7 @@ const loadConversations = async (reset = true) => {
 
     const mapped = Array.from(convMap.values())
     console.log('[Messages] 映射后对话数:', mapped.length, '列表:', mapped)
-    
+
     chats.value = reset
       ? mapped
       : [...chats.value, ...mapped].sort(
