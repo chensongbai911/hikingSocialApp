@@ -117,22 +117,17 @@
             <div v-else class="text-xs text-gray-400 px-3 py-2">消息已撤回</div>
 
             <div class="mt-1 text-xs text-gray-400">
-              <div class="flex items-center justify-between">
-                <span>{{ formatTime(new Date(message.createdAt)) }}</span>
-                <button
-                  v-if="message.senderId === userStore.userId && !message.isRecalled"
-                  class="hover:text-red-500 ml-3"
-                  @click="handleRecall(message.id)"
-                >
-                  撤回
-                </button>
-                <button
-                  v-else-if="!message.isRecalled"
-                  class="hover:text-amber-600 ml-3"
-                  @click="handleReport(message.id)"
-                >
-                  举报
-                </button>
+              <div
+                class="flex items-center gap-3 whitespace-nowrap"
+                :class="message.senderId === userStore.userId ? 'justify-end' : 'justify-start'"
+              >
+                <span class="whitespace-nowrap">{{ formatTime(new Date(message.createdAt)) }}</span>
+                <template v-if="message.senderId === userStore.userId && !message.isRecalled">
+                  <button class="hover:text-red-500" @click="handleRecall(message.id)">撤回</button>
+                </template>
+                <template v-else-if="!message.isRecalled">
+                  <button class="hover:text-amber-600" @click="handleReport(message.id)">举报</button>
+                </template>
               </div>
             </div>
           </div>
@@ -563,9 +558,17 @@ const handleSendMessage = async (
     adjustTextareaHeight()
     await nextTick()
     scrollToBottom()
-  } catch (err) {
+  } catch (err: any) {
     console.error('[ChatWindow] 发送消息失败:', err)
-    toast.error(err?.message || '发送失败')
+    const code = err?.code || err?.response?.data?.code
+    const msg = err?.message || err?.response?.data?.message
+    if (code === 3013 || msg === 'message_limit_exceeded') {
+      isLimited.value = true
+      remainingMessages.value = 0
+      toast.warning('未互关仅可发送3条消息，请互相关注后继续聊天')
+      return
+    }
+    toast.error(msg || '发送失败')
   }
 }
 
@@ -688,13 +691,19 @@ const handleScroll = (e: Event) => {
 }
 
 const formatTime = (date: Date) => {
+  if (!(date instanceof Date) || isNaN(date.getTime())) return ''
+
   const now = new Date()
   const diff = now.getTime() - date.getTime()
+
+  // 相对时间
   if (diff < 60000) return '刚刚'
   if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`
-  if (diff < 86400000)
-    return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
-  return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`
+
+  // 绝对时间（年月日时分秒）
+  const pad = (n: number) => n.toString().padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
 }
 
 const adjustTextareaHeight = () => {

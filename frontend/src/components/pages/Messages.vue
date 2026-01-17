@@ -175,8 +175,10 @@ const mapConversation = (raw: any): ChatItem => {
   const userId = String(userStore.userId)
   console.log('[Messages mapConversation] 当前用户ID:', userId, '原始数据:', { userId1: raw.userId1, userId2: raw.userId2 })
 
-  const other = String(raw.userId1) === userId ? raw.user2 : raw.user1
-  const unread = String(raw.userId1) === userId ? raw.user2UnreadCount : raw.user1UnreadCount
+  const otherIsUser1 = String(raw.userId1) === userId
+  const other = otherIsUser1 ? raw.user2 : raw.user1
+  // 未读数应该展示“我”的未读，而不是对方的
+  const unread = otherIsUser1 ? raw.user1UnreadCount : raw.user2UnreadCount
 
   // 支持驼峰和下划线两种命名
   const otherName = other?.nickname || other?.name || '陌生人'

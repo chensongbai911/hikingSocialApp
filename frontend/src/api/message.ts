@@ -41,7 +41,9 @@ export const getMessages = async (
   const response = await request.get(`/messages/conversations/${conversationId}`, {
     params: { page, limit },
   })
-  return response.data.data
+  // 后端返回 { code, message, data: { messages: [], pagination? } }
+  // 兼容请求封装已解包 data 的情况
+  return response.data?.data || response.data
 }
 
 /**

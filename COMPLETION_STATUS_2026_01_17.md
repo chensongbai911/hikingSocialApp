@@ -1,7 +1,7 @@
 # ✅ 徒步社交App - 聊天功能修复完成
 
-**状态**: 🟢 **完成部署**  
-**时间**: 2026-01-17 23:48 UTC  
+**状态**: 🟢 **完成部署**
+**时间**: 2026-01-17 23:48 UTC
 **服务器**: 115.190.252.62
 
 ---
@@ -9,7 +9,7 @@
 ## 📋 修复摘要
 
 ### 问题 1️⃣：聊天消息列表不完整
-**原问题**：`/api/v1/messages/conversations` 未返回 user2 的完整信息  
+**原问题**：`/api/v1/messages/conversations` 未返回 user2 的完整信息
 **修复**：[MessageService.ts](backend/src/services/MessageService.ts) 第144-154行
 ```typescript
 user2: row.user2_id ? {
@@ -20,12 +20,12 @@ user2: row.user2_id ? {
 ```
 
 ### 问题 2️⃣：消息页面显示默认头像
-**原问题**：消息列表中 sender 信息缺失头像 URL  
-**修复**：[MessageService.ts](backend/src/services/MessageService.ts) 第218-228行  
+**原问题**：消息列表中 sender 信息缺失头像 URL
+**修复**：[MessageService.ts](backend/src/services/MessageService.ts) 第218-228行
 添加 `getSenderAvatarUrl()` 函数生成个性化默认头像
 
 ### 问题 3️⃣：新用户无默认头像
-**原问题**：用户注册时未设置 avatar_url  
+**原问题**：用户注册时未设置 avatar_url
 **修复**：[AuthService.ts](backend/src/services/AuthService.ts) 第90-91行
 ```typescript
 const defaultAvatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=user${userId}`;
@@ -235,6 +235,6 @@ DATABASE_HOST: 'localhost' // 本地数据库连接
 
 ---
 
-**最后更新**: 2026-01-17 23:48 UTC  
-**操作员**: GitHub Copilot  
+**最后更新**: 2026-01-17 23:48 UTC
+**操作员**: GitHub Copilot
 **服务器**: 115.190.252.62

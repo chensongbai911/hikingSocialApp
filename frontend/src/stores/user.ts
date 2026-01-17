@@ -24,7 +24,7 @@ export const useUserStore = defineStore('user', () => {
 
   // 计算属性
   const isLoggedIn = computed(() => !!token.value && !!currentUser.value)
-  const userId = computed(() => currentUser.value?.user_id || '')
+  const userId = computed(() => currentUser.value?.id || '')
   const userLevel = computed(() => currentUser.value?.hiking_level || 'beginner')
   const avatarUrl = computed(() => currentUser.value?.avatar_url || '')
 

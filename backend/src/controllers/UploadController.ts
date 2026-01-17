@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import type { File } from 'multer';
 import { success, businessError } from '../utils/response';
 import { BusinessErrorCode } from '../types/api.types';
 import { UploadService } from '../services/UploadService';
@@ -114,7 +115,7 @@ class UploadController {
         return businessError(res, BusinessErrorCode.UNAUTHORIZED, '请先登录');
       }
 
-      const files = req.files as Express.Multer.File[];
+      const files = req.files as File[];
 
       if (!files || files.length === 0) {
         return businessError(res, BusinessErrorCode.VALIDATION_ERROR, '请选择要上传的图片');
