@@ -413,7 +413,7 @@ const loadConversation = async () => {
       console.error('[ChatWindow] 获取对话信息失败，继续加载消息:', e)
       // 继续加载消息，即使对话信息失败
     }
-    
+
     const { otherUserId, isLimited: limited, remainingMessages: remain, isBlacklisted: black } = info || {}
 
     const targetUserId = otherUserId || id
@@ -454,7 +454,7 @@ const loadConversation = async () => {
     console.log('[ChatWindow] 开始加载消息列表，conversationId:', id)
     const list = await getMessages(id)
     console.log('[ChatWindow] getMessages 返回值:', list)
-    
+
     const rawMessages = (list?.messages || list || []) as any[]
     console.log('[ChatWindow] 获取消息列表:', { total: list?.total, count: rawMessages.length, rawMessages })
 

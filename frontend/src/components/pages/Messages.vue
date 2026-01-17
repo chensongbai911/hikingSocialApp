@@ -216,12 +216,12 @@ const loadConversations = async (reset = true) => {
   else loadingMore.value = true
   try {
     const res = await getConversations(page.value, pageSize.value)
-    console.log('[Messages] 获取对话列表响应:', res)
+    console.log('[Messages] getConversations 原始响应:', res)
 
-    // 处理不同的返回格式
-    const list = res?.conversations || res?.data?.conversations || res || []
+    // 处理返回值结构
+    const list = res?.conversations || res?.data?.conversations || []
     const convMap = new Map<string, any>()
-    total.value = res?.total ?? res?.data?.total ?? res?.totalPages ?? total.value
+    total.value = res?.total ?? res?.data?.total ?? list.length
 
     console.log('[Messages] 原始对话数:', list.length, '列表:', list)
 

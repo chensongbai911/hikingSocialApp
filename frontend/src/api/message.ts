@@ -13,6 +13,7 @@ export const getConversations = async (page: number = 1, limit: number = 20) => 
     params: { page, limit },
   })
   console.log('getConversations API response:', response)
+  // 拦截器已经返回了 response.data，这里是整个响应对象
   return response.data
 }
 
