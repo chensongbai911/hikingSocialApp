@@ -175,11 +175,25 @@ const mapConversation = (raw: any): ChatItem => {
   const userId = String(userStore.userId)
   const other = String(raw.userId1) === userId ? raw.user2 : raw.user1
   const unread = String(raw.userId1) === userId ? raw.user2UnreadCount : raw.user1UnreadCount
+  
+  // 支持驼峰和下划线两种命名
+  const otherName = other?.nickname || other?.name || '陌生人'
+  const otherAvatar = other?.avatarUrl || other?.avatar_url || ''
   const lastMessage = raw.lastMessageContent || ''
+  
+  console.log('[Messages] 映射对话:', {
+    conversationId: raw.id,
+    otherUser: other,
+    otherName,
+    otherAvatar,
+    lastMessage,
+    unread
+  })
+  
   return {
     id: String(raw.id),
-    name: other?.nickname || '陌生人',
-    avatar: other?.avatarUrl || '',
+    name: otherName,
+    avatar: otherAvatar,
     lastMessage,
     lastTime: raw.lastMessageAt || raw.updatedAt || raw.createdAt || null,
     unreadCount: unread || 0,
@@ -202,9 +216,14 @@ const loadConversations = async (reset = true) => {
   else loadingMore.value = true
   try {
     const res = await getConversations(page.value, pageSize.value)
-    const list = res?.conversations || res || []
+    console.log('[Messages] 获取对话列表响应:', res)
+    
+    // 处理不同的返回格式
+    const list = res?.conversations || res?.data?.conversations || res || []
     const convMap = new Map<string, any>()
-    total.value = res?.total ?? res?.data?.total ?? total.value
+    total.value = res?.total ?? res?.data?.total ?? res?.totalPages ?? total.value
+
+    console.log('[Messages] 原始对话数:', list.length, '列表:', list)
 
     // 基于 otherUserId 做去重，若不存在 otherUserId 则退化为 conversation id
     list.map(mapConversation).forEach((c) => {
@@ -215,6 +234,8 @@ const loadConversations = async (reset = true) => {
     })
 
     const mapped = Array.from(convMap.values())
+    console.log('[Messages] 映射后对话数:', mapped.length, '列表:', mapped)
+    
     chats.value = reset
       ? mapped
       : [...chats.value, ...mapped].sort(
@@ -224,6 +245,7 @@ const loadConversations = async (reset = true) => {
         )
     if (list.length > 0) page.value += 1
   } catch (err) {
+    console.error('[Messages] 加载对话列表失败:', err)
     toast.error(err?.message || '加载会话失败')
   } finally {
     loading.value = false
