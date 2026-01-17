@@ -497,18 +497,24 @@ const handleSendMessage = async (
       payload?.imageUrl,
       undefined
     )
+    console.log('[ChatWindow] 发送消息响应:', res)
     const sent = res?.message || res?.data?.message || res
+    console.log('[ChatWindow] 提取的消息对象:', sent)
+    
     if (sent && !messageExists(String(sent.id))) {
-      messages.value.push({
+      // 支持驼峰和下划线两种命名
+      const newMessage = {
         id: String(sent.id),
-        content: sent.content || sent.image_url || sent.file_url || '',
-        contentType: (sent.content_type || contentType) as 'text' | 'image' | 'file',
-        senderId: String(sent.sender_id || userStore.userId),
-        createdAt: sent.created_at || new Date().toISOString(),
-        isRecalled: sent.is_recalled,
-        imageUrl: sent.image_url,
-        fileUrl: sent.file_url,
-      })
+        content: sent.content || sent.imageUrl || sent.image_url || sent.fileUrl || sent.file_url || '',
+        contentType: (sent.contentType || sent.content_type || contentType) as 'text' | 'image' | 'file',
+        senderId: String(sent.senderId || sent.sender_id || userStore.userId),
+        createdAt: sent.createdAt || sent.created_at || new Date().toISOString(),
+        isRecalled: sent.isRecalled || sent.is_recalled || false,
+        imageUrl: sent.imageUrl || sent.image_url,
+        fileUrl: sent.fileUrl || sent.file_url,
+      }
+      console.log('[ChatWindow] 添加新消息到列表:', newMessage)
+      messages.value.push(newMessage)
     }
     if (res?.remainingMessages !== undefined) {
       remainingMessages.value = res.remainingMessages
@@ -516,8 +522,10 @@ const handleSendMessage = async (
     }
     if (contentType === 'text') messageInput.value = ''
     adjustTextareaHeight()
+    await nextTick()
     scrollToBottom()
   } catch (err) {
+    console.error('[ChatWindow] 发送消息失败:', err)
     toast.error(err?.message || '发送失败')
   }
 }

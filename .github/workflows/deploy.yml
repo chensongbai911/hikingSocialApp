@@ -517,7 +517,7 @@ jobs:
             HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" $CURL_TIMEOUT \
               "http://115.190.252.62$endpoint" \
               -H "Authorization: Bearer $TEST_TOKEN" || echo "000")
-            
+
             if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "201" ]; then
               echo "✅ $endpoint OK (HTTP $HTTP_CODE)"
             else
