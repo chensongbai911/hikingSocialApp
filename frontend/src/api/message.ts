@@ -70,7 +70,8 @@ export const sendMessage = async (
       fileUrl,
     }
   )
-  return response.data.data
+  console.log('[API] sendMessage 响应:', response)
+  return response.data
 }
 
 /**

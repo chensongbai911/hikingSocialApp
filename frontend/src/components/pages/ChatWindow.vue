@@ -500,7 +500,7 @@ const handleSendMessage = async (
     console.log('[ChatWindow] 发送消息响应:', res)
     const sent = res?.message || res?.data?.message || res
     console.log('[ChatWindow] 提取的消息对象:', sent)
-    
+
     if (sent && !messageExists(String(sent.id))) {
       // 支持驼峰和下划线两种命名
       const newMessage = {
