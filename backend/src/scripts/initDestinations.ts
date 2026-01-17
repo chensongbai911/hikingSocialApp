@@ -1,11 +1,9 @@
 import mysql from 'mysql2/promise';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// CommonJS: __dirname 自动可用
 
 // 加载环境变量 - 修正路径到backend目录
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });

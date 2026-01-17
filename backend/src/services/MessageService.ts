@@ -121,27 +121,42 @@ export class MessageService {
       )
 
       // 格式化数据
-      const formattedConversations = conversations.map((row: any) => ({
-        id: row.id,
-        userId1: row.userId1,
-        userId2: row.userId2,
-        lastMessageContent: row.lastMessageContent,
-        lastMessageAt: row.lastMessageAt,
-        user1UnreadCount: row.user1UnreadCount || 0,
-        user2UnreadCount: row.user2UnreadCount || 0,
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-        user1: row.user1_id ? {
-          id: row.user1_id,
-          nickname: row.user1_nickname,
-          avatarUrl: row.user1_avatarUrl,
-        } : null,
-        user2: row.user2_id ? {
-          id: row.user2_id,
-          nickname: row.user2_nickname,
-          avatarUrl: row.user2_avatarUrl,
-        } : null,
-      }))
+      const formattedConversations = conversations.map((row: any) => {
+        // 为头像添加默认值处理（需要传入userId以生成个性化默认头像）
+        const getAvatarUrl = (avatarUrl: string | null, userId: string) => {
+          if (avatarUrl) {
+            // 如果是相对路径，添加完整URL
+            if (avatarUrl.startsWith('/uploads/')) {
+              return `http://localhost:3000${avatarUrl}`;
+            }
+            return avatarUrl;
+          }
+          // 默认头像 - 使用特定用户ID生成个性化头像
+          return `https://api.dicebear.com/7.x/avataaars/svg?seed=user${userId}`;
+        };
+
+        return {
+          id: row.id,
+          userId1: row.userId1,
+          userId2: row.userId2,
+          lastMessageContent: row.lastMessageContent,
+          lastMessageAt: row.lastMessageAt,
+          user1UnreadCount: row.user1UnreadCount || 0,
+          user2UnreadCount: row.user2UnreadCount || 0,
+          createdAt: row.createdAt,
+          updatedAt: row.updatedAt,
+          user1: row.user1_id ? {
+            id: row.user1_id,
+            nickname: row.user1_nickname || '未知用户',
+            avatarUrl: getAvatarUrl(row.user1_avatarUrl, row.user1_id),
+          } : null,
+          user2: row.user2_id ? {
+            id: row.user2_id,
+            nickname: row.user2_nickname || '未知用户',
+            avatarUrl: getAvatarUrl(row.user2_avatarUrl, row.user2_id),
+          } : null,
+        };
+      })
 
       return {
         conversations: formattedConversations,
@@ -202,24 +217,39 @@ export class MessageService {
     )
 
     // 转换嵌套对象结构
-    const formattedMessages = messages.map((msg: any) => ({
-      id: msg.id,
-      conversationId: msg.conversationId,
-      senderId: msg.senderId,
-      content: msg.content,
-      contentType: msg.contentType,
-      imageUrl: msg.imageUrl,
-      fileUrl: msg.fileUrl,
-      isRead: msg.isRead,
-      readAt: msg.readAt,
-      createdAt: msg.createdAt,
-      updatedAt: msg.updatedAt,
-      sender: {
-        id: msg.sender_id,
-        nickname: msg.sender_nickname,
-        avatarUrl: msg.sender_avatarUrl
-      }
-    }))
+    const formattedMessages = messages.map((msg: any) => {
+      // 处理发送者头像
+      const getSenderAvatarUrl = (avatarUrl: string | null, senderId: string) => {
+        if (avatarUrl) {
+          // 如果是相对路径，添加完整URL
+          if (avatarUrl.startsWith('/uploads/')) {
+            return `http://localhost:3000${avatarUrl}`;
+          }
+          return avatarUrl;
+        }
+        // 默认头像
+        return `https://api.dicebear.com/7.x/avataaars/svg?seed=user${senderId}`;
+      };
+
+      return {
+        id: msg.id,
+        conversationId: msg.conversationId,
+        senderId: msg.senderId,
+        content: msg.content,
+        contentType: msg.contentType,
+        imageUrl: msg.imageUrl,
+        fileUrl: msg.fileUrl,
+        isRead: msg.isRead,
+        readAt: msg.readAt,
+        createdAt: msg.createdAt,
+        updatedAt: msg.updatedAt,
+        sender: {
+          id: msg.sender_id,
+          nickname: msg.sender_nickname || '未知用户',
+          avatarUrl: getSenderAvatarUrl(msg.sender_avatarUrl, msg.sender_id)
+        }
+      };
+    })
 
     // 反向排序以显示最新消息在底部
     return {

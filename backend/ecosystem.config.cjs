@@ -1,30 +1,27 @@
 module.exports = {
-  apps: [
-    {
-      name: 'hiking-app-backend',
-      script: './dist/server.js',
-      instances: 1,
-      exec_mode: 'cluster',
-      env: {
-        NODE_ENV: 'development',
-        PORT: 3000,
-      },
-      env_production: {
-        NODE_ENV: 'production',
-        PORT: 3000,
-      },
-      // 错误日志
-      error_file: './logs/pm2-error.log',
-      // 输出日志
-      out_file: './logs/pm2-out.log',
-      // 日志格式
-      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-      // 自动重启
-      autorestart: true,
-      // 监听文件变化
-      watch: false,
-      // 最大内存
-      max_memory_restart: '500M',
+  apps: [{
+    name: 'hiking-app-backend',
+    script: 'dist/server.js',
+    env: {
+      NODE_ENV: 'production',
+      USE_API_PREFIX: 'true',
+      DB_HOST: 'localhost',
+      DB_PORT: '3306',
+      DB_NAME: 'hiking_app',
+      DB_USER: 'hiking_user',
+      DB_PASSWORD: 'senbochen',
+      PORT: '3000',
+      API_VERSION: 'v1',
+      JWT_SECRET: 'your-super-secret-jwt-key-change-in-production',
+      CORS_ORIGIN: '*'
     },
-  ],
+    watch: false,
+    instances: 1,
+    exec_mode: 'fork',
+    max_memory_restart: '200M',
+    error_file: './logs/err.log',
+    out_file: './logs/out.log',
+    log_file: './logs/combined.log',
+    time: true
+  }]
 };

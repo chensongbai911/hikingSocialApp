@@ -3,10 +3,6 @@ import http from 'http';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // 加载环境变量
 const envPath = path.resolve(__dirname, '../.env');
@@ -53,20 +49,23 @@ app.use(requestLogger);
 // 静态文件服务 - uploads目录
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// API路由
-const apiVersion = `/api/${process.env.API_VERSION || 'v1'}`;
-console.log(`API base path: ${apiVersion}`);
+// API路由前缀
+// 当 USE_API_PREFIX 为 true 时，路由会被注册在 /api/v1 下（用于直接访问）
+// 当 USE_API_PREFIX 为 false 时，路由直接注册（用于 Nginx 代理已处理前缀的情况）
+const useApiPrefix = process.env.USE_API_PREFIX !== 'false'; // 默认为 true
+const apiPrefix = useApiPrefix ? `/api/${process.env.API_VERSION || 'v1'}` : '';
+console.log(`API routes prefix: "${apiPrefix}" (USE_API_PREFIX=${useApiPrefix})`);
 
 // 注册路由
-app.use(`${apiVersion}/auth`, authRoutes);
-app.use(`${apiVersion}/users`, userRoutes);
-app.use(`${apiVersion}/activities`, activityRoutes);
-app.use(`${apiVersion}/discovery`, discoveryRoutes);
-app.use(`${apiVersion}/upload`, uploadRoutes);
-app.use(`${apiVersion}/applications`, applicationRoutes);
-app.use(`${apiVersion}/friends`, friendRoutes);
-app.use(`${apiVersion}/destinations`, destinationRoutes);
-app.use(`${apiVersion}/messages`, messageRoutes);
+app.use(`${apiPrefix}/auth`, authRoutes);
+app.use(`${apiPrefix}/users`, userRoutes);
+app.use(`${apiPrefix}/activities`, activityRoutes);
+app.use(`${apiPrefix}/discovery`, discoveryRoutes);
+app.use(`${apiPrefix}/upload`, uploadRoutes);
+app.use(`${apiPrefix}/applications`, applicationRoutes);
+app.use(`${apiPrefix}/friends`, friendRoutes);
+app.use(`${apiPrefix}/destinations`, destinationRoutes);
+app.use(`${apiPrefix}/messages`, messageRoutes);
 
 // 健康检查端点
 app.get('/health', (req: Request, res: Response) => {
@@ -84,12 +83,12 @@ app.get('/', (req: Request, res: Response) => {
     version: process.env.API_VERSION || 'v1',
     endpoints: {
       health: '/health',
-      auth: `${apiVersion}/auth`,
-      users: `${apiVersion}/users`,
-      activities: `${apiVersion}/activities`,
-      discovery: `${apiVersion}/discovery`,
-      upload: `${apiVersion}/upload`,
-      messages: `${apiVersion}/messages`
+      auth: `${apiPrefix}/auth`,
+      users: `${apiPrefix}/users`,
+      activities: `${apiPrefix}/activities`,
+      discovery: `${apiPrefix}/discovery`,
+      upload: `${apiPrefix}/upload`,
+      messages: `${apiPrefix}/messages`
     }
   });
 });
@@ -124,7 +123,7 @@ const startServer = async () => {
       console.log('='.repeat(50));
       console.log(`🚀 服务器启动成功！`);
       console.log(`📍 地址: http://localhost:${PORT}`);
-      console.log(`📚 API版本: ${apiVersion}`);
+      console.log(`📚 API前缀: ${apiPrefix || '/'}`);
       console.log(`🔐 环境: ${process.env.NODE_ENV || 'development'}`);
       console.log(`📂 上传目录: ${path.join(__dirname, '../uploads')}`);
       console.log('='.repeat(50));

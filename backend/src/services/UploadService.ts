@@ -1,11 +1,9 @@
 import fs from 'fs'
 import path from 'path'
-import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 import { promisify } from 'util'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+// CommonJS: __dirname 自动可用
 const unlinkAsync = promisify(fs.unlink)
 
 export interface ImageProcessOptions {

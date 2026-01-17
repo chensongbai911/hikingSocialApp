@@ -87,11 +87,14 @@ export class AuthService {
       // 加密密码
       const passwordHash = await bcrypt.hash(data.password, 10);
 
-      // 创建用户
+      // 生成默认头像URL
+      const defaultAvatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=user${userId}`;
+
+      // 创建用户（包含默认头像）
       await connection.query<ResultSetHeader>(
-        `INSERT INTO users (id, email, password_hash, nickname, gender, age, hiking_level, is_verified, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, 'beginner', false, NOW(), NOW())`,
-        [userId, data.email, passwordHash, data.nickname, data.gender || null, data.age || null]
+        `INSERT INTO users (id, email, password_hash, nickname, gender, age, avatar_url, hiking_level, is_verified, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 'beginner', false, NOW(), NOW())`,
+        [userId, data.email, passwordHash, data.nickname, data.gender || null, data.age || null, defaultAvatarUrl]
       );
 
       // 获取创建的用户信息

@@ -1,10 +1,8 @@
 import multer from 'multer'
 import path from 'path'
 import fs from 'fs'
-import { fileURLToPath } from 'url'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+// CommonJS: __dirname 自动可用
 
 // 确保上传目录存在
 const uploadDir = path.join(__dirname, '../../uploads')

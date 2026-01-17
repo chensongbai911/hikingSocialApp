@@ -174,7 +174,7 @@ const formatTime = (time: string | null) => {
 const mapConversation = (raw: any): ChatItem => {
   const userId = String(userStore.userId)
   console.log('[Messages mapConversation] 当前用户ID:', userId, '原始数据:', { userId1: raw.userId1, userId2: raw.userId2 })
-  
+
   const other = String(raw.userId1) === userId ? raw.user2 : raw.user1
   const unread = String(raw.userId1) === userId ? raw.user2UnreadCount : raw.user1UnreadCount
 
