@@ -1,6 +1,14 @@
-import { Server } from 'socket.io';
-import jwt from 'jsonwebtoken';
-import { chatPolicyService } from '../services/ChatPolicyService';
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.initSocket = initSocket;
+exports.emitToUser = emitToUser;
+exports.getIO = getIO;
+const socket_io_1 = require("socket.io");
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const ChatPolicyService_1 = require("../services/ChatPolicyService");
 let io = null;
 const userSockets = new Map();
 function addUserSocket(userId, socketId) {
@@ -16,8 +24,8 @@ function removeUserSocket(userId, socketId) {
     if (set.size === 0)
         userSockets.delete(userId);
 }
-export function initSocket(server) {
-    io = new Server(server, {
+function initSocket(server) {
+    io = new socket_io_1.Server(server, {
         cors: { origin: process.env.CORS_ORIGIN?.split(',') || '*', credentials: true },
     });
     io.use((socket, next) => {
@@ -26,7 +34,7 @@ export function initSocket(server) {
             if (!token)
                 return next(new Error('unauthorized'));
             const secret = process.env.JWT_SECRET || 'dev-secret';
-            const payload = jwt.verify(token.replace(/^Bearer\s+/i, ''), secret);
+            const payload = jsonwebtoken_1.default.verify(token.replace(/^Bearer\s+/i, ''), secret);
             socket.data.userId = String(payload.id || payload.userId || payload.sub);
             if (!socket.data.userId)
                 return next(new Error('unauthorized'));
@@ -48,7 +56,7 @@ export function initSocket(server) {
                 const { conversationId, isTyping } = payload || {};
                 if (!conversationId)
                     return;
-                const participants = await chatPolicyService.getConversationParticipants(conversationId);
+                const participants = await ChatPolicyService_1.chatPolicyService.getConversationParticipants(conversationId);
                 const other = participants.user1 === userId ? participants.user2 : participants.user1;
                 emitToUser(other, 'typing', { conversationId, fromUserId: userId, isTyping });
             }
@@ -56,7 +64,7 @@ export function initSocket(server) {
         });
     });
 }
-export function emitToUser(userId, event, data) {
+function emitToUser(userId, event, data) {
     if (!io)
         return;
     const set = userSockets.get(String(userId));
@@ -65,7 +73,7 @@ export function emitToUser(userId, event, data) {
     for (const sid of set)
         io.to(sid).emit(event, data);
 }
-export function getIO() {
+function getIO() {
     return io;
 }
 //# sourceMappingURL=socket.js.map

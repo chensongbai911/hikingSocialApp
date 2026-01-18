@@ -1,7 +1,10 @@
-import { activityService } from '../services/ActivityService';
-import { success, created, businessError, validationError, serverError, paginated, noContent } from '../utils/response';
-import { BusinessErrorCode } from '../types/api.types';
-export class ActivityController {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ActivityController = void 0;
+const ActivityService_1 = require("../services/ActivityService");
+const response_1 = require("../utils/response");
+const api_types_1 = require("../types/api.types");
+class ActivityController {
     /**
      * 创建活动
      * POST /api/v1/activities
@@ -10,50 +13,50 @@ export class ActivityController {
         try {
             const userId = req.user?.id;
             if (!userId) {
-                return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
             }
             const { title, description, cover_image_url, photos, // 照片数组
             location, latitude, longitude, start_time, end_time, difficulty, max_participants, route_description, equipment_required } = req.body;
             // 参数验证
             if (!title || title.trim().length === 0) {
-                return validationError(res, { title: '活动标题不能为空' });
+                return (0, response_1.validationError)(res, { title: '活动标题不能为空' });
             }
             if (title.length > 255) {
-                return validationError(res, { title: '活动标题不能超过255个字符' });
+                return (0, response_1.validationError)(res, { title: '活动标题不能超过255个字符' });
             }
             if (!location || location.trim().length === 0) {
-                return validationError(res, { location: '活动地点不能为空' });
+                return (0, response_1.validationError)(res, { location: '活动地点不能为空' });
             }
             if (!start_time) {
-                return validationError(res, { start_time: '活动开始时间不能为空' });
+                return (0, response_1.validationError)(res, { start_time: '活动开始时间不能为空' });
             }
             // 验证照片数组
             if (photos && Array.isArray(photos) && photos.length > 6) {
-                return validationError(res, { photos: '最多只能上传6张照片' });
+                return (0, response_1.validationError)(res, { photos: '最多只能上传6张照片' });
             }
             const startTime = new Date(start_time);
             if (isNaN(startTime.getTime())) {
-                return validationError(res, { start_time: '开始时间格式不正确' });
+                return (0, response_1.validationError)(res, { start_time: '开始时间格式不正确' });
             }
             if (startTime < new Date()) {
-                return validationError(res, { start_time: '开始时间不能早于当前时间' });
+                return (0, response_1.validationError)(res, { start_time: '开始时间不能早于当前时间' });
             }
             if (end_time) {
                 const endTime = new Date(end_time);
                 if (isNaN(endTime.getTime())) {
-                    return validationError(res, { end_time: '结束时间格式不正确' });
+                    return (0, response_1.validationError)(res, { end_time: '结束时间格式不正确' });
                 }
                 if (endTime <= startTime) {
-                    return validationError(res, { end_time: '结束时间必须晚于开始时间' });
+                    return (0, response_1.validationError)(res, { end_time: '结束时间必须晚于开始时间' });
                 }
             }
             if (!difficulty || !['easy', 'moderate', 'hard'].includes(difficulty)) {
-                return validationError(res, { difficulty: '难度值必须是easy、moderate或hard' });
+                return (0, response_1.validationError)(res, { difficulty: '难度值必须是easy、moderate或hard' });
             }
             if (max_participants !== undefined && (max_participants < 1 || max_participants > 100)) {
-                return validationError(res, { max_participants: '最大参与人数必须在1-100之间' });
+                return (0, response_1.validationError)(res, { max_participants: '最大参与人数必须在1-100之间' });
             }
-            const activity = await activityService.createActivity(userId, {
+            const activity = await ActivityService_1.activityService.createActivity(userId, {
                 title,
                 description,
                 cover_image_url,
@@ -68,11 +71,11 @@ export class ActivityController {
                 route_description,
                 equipment_required
             });
-            return created(res, activity, '创建活动成功');
+            return (0, response_1.created)(res, activity, '创建活动成功');
         }
         catch (error) {
             console.error('Create activity error:', error);
-            return serverError(res, '创建活动失败', error);
+            return (0, response_1.serverError)(res, '创建活动失败', error);
         }
     }
     /**
@@ -83,15 +86,15 @@ export class ActivityController {
         try {
             const { id } = req.params;
             const userId = req.user?.id;
-            const activity = await activityService.getActivityById(id, userId);
-            return success(res, activity, '获取活动详情成功');
+            const activity = await ActivityService_1.activityService.getActivityById(id, userId);
+            return (0, response_1.success)(res, activity, '获取活动详情成功');
         }
         catch (error) {
             console.error('Get activity error:', error);
-            if (error.code === BusinessErrorCode.RESOURCE_NOT_FOUND) {
-                return businessError(res, error.code, error.message);
+            if (error.code === api_types_1.BusinessErrorCode.RESOURCE_NOT_FOUND) {
+                return (0, response_1.businessError)(res, error.code, error.message);
             }
-            return serverError(res, '获取活动详情失败', error);
+            return (0, response_1.serverError)(res, '获取活动详情失败', error);
         }
     }
     /**
@@ -114,12 +117,12 @@ export class ActivityController {
                 filters.start_date = new Date(req.query.start_date);
             if (req.query.end_date)
                 filters.end_date = new Date(req.query.end_date);
-            const { activities, total } = await activityService.getActivities(page, pageSize, filters, userId);
-            return paginated(res, activities, page, pageSize, total, '获取活动列表成功');
+            const { activities, total } = await ActivityService_1.activityService.getActivities(page, pageSize, filters, userId);
+            return (0, response_1.paginated)(res, activities, page, pageSize, total, '获取活动列表成功');
         }
         catch (error) {
             console.error('Get activities error:', error);
-            return serverError(res, '获取活动列表失败', error);
+            return (0, response_1.serverError)(res, '获取活动列表失败', error);
         }
     }
     /**
@@ -131,44 +134,44 @@ export class ActivityController {
             const { id } = req.params;
             const userId = req.user?.id;
             if (!userId) {
-                return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
             }
             const { title, description, cover_image_url, photos, // 照片数组
             location, latitude, longitude, start_time, end_time, difficulty, max_participants, status, route_description, equipment_required } = req.body;
             // 参数验证
             if (title !== undefined && (title.trim().length === 0 || title.length > 255)) {
-                return validationError(res, { title: '活动标题长度必须在1-255个字符之间' });
+                return (0, response_1.validationError)(res, { title: '活动标题长度必须在1-255个字符之间' });
             }
             if (location !== undefined && location.trim().length === 0) {
-                return validationError(res, { location: '活动地点不能为空' });
+                return (0, response_1.validationError)(res, { location: '活动地点不能为空' });
             }
             // 验证照片数组
             if (photos !== undefined && Array.isArray(photos) && photos.length > 6) {
-                return validationError(res, { photos: '最多只能上传6张照片' });
+                return (0, response_1.validationError)(res, { photos: '最多只能上传6张照片' });
             }
             if (start_time !== undefined) {
                 const startTime = new Date(start_time);
                 if (isNaN(startTime.getTime())) {
-                    return validationError(res, { start_time: '开始时间格式不正确' });
+                    return (0, response_1.validationError)(res, { start_time: '开始时间格式不正确' });
                 }
             }
             if (end_time !== undefined) {
                 const endTime = new Date(end_time);
                 if (isNaN(endTime.getTime())) {
-                    return validationError(res, { end_time: '结束时间格式不正确' });
+                    return (0, response_1.validationError)(res, { end_time: '结束时间格式不正确' });
                 }
             }
             if (difficulty !== undefined && !['easy', 'moderate', 'hard'].includes(difficulty)) {
-                return validationError(res, { difficulty: '难度值必须是easy、moderate或hard' });
+                return (0, response_1.validationError)(res, { difficulty: '难度值必须是easy、moderate或hard' });
             }
             // 只在明确提供 status 时才验证（排除 undefined 和空字符串）
             if (status !== undefined && status !== null && status !== '') {
                 if (!['pending', 'approved', 'ongoing', 'completed', 'cancelled', 'recruiting'].includes(status)) {
-                    return validationError(res, { status: '状态值不合法' });
+                    return (0, response_1.validationError)(res, { status: '状态值不合法' });
                 }
             }
             if (max_participants !== undefined && (max_participants < 1 || max_participants > 100)) {
-                return validationError(res, { max_participants: '最大参与人数必须在1-100之间' });
+                return (0, response_1.validationError)(res, { max_participants: '最大参与人数必须在1-100之间' });
             }
             const updateData = {};
             if (title !== undefined)
@@ -202,18 +205,18 @@ export class ActivityController {
                 updateData.route_description = route_description;
             if (equipment_required !== undefined)
                 updateData.equipment_required = equipment_required;
-            const activity = await activityService.updateActivity(id, userId, updateData);
-            return success(res, activity, '更新活动成功');
+            const activity = await ActivityService_1.activityService.updateActivity(id, userId, updateData);
+            return (0, response_1.success)(res, activity, '更新活动成功');
         }
         catch (error) {
             console.error('Update activity error:', error);
-            if (error.code === BusinessErrorCode.RESOURCE_NOT_FOUND) {
-                return businessError(res, error.code, error.message);
+            if (error.code === api_types_1.BusinessErrorCode.RESOURCE_NOT_FOUND) {
+                return (0, response_1.businessError)(res, error.code, error.message);
             }
-            if (error.code === BusinessErrorCode.FORBIDDEN) {
-                return businessError(res, error.code, error.message);
+            if (error.code === api_types_1.BusinessErrorCode.FORBIDDEN) {
+                return (0, response_1.businessError)(res, error.code, error.message);
             }
-            return serverError(res, '更新活动失败', error);
+            return (0, response_1.serverError)(res, '更新活动失败', error);
         }
     }
     /**
@@ -225,20 +228,20 @@ export class ActivityController {
             const { id } = req.params;
             const userId = req.user?.id;
             if (!userId) {
-                return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
             }
-            await activityService.deleteActivity(id, userId);
-            return noContent(res);
+            await ActivityService_1.activityService.deleteActivity(id, userId);
+            return (0, response_1.noContent)(res);
         }
         catch (error) {
             console.error('Delete activity error:', error);
-            if (error.code === BusinessErrorCode.RESOURCE_NOT_FOUND) {
-                return businessError(res, error.code, error.message);
+            if (error.code === api_types_1.BusinessErrorCode.RESOURCE_NOT_FOUND) {
+                return (0, response_1.businessError)(res, error.code, error.message);
             }
-            if (error.code === BusinessErrorCode.FORBIDDEN) {
-                return businessError(res, error.code, error.message);
+            if (error.code === api_types_1.BusinessErrorCode.FORBIDDEN) {
+                return (0, response_1.businessError)(res, error.code, error.message);
             }
-            return serverError(res, '删除活动失败', error);
+            return (0, response_1.serverError)(res, '删除活动失败', error);
         }
     }
     /**
@@ -250,20 +253,20 @@ export class ActivityController {
             const { id } = req.params;
             const userId = req.user?.id;
             if (!userId) {
-                return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
             }
-            const participation = await activityService.joinActivity(id, userId);
-            return created(res, participation, '成功加入活动');
+            const participation = await ActivityService_1.activityService.joinActivity(id, userId);
+            return (0, response_1.created)(res, participation, '成功加入活动');
         }
         catch (error) {
             console.error('Join activity error:', error);
-            if (error.code === BusinessErrorCode.RESOURCE_NOT_FOUND) {
-                return businessError(res, error.code, error.message);
+            if (error.code === api_types_1.BusinessErrorCode.RESOURCE_NOT_FOUND) {
+                return (0, response_1.businessError)(res, error.code, error.message);
             }
-            if (error.code === BusinessErrorCode.VALIDATION_ERROR) {
-                return businessError(res, error.code, error.message);
+            if (error.code === api_types_1.BusinessErrorCode.VALIDATION_ERROR) {
+                return (0, response_1.businessError)(res, error.code, error.message);
             }
-            return serverError(res, '加入活动失败', error);
+            return (0, response_1.serverError)(res, '加入活动失败', error);
         }
     }
     /**
@@ -275,17 +278,17 @@ export class ActivityController {
             const { id } = req.params;
             const userId = req.user?.id;
             if (!userId) {
-                return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
             }
-            await activityService.leaveActivity(id, userId);
-            return noContent(res);
+            await ActivityService_1.activityService.leaveActivity(id, userId);
+            return (0, response_1.noContent)(res);
         }
         catch (error) {
             console.error('Leave activity error:', error);
-            if (error.code === BusinessErrorCode.RESOURCE_NOT_FOUND) {
-                return businessError(res, error.code, error.message);
+            if (error.code === api_types_1.BusinessErrorCode.RESOURCE_NOT_FOUND) {
+                return (0, response_1.businessError)(res, error.code, error.message);
             }
-            return serverError(res, '退出活动失败', error);
+            return (0, response_1.serverError)(res, '退出活动失败', error);
         }
     }
     /**
@@ -296,16 +299,16 @@ export class ActivityController {
         try {
             const { userId } = req.params;
             if (!userId) {
-                return validationError(res, '用户ID不能为空');
+                return (0, response_1.validationError)(res, '用户ID不能为空');
             }
             const page = parseInt(req.query.page) || 1;
             const pageSize = parseInt(req.query.page_size) || 20;
-            const { activities, total } = await activityService.getUserJoinedActivities(userId, page, pageSize);
-            return paginated(res, activities, page, pageSize, total, '获取用户参与的活动列表成功');
+            const { activities, total } = await ActivityService_1.activityService.getUserJoinedActivities(userId, page, pageSize);
+            return (0, response_1.paginated)(res, activities, page, pageSize, total, '获取用户参与的活动列表成功');
         }
         catch (error) {
             console.error('Get user joined activities error:', error);
-            return serverError(res, '获取用户参与的活动列表失败', error);
+            return (0, response_1.serverError)(res, '获取用户参与的活动列表失败', error);
         }
     }
     /**
@@ -316,16 +319,16 @@ export class ActivityController {
         try {
             const userId = req.user?.id;
             if (!userId) {
-                return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
             }
             const page = parseInt(req.query.page) || 1;
             const pageSize = parseInt(req.query.page_size) || 20;
-            const { activities, total } = await activityService.getUserJoinedActivities(userId, page, pageSize);
-            return paginated(res, activities, page, pageSize, total, '获取参与的活动列表成功');
+            const { activities, total } = await ActivityService_1.activityService.getUserJoinedActivities(userId, page, pageSize);
+            return (0, response_1.paginated)(res, activities, page, pageSize, total, '获取参与的活动列表成功');
         }
         catch (error) {
             console.error('Get my joined activities error:', error);
-            return serverError(res, '获取参与的活动列表失败', error);
+            return (0, response_1.serverError)(res, '获取参与的活动列表失败', error);
         }
     }
     /**
@@ -336,17 +339,18 @@ export class ActivityController {
         try {
             const userId = req.user?.id;
             if (!userId) {
-                return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
             }
             const page = parseInt(req.query.page) || 1;
             const pageSize = parseInt(req.query.page_size) || 20;
-            const { activities, total } = await activityService.getUserCreatedActivities(userId, page, pageSize);
-            return paginated(res, activities, page, pageSize, total, '获取创建的活动列表成功');
+            const { activities, total } = await ActivityService_1.activityService.getUserCreatedActivities(userId, page, pageSize);
+            return (0, response_1.paginated)(res, activities, page, pageSize, total, '获取创建的活动列表成功');
         }
         catch (error) {
             console.error('Get my created activities error:', error);
-            return serverError(res, '获取创建的活动列表失败', error);
+            return (0, response_1.serverError)(res, '获取创建的活动列表失败', error);
         }
     }
 }
+exports.ActivityController = ActivityController;
 //# sourceMappingURL=ActivityController.js.map

@@ -1,6 +1,7 @@
 import fs from 'fs'
 import path from 'path'
-import type { File } from 'multer'
+
+type MulterFile = Express.Multer.File
 import sharp from 'sharp'
 import { promisify } from 'util'
 
@@ -183,7 +184,7 @@ export class UploadService {
    * 处理上传的文件
    */
   static processUploadedFile(
-    file: File | undefined,
+    file: MulterFile | undefined,
     uploadType: 'avatar' | 'activity' | 'message' = 'avatar'
   ): string {
     if (!file) {
@@ -223,7 +224,7 @@ export class UploadService {
   /**
    * 验证图片文件
    */
-  static validateImageFile(file: File): void {
+  static validateImageFile(file: MulterFile): void {
     const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 
     if (!allowedMimes.includes(file.mimetype)) {

@@ -1,28 +1,32 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import sharp from 'sharp';
-import { promisify } from 'util';
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const unlinkAsync = promisify(fs.unlink);
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.UploadService = void 0;
+const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
+const sharp_1 = __importDefault(require("sharp"));
+const util_1 = require("util");
+// CommonJS: __dirname 自动可用
+const unlinkAsync = (0, util_1.promisify)(fs_1.default.unlink);
 /**
  * 文件上传服务
  */
-export class UploadService {
+class UploadService {
     /**
      * 处理图片:压缩、调整大小、转换格式
      */
     static async processImage(filePath, options = {}) {
         const { width = 1200, height = 1200, quality = 85, format = 'jpeg' } = options;
         try {
-            const image = sharp(filePath);
+            const image = (0, sharp_1.default)(filePath);
             const metadata = await image.metadata();
             // 生成处理后的文件路径
-            const dir = path.dirname(filePath);
+            const dir = path_1.default.dirname(filePath);
             const ext = `.${format}`;
-            const baseName = path.basename(filePath, path.extname(filePath));
-            const processedPath = path.join(dir, `${baseName}-processed${ext}`);
+            const baseName = path_1.default.basename(filePath, path_1.default.extname(filePath));
+            const processedPath = path_1.default.join(dir, `${baseName}-processed${ext}`);
             // 调整大小并压缩
             await image
                 .resize(width, height, {
@@ -32,8 +36,8 @@ export class UploadService {
                 .toFormat(format, { quality })
                 .toFile(processedPath);
             // 获取处理后的文件大小
-            const stats = fs.statSync(processedPath);
-            const processedMetadata = await sharp(processedPath).metadata();
+            const stats = fs_1.default.statSync(processedPath);
+            const processedMetadata = await (0, sharp_1.default)(processedPath).metadata();
             return {
                 originalPath: filePath,
                 processedPath,
@@ -51,10 +55,10 @@ export class UploadService {
      */
     static async generateThumbnail(filePath, size = 200) {
         try {
-            const dir = path.dirname(filePath);
-            const baseName = path.basename(filePath, path.extname(filePath));
-            const thumbnailPath = path.join(dir, `${baseName}-thumb.jpg`);
-            await sharp(filePath)
+            const dir = path_1.default.dirname(filePath);
+            const baseName = path_1.default.basename(filePath, path_1.default.extname(filePath));
+            const thumbnailPath = path_1.default.join(dir, `${baseName}-thumb.jpg`);
+            await (0, sharp_1.default)(filePath)
                 .resize(size, size, {
                 fit: 'cover',
                 position: 'center',
@@ -73,13 +77,13 @@ export class UploadService {
      */
     static async processAvatar(filePath) {
         try {
-            const image = sharp(filePath);
+            const image = (0, sharp_1.default)(filePath);
             const metadata = await image.metadata();
             // 头像固定尺寸
             const avatarSize = 300;
-            const dir = path.dirname(filePath);
-            const baseName = path.basename(filePath, path.extname(filePath));
-            const processedPath = path.join(dir, `${baseName}-avatar.jpg`);
+            const dir = path_1.default.dirname(filePath);
+            const baseName = path_1.default.basename(filePath, path_1.default.extname(filePath));
+            const processedPath = path_1.default.join(dir, `${baseName}-avatar.jpg`);
             // 裁剪为正方形并压缩
             await image
                 .resize(avatarSize, avatarSize, {
@@ -89,15 +93,15 @@ export class UploadService {
                 .jpeg({ quality: 90 })
                 .toFile(processedPath);
             // 生成小头像(用于列表显示)
-            const thumbnailPath = path.join(dir, `${baseName}-avatar-thumb.jpg`);
-            await sharp(processedPath)
+            const thumbnailPath = path_1.default.join(dir, `${baseName}-avatar-thumb.jpg`);
+            await (0, sharp_1.default)(processedPath)
                 .resize(100, 100, {
                 fit: 'cover',
                 position: 'center',
             })
                 .jpeg({ quality: 85 })
                 .toFile(thumbnailPath);
-            const stats = fs.statSync(processedPath);
+            const stats = fs_1.default.statSync(processedPath);
             return {
                 originalPath: filePath,
                 processedPath,
@@ -127,7 +131,7 @@ export class UploadService {
      */
     static async deleteFileAsync(filePath) {
         try {
-            if (fs.existsSync(filePath)) {
+            if (fs_1.default.existsSync(filePath)) {
                 await unlinkAsync(filePath);
             }
         }
@@ -164,9 +168,9 @@ export class UploadService {
             return;
         try {
             // 从 URL 提取文件路径
-            const filePath = path.join(__dirname, '../../', fileUrl);
-            if (fs.existsSync(filePath)) {
-                fs.unlinkSync(filePath);
+            const filePath = path_1.default.join(__dirname, '../../', fileUrl);
+            if (fs_1.default.existsSync(filePath)) {
+                fs_1.default.unlinkSync(filePath);
             }
         }
         catch (error) {
@@ -196,11 +200,11 @@ export class UploadService {
      */
     static getFileInfo(fileUrl) {
         try {
-            const filePath = path.join(__dirname, '../../', fileUrl);
-            if (!fs.existsSync(filePath)) {
+            const filePath = path_1.default.join(__dirname, '../../', fileUrl);
+            if (!fs_1.default.existsSync(filePath)) {
                 return { exists: false, size: 0 };
             }
-            const stats = fs.statSync(filePath);
+            const stats = fs_1.default.statSync(filePath);
             return { exists: true, size: stats.size };
         }
         catch (error) {
@@ -212,19 +216,19 @@ export class UploadService {
      */
     static cleanupOldFiles(uploadDir, ageInDays = 30) {
         try {
-            const fullPath = path.join(__dirname, '../../uploads', uploadDir);
-            if (!fs.existsSync(fullPath)) {
+            const fullPath = path_1.default.join(__dirname, '../../uploads', uploadDir);
+            if (!fs_1.default.existsSync(fullPath)) {
                 return;
             }
-            const files = fs.readdirSync(fullPath);
+            const files = fs_1.default.readdirSync(fullPath);
             const now = Date.now();
             const ageInMs = ageInDays * 24 * 60 * 60 * 1000;
             files.forEach((file) => {
-                const filePath = path.join(fullPath, file);
-                const stats = fs.statSync(filePath);
+                const filePath = path_1.default.join(fullPath, file);
+                const stats = fs_1.default.statSync(filePath);
                 const fileAge = now - stats.mtimeMs;
                 if (fileAge > ageInMs) {
-                    fs.unlinkSync(filePath);
+                    fs_1.default.unlinkSync(filePath);
                     console.log(`Deleted old file: ${file}`);
                 }
             });
@@ -234,5 +238,6 @@ export class UploadService {
         }
     }
 }
-export default UploadService;
+exports.UploadService = UploadService;
+exports.default = UploadService;
 //# sourceMappingURL=UploadService.js.map

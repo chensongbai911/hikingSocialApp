@@ -1,14 +1,17 @@
-import { MessageService } from '../services/MessageService';
-import { chatPolicyService } from '../services/ChatPolicyService';
-import { pool } from '../config/database';
-import { emitToUser } from '../realtime/socket';
-import { businessError, validationError } from '../utils/response';
-import { BusinessErrorCode } from '../types/api.types';
-const messageService = new MessageService();
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.MessageController = void 0;
+const MessageService_1 = require("../services/MessageService");
+const ChatPolicyService_1 = require("../services/ChatPolicyService");
+const database_1 = require("../config/database");
+const socket_1 = require("../realtime/socket");
+const response_1 = require("../utils/response");
+const api_types_1 = require("../types/api.types");
+const messageService = new MessageService_1.MessageService();
 /**
  * 消息控制�?- 处理聊天相关�?REST API 请求
  */
-export class MessageController {
+class MessageController {
     /**
      * 获取用户的对话列�?   * GET /api/v1/messages/conversations
      */
@@ -16,12 +19,12 @@ export class MessageController {
         try {
             const userId = req.user?.id;
             if (!userId) {
-                return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
             }
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 20;
             if (page < 1 || limit < 1 || limit > 100) {
-                return validationError(res, '分页参数无效');
+                return (0, response_1.validationError)(res, '分页参数无效');
             }
             const result = await messageService.getConversations(userId, page, limit);
             res.json({
@@ -41,16 +44,16 @@ export class MessageController {
         try {
             const userId = req.user?.id;
             if (!userId) {
-                return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
             }
             const conversationId = parseInt(req.params.conversationId);
             if (!conversationId || isNaN(conversationId)) {
-                return validationError(res, '无效的对话ID');
+                return (0, response_1.validationError)(res, '无效的对话ID');
             }
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 50;
             if (page < 1 || limit < 1 || limit > 100) {
-                return validationError(res, '分页参数无效');
+                return (0, response_1.validationError)(res, '分页参数无效');
             }
             const result = await messageService.getMessages(conversationId, page, limit);
             // 自动标记为已�?      await messageService.markConversationAsRead(conversationId, userId)
@@ -72,15 +75,15 @@ export class MessageController {
         try {
             const userId = req.user?.id;
             if (!userId) {
-                return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
             }
             const conversationId = parseInt(req.params.conversationId);
             if (!conversationId || isNaN(conversationId)) {
-                return validationError(res, '无效的对话ID');
+                return (0, response_1.validationError)(res, '无效的对话ID');
             }
             // 取参与者 & 预检查
-            const precheck = await chatPolicyService.precheckSend(conversationId, String(userId));
-            const isBlack = await chatPolicyService.isBlacklisted(String(userId), String(precheck.receiverId));
+            const precheck = await ChatPolicyService_1.chatPolicyService.precheckSend(conversationId, String(userId));
+            const isBlack = await ChatPolicyService_1.chatPolicyService.isBlacklisted(String(userId), String(precheck.receiverId));
             res.json({
                 code: 0,
                 data: {
@@ -107,15 +110,15 @@ export class MessageController {
         try {
             const userId = req.user?.id;
             if (!userId) {
-                return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
             }
             const { targetUserId } = req.body;
             // 修复：targetUserId 是字符串格式（如 "user-004"），不应该用 isNaN 验证
             if (!targetUserId || typeof targetUserId !== 'string' || targetUserId.trim() === '') {
-                return validationError(res, '缺少目标用户ID');
+                return (0, response_1.validationError)(res, '缺少目标用户ID');
             }
             if (userId === targetUserId) {
-                return validationError(res, '不能与自己创建对话');
+                return (0, response_1.validationError)(res, '不能与自己创建对话');
             }
             try {
                 const conversation = await messageService.getOrCreateConversation(userId, targetUserId);
@@ -129,7 +132,7 @@ export class MessageController {
             }
             catch (error) {
                 console.error('创建对话失败:', error);
-                return businessError(res, 2001, '创建对话失败: ' + (error.message || '未知错误'));
+                return (0, response_1.businessError)(res, 2001, '创建对话失败: ' + (error.message || '未知错误'));
             }
         }
         catch (error) {
@@ -143,59 +146,59 @@ export class MessageController {
         try {
             const userId = req.user?.id;
             if (!userId) {
-                return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
             }
             const conversationId = parseInt(req.params.conversationId);
             if (!conversationId || isNaN(conversationId)) {
-                return validationError(res, '无效的对话ID');
+                return (0, response_1.validationError)(res, '无效的对话ID');
             }
             const { content, contentType = 'text', imageUrl, fileUrl, } = req.body;
             if (!['text', 'image', 'file'].includes(contentType)) {
-                return validationError(res, '无效的消息类型');
+                return (0, response_1.validationError)(res, '无效的消息类型');
             }
             // 校验消息内容/附件：
             // - 文本消息: 必须有非空 content，且不超过 200 字符
             // - 图片/文件消息: 允许 content 为空，但必须提供对应的 URL
             if (contentType === 'text') {
                 if (!content || content.trim().length === 0) {
-                    return validationError(res, '消息内容不能为空');
+                    return (0, response_1.validationError)(res, '消息内容不能为空');
                 }
                 if (content.length > 200) {
-                    return validationError(res, '文本消息长度不能超过200字符');
+                    return (0, response_1.validationError)(res, '文本消息长度不能超过200字符');
                 }
             }
             else if (contentType === 'image') {
                 if (!imageUrl || typeof imageUrl !== 'string') {
-                    return validationError(res, '图片消息缺少图片地址');
+                    return (0, response_1.validationError)(res, '图片消息缺少图片地址');
                 }
                 if (content && content.length > 200) {
-                    return validationError(res, '图片说明文本长度不能超过200字符');
+                    return (0, response_1.validationError)(res, '图片说明文本长度不能超过200字符');
                 }
             }
             else if (contentType === 'file') {
                 if (!fileUrl || typeof fileUrl !== 'string') {
-                    return validationError(res, '文件消息缺少文件地址');
+                    return (0, response_1.validationError)(res, '文件消息缺少文件地址');
                 }
                 if (content && content.length > 200) {
-                    return validationError(res, '文件说明文本长度不能超过200字符');
+                    return (0, response_1.validationError)(res, '文件说明文本长度不能超过200字符');
                 }
             }
             // 发送前策略校验：黑名单、关注关系、3条限制
             let precheck;
             try {
-                precheck = await chatPolicyService.precheckSend(conversationId, String(userId));
+                precheck = await ChatPolicyService_1.chatPolicyService.precheckSend(conversationId, String(userId));
             }
             catch (err) {
                 const msg = err?.message || '';
                 if (msg.includes('对话不存在')) {
-                    return businessError(res, BusinessErrorCode.RESOURCE_NOT_FOUND, '对话不存在或已被删除');
+                    return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.RESOURCE_NOT_FOUND, '对话不存在或已被删除');
                 }
                 console.error('precheckSend error:', err);
-                return businessError(res, BusinessErrorCode.FORBIDDEN, '无权发送此对话的消息');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.FORBIDDEN, '无权发送此对话的消息');
             }
             if (!precheck || !precheck.canSend) {
                 const reason = precheck?.reason || 'cannot_send';
-                return businessError(res, BusinessErrorCode.FORBIDDEN, reason);
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.FORBIDDEN, reason);
             }
             let message;
             try {
@@ -204,21 +207,21 @@ export class MessageController {
             catch (err) {
                 const msg = err?.message || '';
                 if (msg.includes('对话不存在')) {
-                    return businessError(res, BusinessErrorCode.RESOURCE_NOT_FOUND, '对话不存在或已被删除');
+                    return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.RESOURCE_NOT_FOUND, '对话不存在或已被删除');
                 }
                 if (msg.includes('用户不是对话的参与者')) {
-                    return businessError(res, BusinessErrorCode.FORBIDDEN, '无权发送此对话的消息');
+                    return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.FORBIDDEN, '无权发送此对话的消息');
                 }
                 console.error('sendMessage error:', err);
                 throw err;
             }
             // 单向关注限制：计数+1
             if (!precheck.isMutualFollow && precheck.remainingMessages !== undefined) {
-                await chatPolicyService.incrementLimit(conversationId, String(userId));
+                await ChatPolicyService_1.chatPolicyService.incrementLimit(conversationId, String(userId));
             }
             // 推送新消息给对方
             if (precheck.receiverId) {
-                emitToUser(String(precheck.receiverId), 'new_message', {
+                (0, socket_1.emitToUser)(String(precheck.receiverId), 'new_message', {
                     conversationId,
                     message,
                 });
@@ -244,36 +247,36 @@ export class MessageController {
         try {
             const userId = req.user?.id;
             if (!userId) {
-                return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
             }
             const messageId = parseInt(req.params.messageId);
             if (!messageId || isNaN(messageId)) {
-                return validationError(res, '无效的消息ID');
+                return (0, response_1.validationError)(res, '无效的消息ID');
             }
-            const [rows] = await pool.query('SELECT id, sender_id, created_at, is_recalled FROM messages WHERE id = ? LIMIT 1', [messageId]);
+            const [rows] = await database_1.pool.query('SELECT id, sender_id, created_at, is_recalled FROM messages WHERE id = ? LIMIT 1', [messageId]);
             if (!rows || rows.length === 0) {
-                return businessError(res, BusinessErrorCode.RESOURCE_NOT_FOUND, '消息不存在');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.RESOURCE_NOT_FOUND, '消息不存在');
             }
             const msg = rows[0];
             if (String(msg.sender_id) !== String(userId)) {
-                return businessError(res, BusinessErrorCode.FORBIDDEN, '只能撤回自己发送的消息');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.FORBIDDEN, '只能撤回自己发送的消息');
             }
             if (msg.is_recalled) {
-                return validationError(res, '消息已撤回');
+                return (0, response_1.validationError)(res, '消息已撤回');
             }
             const createdAt = new Date(msg.created_at).getTime();
             const now = Date.now();
             if (now - createdAt > 120000) {
-                return businessError(res, BusinessErrorCode.FORBIDDEN, 'recall_window_closed');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.FORBIDDEN, 'recall_window_closed');
             }
-            await pool.query('UPDATE messages SET is_recalled = TRUE, recalled_at = NOW(), recalled_by = ? WHERE id = ?', [userId, messageId]);
+            await database_1.pool.query('UPDATE messages SET is_recalled = TRUE, recalled_at = NOW(), recalled_by = ? WHERE id = ?', [userId, messageId]);
             // 推送撤回事件给双方
-            const [convRows] = await pool.query('SELECT conversation_id FROM messages WHERE id = ? LIMIT 1', [messageId]);
+            const [convRows] = await database_1.pool.query('SELECT conversation_id FROM messages WHERE id = ? LIMIT 1', [messageId]);
             const conversationId = convRows?.[0]?.conversation_id;
             if (conversationId) {
-                const { user1, user2 } = await chatPolicyService.getConversationParticipants(conversationId);
-                emitToUser(String(user1), 'message_recalled', { messageId, conversationId, recalledAt: new Date().toISOString() });
-                emitToUser(String(user2), 'message_recalled', { messageId, conversationId, recalledAt: new Date().toISOString() });
+                const { user1, user2 } = await ChatPolicyService_1.chatPolicyService.getConversationParticipants(conversationId);
+                (0, socket_1.emitToUser)(String(user1), 'message_recalled', { messageId, conversationId, recalledAt: new Date().toISOString() });
+                (0, socket_1.emitToUser)(String(user2), 'message_recalled', { messageId, conversationId, recalledAt: new Date().toISOString() });
             }
             res.json({ code: 0, message: '撤回成功', data: { messageId, recalledAt: new Date().toISOString() } });
         }
@@ -289,17 +292,17 @@ export class MessageController {
         try {
             const userId = req.user?.id;
             if (!userId) {
-                return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
             }
             const messageId = parseInt(req.params.messageId);
             if (!messageId || isNaN(messageId)) {
-                return validationError(res, '无效的消息ID');
+                return (0, response_1.validationError)(res, '无效的消息ID');
             }
             const { reason, extra } = req.body || {};
             if (!reason || typeof reason !== 'string') {
-                return validationError(res, '缺少举报原因');
+                return (0, response_1.validationError)(res, '缺少举报原因');
             }
-            await pool.query('INSERT INTO message_reports (message_id, reporter_id, reason, extra) VALUES (?, ?, ?, ?)', [messageId, String(userId), reason, extra ? JSON.stringify(extra) : null]);
+            await database_1.pool.query('INSERT INTO message_reports (message_id, reporter_id, reason, extra) VALUES (?, ?, ?, ?)', [messageId, String(userId), reason, extra ? JSON.stringify(extra) : null]);
             res.json({ code: 0, message: '已接收举报' });
         }
         catch (error) {
@@ -314,16 +317,16 @@ export class MessageController {
         try {
             const userId = req.user?.id;
             if (!userId)
-                return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
             const targetUserId = req.params.targetUserId;
             if (!targetUserId)
-                return validationError(res, '缺少目标用户');
+                return (0, response_1.validationError)(res, '缺少目标用户');
             // 确保黑名单/限制表存在，避免本地开发缺表导致 500
-            await chatPolicyService.ensureTablesReady();
-            await pool.query('INSERT INTO user_blacklist (user_id, blocked_user_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE user_id = user_id', [String(userId), String(targetUserId)]);
+            await ChatPolicyService_1.chatPolicyService.ensureTablesReady();
+            await database_1.pool.query('INSERT INTO user_blacklist (user_id, blocked_user_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE user_id = user_id', [String(userId), String(targetUserId)]);
             // 推送黑名单更新给双方
-            emitToUser(String(userId), 'blacklist_updated', { userId: String(userId), targetUserId: String(targetUserId), action: 'added' });
-            emitToUser(String(targetUserId), 'blacklist_updated', { userId: String(userId), targetUserId: String(targetUserId), action: 'added' });
+            (0, socket_1.emitToUser)(String(userId), 'blacklist_updated', { userId: String(userId), targetUserId: String(targetUserId), action: 'added' });
+            (0, socket_1.emitToUser)(String(targetUserId), 'blacklist_updated', { userId: String(userId), targetUserId: String(targetUserId), action: 'added' });
             res.json({ code: 0, message: '已加入黑名单' });
         }
         catch (error) {
@@ -338,16 +341,16 @@ export class MessageController {
         try {
             const userId = req.user?.id;
             if (!userId)
-                return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
             const targetUserId = req.params.targetUserId;
             if (!targetUserId)
-                return validationError(res, '缺少目标用户');
+                return (0, response_1.validationError)(res, '缺少目标用户');
             // 确保黑名单/限制表存在，避免本地开发缺表导致 500
-            await chatPolicyService.ensureTablesReady();
-            await pool.query('DELETE FROM user_blacklist WHERE user_id = ? AND blocked_user_id = ?', [String(userId), String(targetUserId)]);
+            await ChatPolicyService_1.chatPolicyService.ensureTablesReady();
+            await database_1.pool.query('DELETE FROM user_blacklist WHERE user_id = ? AND blocked_user_id = ?', [String(userId), String(targetUserId)]);
             // 推送黑名单更新给双方
-            emitToUser(String(userId), 'blacklist_updated', { userId: String(userId), targetUserId: String(targetUserId), action: 'removed' });
-            emitToUser(String(targetUserId), 'blacklist_updated', { userId: String(userId), targetUserId: String(targetUserId), action: 'removed' });
+            (0, socket_1.emitToUser)(String(userId), 'blacklist_updated', { userId: String(userId), targetUserId: String(targetUserId), action: 'removed' });
+            (0, socket_1.emitToUser)(String(targetUserId), 'blacklist_updated', { userId: String(userId), targetUserId: String(targetUserId), action: 'removed' });
             res.json({ code: 0, message: '已移出黑名单' });
         }
         catch (error) {
@@ -362,10 +365,10 @@ export class MessageController {
         try {
             const userId = req.user?.id;
             if (!userId)
-                return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
             // 确保黑名单/限制表存在，避免本地开发缺表导致 500
-            await chatPolicyService.ensureTablesReady();
-            const [rows] = await pool.query('SELECT blocked_user_id FROM user_blacklist WHERE user_id = ?', [String(userId)]);
+            await ChatPolicyService_1.chatPolicyService.ensureTablesReady();
+            const [rows] = await database_1.pool.query('SELECT blocked_user_id FROM user_blacklist WHERE user_id = ?', [String(userId)]);
             res.json({ code: 0, data: rows.map(r => r.blocked_user_id) });
         }
         catch (error) {
@@ -379,11 +382,11 @@ export class MessageController {
         try {
             const userId = req.user?.id;
             if (!userId) {
-                return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
             }
             const messageId = parseInt(req.params.messageId);
             if (!messageId || isNaN(messageId)) {
-                return validationError(res, '无效的消息ID');
+                return (0, response_1.validationError)(res, '无效的消息ID');
             }
             const message = await messageService.markMessageAsRead(messageId);
             res.json({
@@ -406,11 +409,11 @@ export class MessageController {
         try {
             const userId = req.user?.id;
             if (!userId) {
-                return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
             }
             const conversationId = parseInt(req.params.conversationId);
             if (!conversationId || isNaN(conversationId)) {
-                return validationError(res, '无效的对话ID');
+                return (0, response_1.validationError)(res, '无效的对话ID');
             }
             await messageService.markConversationAsRead(conversationId, userId);
             res.json({
@@ -430,11 +433,11 @@ export class MessageController {
         try {
             const userId = req.user?.id;
             if (!userId) {
-                return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
             }
             const messageId = parseInt(req.params.messageId);
             if (!messageId || isNaN(messageId)) {
-                return validationError(res, '无效的消息ID');
+                return (0, response_1.validationError)(res, '无效的消息ID');
             }
             await messageService.deleteMessage(messageId);
             res.json({
@@ -454,25 +457,25 @@ export class MessageController {
         try {
             const userId = req.user?.id;
             if (!userId) {
-                return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
             }
             const conversationId = parseInt(req.params.conversationId);
             if (!conversationId || isNaN(conversationId)) {
-                return validationError(res, '无效的对话ID');
+                return (0, response_1.validationError)(res, '无效的对话ID');
             }
             // 确保限制表存在，避免清空对话时缺表
-            await chatPolicyService.ensureTablesReady();
+            await ChatPolicyService_1.chatPolicyService.ensureTablesReady();
             // 校验参与者
-            const [convRows] = await pool.query('SELECT id, user_id1, user_id2 FROM conversations WHERE id = ? LIMIT 1', [conversationId]);
+            const [convRows] = await database_1.pool.query('SELECT id, user_id1, user_id2 FROM conversations WHERE id = ? LIMIT 1', [conversationId]);
             if (!convRows || convRows.length === 0) {
-                return businessError(res, BusinessErrorCode.RESOURCE_NOT_FOUND, '对话不存在');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.RESOURCE_NOT_FOUND, '对话不存在');
             }
             const conv = convRows[0];
             if (String(conv.user_id1) !== String(userId) && String(conv.user_id2) !== String(userId)) {
-                return businessError(res, BusinessErrorCode.FORBIDDEN, '用户不是对话的参与者');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.FORBIDDEN, '用户不是对话的参与者');
             }
             // 事务：归档 -> 删除消息 -> 重置对话 -> 清理限制
-            const conn = await pool.getConnection();
+            const conn = await database_1.pool.getConnection();
             try {
                 await conn.beginTransaction();
                 // 将现有消息归档（逐条快照）
@@ -523,7 +526,7 @@ export class MessageController {
         try {
             const userId = req.user?.id;
             if (!userId) {
-                return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
             }
             const count = await messageService.getUnreadCount(userId);
             res.json({
@@ -546,18 +549,18 @@ export class MessageController {
         try {
             const userId = req.user?.id;
             if (!userId) {
-                return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
             }
             const conversationId = parseInt(req.params.conversationId);
             if (!conversationId || isNaN(conversationId)) {
-                return validationError(res, '无效的对话ID');
+                return (0, response_1.validationError)(res, '无效的对话ID');
             }
             const keyword = req.query.keyword;
             if (!keyword || keyword.trim().length === 0) {
-                return validationError(res, '缺少搜索关键词');
+                return (0, response_1.validationError)(res, '缺少搜索关键词');
             }
             if (keyword.length > 100) {
-                return validationError(res, '搜索关键词长度不能超过100个字符');
+                return (0, response_1.validationError)(res, '搜索关键词长度不能超过100个字符');
             }
             const limit = parseInt(req.query.limit) || 20;
             const messages = await messageService.searchMessages(conversationId, keyword, limit);
@@ -582,7 +585,7 @@ export class MessageController {
         try {
             const userId = req.user?.id;
             if (!userId) {
-                return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
             }
             const stats = await messageService.getConversationStats(userId);
             res.json({
@@ -596,4 +599,5 @@ export class MessageController {
         }
     }
 }
+exports.MessageController = MessageController;
 //# sourceMappingURL=MessageController.js.map

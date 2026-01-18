@@ -1,16 +1,19 @@
-import { DataTypes, Model } from 'sequelize';
-import { User } from './User';
-import { Activity } from './Activity';
-export class Application extends Model {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Application = void 0;
+const sequelize_1 = require("sequelize");
+const User_1 = require("./User");
+const Activity_1 = require("./Activity");
+class Application extends sequelize_1.Model {
     static initialize(sequelize) {
         return Application.init({
             id: {
-                type: DataTypes.INTEGER,
+                type: sequelize_1.DataTypes.INTEGER,
                 primaryKey: true,
                 autoIncrement: true,
             },
             userId: {
-                type: DataTypes.STRING(36),
+                type: sequelize_1.DataTypes.STRING(36),
                 allowNull: false,
                 references: {
                     model: 'users',
@@ -19,7 +22,7 @@ export class Application extends Model {
                 onDelete: 'CASCADE',
             },
             activityId: {
-                type: DataTypes.STRING(36),
+                type: sequelize_1.DataTypes.STRING(36),
                 allowNull: false,
                 references: {
                     model: 'activities',
@@ -28,22 +31,22 @@ export class Application extends Model {
                 onDelete: 'CASCADE',
             },
             status: {
-                type: DataTypes.ENUM('pending', 'approved', 'rejected'),
+                type: sequelize_1.DataTypes.ENUM('pending', 'approved', 'rejected'),
                 allowNull: false,
                 defaultValue: 'pending',
             },
             message: {
-                type: DataTypes.TEXT,
+                type: sequelize_1.DataTypes.TEXT,
                 allowNull: true,
                 comment: '申请留言',
             },
             reviewedAt: {
-                type: DataTypes.DATE,
+                type: sequelize_1.DataTypes.DATE,
                 allowNull: true,
                 comment: '审核时间',
             },
             reviewedBy: {
-                type: DataTypes.STRING(36),
+                type: sequelize_1.DataTypes.STRING(36),
                 allowNull: true,
                 references: {
                     model: 'users',
@@ -52,12 +55,12 @@ export class Application extends Model {
                 comment: '审核人ID',
             },
             createdAt: {
-                type: DataTypes.DATE,
-                defaultValue: DataTypes.NOW,
+                type: sequelize_1.DataTypes.DATE,
+                defaultValue: sequelize_1.DataTypes.NOW,
             },
             updatedAt: {
-                type: DataTypes.DATE,
-                defaultValue: DataTypes.NOW,
+                type: sequelize_1.DataTypes.DATE,
+                defaultValue: sequelize_1.DataTypes.NOW,
             },
         }, {
             sequelize,
@@ -72,10 +75,11 @@ export class Application extends Model {
         });
     }
     static associate() {
-        Application.belongsTo(User, { foreignKey: 'userId', as: 'applicant' });
-        Application.belongsTo(User, { foreignKey: 'reviewedBy', as: 'reviewer' });
-        Application.belongsTo(Activity, { foreignKey: 'activityId' });
+        Application.belongsTo(User_1.User, { foreignKey: 'userId', as: 'applicant' });
+        Application.belongsTo(User_1.User, { foreignKey: 'reviewedBy', as: 'reviewer' });
+        Application.belongsTo(Activity_1.Activity, { foreignKey: 'activityId' });
     }
 }
-export default Application;
+exports.Application = Application;
+exports.default = Application;
 //# sourceMappingURL=Application.js.map

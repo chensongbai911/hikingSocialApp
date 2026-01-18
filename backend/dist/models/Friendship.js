@@ -1,15 +1,18 @@
-import { DataTypes, Model } from 'sequelize';
-import { User } from './User';
-export class Friendship extends Model {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Friendship = void 0;
+const sequelize_1 = require("sequelize");
+const User_1 = require("./User");
+class Friendship extends sequelize_1.Model {
     static initialize(sequelize) {
         return Friendship.init({
             id: {
-                type: DataTypes.INTEGER,
+                type: sequelize_1.DataTypes.INTEGER,
                 primaryKey: true,
                 autoIncrement: true,
             },
             userId: {
-                type: DataTypes.STRING(36),
+                type: sequelize_1.DataTypes.STRING(36),
                 allowNull: false,
                 references: {
                     model: 'users',
@@ -18,7 +21,7 @@ export class Friendship extends Model {
                 onDelete: 'CASCADE',
             },
             friendId: {
-                type: DataTypes.STRING(36),
+                type: sequelize_1.DataTypes.STRING(36),
                 allowNull: false,
                 references: {
                     model: 'users',
@@ -27,32 +30,32 @@ export class Friendship extends Model {
                 onDelete: 'CASCADE',
             },
             status: {
-                type: DataTypes.ENUM('pending', 'accepted', 'rejected', 'blocked'),
+                type: sequelize_1.DataTypes.ENUM('pending', 'accepted', 'rejected', 'blocked'),
                 allowNull: false,
                 defaultValue: 'pending',
             },
             initiatedBy: {
-                type: DataTypes.STRING(36),
+                type: sequelize_1.DataTypes.STRING(36),
                 allowNull: false,
                 comment: '发起请求的用户ID',
             },
             message: {
-                type: DataTypes.TEXT,
+                type: sequelize_1.DataTypes.TEXT,
                 allowNull: true,
                 comment: '好友请求附言',
             },
             acceptedAt: {
-                type: DataTypes.DATE,
+                type: sequelize_1.DataTypes.DATE,
                 allowNull: true,
                 comment: '接受时间',
             },
             createdAt: {
-                type: DataTypes.DATE,
-                defaultValue: DataTypes.NOW,
+                type: sequelize_1.DataTypes.DATE,
+                defaultValue: sequelize_1.DataTypes.NOW,
             },
             updatedAt: {
-                type: DataTypes.DATE,
-                defaultValue: DataTypes.NOW,
+                type: sequelize_1.DataTypes.DATE,
+                defaultValue: sequelize_1.DataTypes.NOW,
             },
         }, {
             sequelize,
@@ -71,9 +74,10 @@ export class Friendship extends Model {
         });
     }
     static associate() {
-        Friendship.belongsTo(User, { foreignKey: 'userId', as: 'user' });
-        Friendship.belongsTo(User, { foreignKey: 'friendId', as: 'friend' });
+        Friendship.belongsTo(User_1.User, { foreignKey: 'userId', as: 'user' });
+        Friendship.belongsTo(User_1.User, { foreignKey: 'friendId', as: 'friend' });
     }
 }
-export default Friendship;
+exports.Friendship = Friendship;
+exports.default = Friendship;
 //# sourceMappingURL=Friendship.js.map

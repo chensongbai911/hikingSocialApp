@@ -1,4 +1,7 @@
-export var BusinessErrorCode;
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.BusinessError = exports.BusinessErrorCode = void 0;
+var BusinessErrorCode;
 (function (BusinessErrorCode) {
     // 通用错误 1xxx
     BusinessErrorCode[BusinessErrorCode["INVALID_REQUEST"] = 1001] = "INVALID_REQUEST";
@@ -20,8 +23,8 @@ export var BusinessErrorCode;
     BusinessErrorCode[BusinessErrorCode["ALREADY_FRIENDS"] = 5001] = "ALREADY_FRIENDS";
     BusinessErrorCode[BusinessErrorCode["FRIEND_REQUEST_PENDING"] = 5002] = "FRIEND_REQUEST_PENDING";
     BusinessErrorCode[BusinessErrorCode["FRIEND_REQUEST_NOT_FOUND"] = 5003] = "FRIEND_REQUEST_NOT_FOUND";
-})(BusinessErrorCode || (BusinessErrorCode = {}));
-export class BusinessError extends Error {
+})(BusinessErrorCode || (exports.BusinessErrorCode = BusinessErrorCode = {}));
+class BusinessError extends Error {
     constructor(code, message, statusCode = 400) {
         super(message);
         this.code = code;
@@ -29,4 +32,5 @@ export class BusinessError extends Error {
         this.name = 'BusinessError';
     }
 }
+exports.BusinessError = BusinessError;
 //# sourceMappingURL=errors.js.map

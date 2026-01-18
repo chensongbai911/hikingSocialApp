@@ -1,7 +1,10 @@
-import { authService } from '../services/AuthService';
-import { success, created, businessError, validationError, serverError } from '../utils/response';
-import { BusinessErrorCode } from '../types/api.types';
-export class AuthController {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.AuthController = void 0;
+const AuthService_1 = require("../services/AuthService");
+const response_1 = require("../utils/response");
+const api_types_1 = require("../types/api.types");
+class AuthController {
     /**
      * 用户注册
      * POST /api/v1/auth/register
@@ -11,7 +14,7 @@ export class AuthController {
             const { email, nickname, password, gender, age } = req.body;
             // 参数验证
             if (!email || !nickname || !password) {
-                return validationError(res, {
+                return (0, response_1.validationError)(res, {
                     email: !email ? '邮箱不能为空' : undefined,
                     nickname: !nickname ? '昵称不能为空' : undefined,
                     password: !password ? '密码不能为空' : undefined
@@ -20,39 +23,39 @@ export class AuthController {
             // 邮箱格式验证
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
-                return validationError(res, { email: '邮箱格式不正确' });
+                return (0, response_1.validationError)(res, { email: '邮箱格式不正确' });
             }
             // 密码长度验证
             if (password.length < 6) {
-                return validationError(res, { password: '密码长度至少6位' });
+                return (0, response_1.validationError)(res, { password: '密码长度至少6位' });
             }
             // 昵称长度验证
             if (nickname.length < 2 || nickname.length > 20) {
-                return validationError(res, { nickname: '昵称长度应在2-20个字符之间' });
+                return (0, response_1.validationError)(res, { nickname: '昵称长度应在2-20个字符之间' });
             }
             // 年龄验证
             if (age && (age < 1 || age > 120)) {
-                return validationError(res, { age: '年龄必须在1-120之间' });
+                return (0, response_1.validationError)(res, { age: '年龄必须在1-120之间' });
             }
             // 性别验证
             if (gender && !['male', 'female', 'other'].includes(gender)) {
-                return validationError(res, { gender: '性别值不合法' });
+                return (0, response_1.validationError)(res, { gender: '性别值不合法' });
             }
-            const result = await authService.register({
+            const result = await AuthService_1.authService.register({
                 email,
                 nickname,
                 password,
                 gender,
                 age
             });
-            return created(res, result, '注册成功');
+            return (0, response_1.created)(res, result, '注册成功');
         }
         catch (error) {
             console.error('Register error:', error);
-            if (error.code === BusinessErrorCode.USER_ALREADY_EXISTS) {
-                return businessError(res, error.code, error.message);
+            if (error.code === api_types_1.BusinessErrorCode.USER_ALREADY_EXISTS) {
+                return (0, response_1.businessError)(res, error.code, error.message);
             }
-            return serverError(res, '注册失败', error);
+            return (0, response_1.serverError)(res, '注册失败', error);
         }
     }
     /**
@@ -64,20 +67,20 @@ export class AuthController {
             const { email, password } = req.body;
             // 参数验证
             if (!email || !password) {
-                return validationError(res, {
+                return (0, response_1.validationError)(res, {
                     email: !email ? '邮箱不能为空' : undefined,
                     password: !password ? '密码不能为空' : undefined
                 });
             }
-            const result = await authService.login({ email, password });
-            return success(res, result, '登录成功');
+            const result = await AuthService_1.authService.login({ email, password });
+            return (0, response_1.success)(res, result, '登录成功');
         }
         catch (error) {
             console.error('Login error:', error);
-            if (error.code === BusinessErrorCode.INVALID_CREDENTIALS) {
-                return businessError(res, error.code, error.message);
+            if (error.code === api_types_1.BusinessErrorCode.INVALID_CREDENTIALS) {
+                return (0, response_1.businessError)(res, error.code, error.message);
             }
-            return serverError(res, '登录失败', error);
+            return (0, response_1.serverError)(res, '登录失败', error);
         }
     }
     /**
@@ -86,12 +89,12 @@ export class AuthController {
      */
     static async logout(req, res) {
         try {
-            await authService.logout();
-            return success(res, null, '登出成功');
+            await AuthService_1.authService.logout();
+            return (0, response_1.success)(res, null, '登出成功');
         }
         catch (error) {
             console.error('Logout error:', error);
-            return serverError(res, '登出失败', error);
+            return (0, response_1.serverError)(res, '登出失败', error);
         }
     }
     /**
@@ -102,19 +105,19 @@ export class AuthController {
         try {
             const { token } = req.body;
             if (!token) {
-                return validationError(res, { token: 'Token不能为空' });
+                return (0, response_1.validationError)(res, { token: 'Token不能为空' });
             }
-            const result = await authService.refreshToken(token);
-            return success(res, result, 'Token刷新成功');
+            const result = await AuthService_1.authService.refreshToken(token);
+            return (0, response_1.success)(res, result, 'Token刷新成功');
         }
         catch (error) {
             console.error('Refresh token error:', error);
-            if (error.code === BusinessErrorCode.TOKEN_INVALID ||
-                error.code === BusinessErrorCode.TOKEN_EXPIRED ||
-                error.code === BusinessErrorCode.USER_NOT_FOUND) {
-                return businessError(res, error.code, error.message);
+            if (error.code === api_types_1.BusinessErrorCode.TOKEN_INVALID ||
+                error.code === api_types_1.BusinessErrorCode.TOKEN_EXPIRED ||
+                error.code === api_types_1.BusinessErrorCode.USER_NOT_FOUND) {
+                return (0, response_1.businessError)(res, error.code, error.message);
             }
-            return serverError(res, 'Token刷新失败', error);
+            return (0, response_1.serverError)(res, 'Token刷新失败', error);
         }
     }
     /**
@@ -126,18 +129,19 @@ export class AuthController {
             // 从认证中间件获取用户ID
             const userId = req.user?.id;
             if (!userId) {
-                return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
             }
-            const user = await authService.getCurrentUser(userId);
-            return success(res, user, '获取用户信息成功');
+            const user = await AuthService_1.authService.getCurrentUser(userId);
+            return (0, response_1.success)(res, user, '获取用户信息成功');
         }
         catch (error) {
             console.error('Get current user error:', error);
-            if (error.code === BusinessErrorCode.USER_NOT_FOUND) {
-                return businessError(res, error.code, error.message);
+            if (error.code === api_types_1.BusinessErrorCode.USER_NOT_FOUND) {
+                return (0, response_1.businessError)(res, error.code, error.message);
             }
-            return serverError(res, '获取用户信息失败', error);
+            return (0, response_1.serverError)(res, '获取用户信息失败', error);
         }
     }
 }
+exports.AuthController = AuthController;
 //# sourceMappingURL=AuthController.js.map

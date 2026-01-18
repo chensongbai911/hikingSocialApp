@@ -1,5 +1,8 @@
-import { pool } from '../config/database';
-export class ChatPolicyService {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.chatPolicyService = exports.ChatPolicyService = void 0;
+const database_1 = require("../config/database");
+class ChatPolicyService {
     constructor() {
         this.tablesReady = false;
         this.ensureTablesPromise = null;
@@ -11,7 +14,7 @@ export class ChatPolicyService {
             return this.ensureTablesPromise;
         this.ensureTablesPromise = (async () => {
             // 黑名单表
-            await pool.query(`
+            await database_1.pool.query(`
         CREATE TABLE IF NOT EXISTS user_blacklist (
           id INT PRIMARY KEY AUTO_INCREMENT,
           user_id VARCHAR(50) NOT NULL,
@@ -24,7 +27,7 @@ export class ChatPolicyService {
         ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
       `);
             // 单向关注限制表
-            await pool.query(`
+            await database_1.pool.query(`
         CREATE TABLE IF NOT EXISTS message_limits (
           id INT PRIMARY KEY AUTO_INCREMENT,
           conversation_id INT NOT NULL,
@@ -54,18 +57,18 @@ export class ChatPolicyService {
     }
     async queryWithAutoMigrate(sql, params = []) {
         try {
-            return await pool.query(sql, params);
+            return await database_1.pool.query(sql, params);
         }
         catch (err) {
             if (err?.code === 'ER_NO_SUCH_TABLE') {
                 await this.ensureChatTables();
-                return await pool.query(sql, params);
+                return await database_1.pool.query(sql, params);
             }
             throw err;
         }
     }
     async getConversationParticipants(conversationId) {
-        const [rows] = await pool.query('SELECT user_id1 AS user1, user_id2 AS user2 FROM conversations WHERE id = ? LIMIT 1', [conversationId]);
+        const [rows] = await database_1.pool.query('SELECT user_id1 AS user1, user_id2 AS user2 FROM conversations WHERE id = ? LIMIT 1', [conversationId]);
         if (!rows || rows.length === 0)
             throw new Error('对话不存在');
         return { user1: rows[0].user1, user2: rows[0].user2 };
@@ -76,8 +79,8 @@ export class ChatPolicyService {
     }
     async getFollowRelation(a, b) {
         const [[aRows], [bRows]] = await Promise.all([
-            pool.query('SELECT 1 FROM user_followers WHERE follower_id = ? AND following_id = ? LIMIT 1', [a, b]),
-            pool.query('SELECT 1 FROM user_followers WHERE follower_id = ? AND following_id = ? LIMIT 1', [b, a]),
+            database_1.pool.query('SELECT 1 FROM user_followers WHERE follower_id = ? AND following_id = ? LIMIT 1', [a, b]),
+            database_1.pool.query('SELECT 1 FROM user_followers WHERE follower_id = ? AND following_id = ? LIMIT 1', [b, a]),
         ]);
         const aFollowB = aRows.length > 0;
         const bFollowA = bRows.length > 0;
@@ -123,5 +126,6 @@ export class ChatPolicyService {
         return { canSend: true, remainingMessages: 3 - count, receiverId, isMutualFollow: false };
     }
 }
-export const chatPolicyService = new ChatPolicyService();
+exports.ChatPolicyService = ChatPolicyService;
+exports.chatPolicyService = new ChatPolicyService();
 //# sourceMappingURL=ChatPolicyService.js.map

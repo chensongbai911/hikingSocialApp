@@ -1,20 +1,26 @@
+"use strict";
 /**
  * 初始化脚本 - 创建测试账户
  * 用于开发测试，在生产环境中应删除
  */
-import { User } from '@/models/User';
-import bcrypt from 'bcrypt';
-export async function initializeTestUsers() {
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.initializeTestUsers = initializeTestUsers;
+const User_1 = require("@/models/User");
+const bcrypt_1 = __importDefault(require("bcrypt"));
+async function initializeTestUsers() {
     try {
         // 检查是否已有测试账户
-        const existingUser = await User.findOne({ where: { email: 'user1@test.com' } });
+        const existingUser = await User_1.User.findOne({ where: { email: 'user1@test.com' } });
         if (existingUser) {
             console.log('✅ 测试账户已存在，跳过初始化');
             return;
         }
         // 创建测试账户1
-        const passwordHash1 = await bcrypt.hash('password123', 10);
-        await User.create({
+        const passwordHash1 = await bcrypt_1.default.hash('password123', 10);
+        await User_1.User.create({
             email: 'user1@test.com',
             nickname: 'TestUser1',
             passwordHash: passwordHash1,
@@ -27,8 +33,8 @@ export async function initializeTestUsers() {
         });
         console.log('✅ 创建测试账户: user1@test.com');
         // 创建测试账户2
-        const passwordHash2 = await bcrypt.hash('password123', 10);
-        await User.create({
+        const passwordHash2 = await bcrypt_1.default.hash('password123', 10);
+        await User_1.User.create({
             email: 'user2@test.com',
             nickname: 'TestUser2',
             passwordHash: passwordHash2,

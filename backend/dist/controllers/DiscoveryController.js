@@ -1,7 +1,10 @@
-import { discoveryService } from '../services/DiscoveryService';
-import { businessError, serverError, paginated } from '../utils/response';
-import { BusinessErrorCode } from '../types/api.types';
-export class DiscoveryController {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.DiscoveryController = void 0;
+const DiscoveryService_1 = require("../services/DiscoveryService");
+const response_1 = require("../utils/response");
+const api_types_1 = require("../types/api.types");
+class DiscoveryController {
     /**
      * 获取推荐活动
      * GET /api/v1/discovery/activities
@@ -10,16 +13,16 @@ export class DiscoveryController {
         try {
             const userId = req.user?.id;
             if (!userId) {
-                return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
             }
             const page = parseInt(req.query.page) || 1;
             const pageSize = parseInt(req.query.page_size) || 20;
-            const { activities, total } = await discoveryService.getRecommendedActivities(userId, page, pageSize);
-            return paginated(res, activities, page, pageSize, total, '获取推荐活动成功');
+            const { activities, total } = await DiscoveryService_1.discoveryService.getRecommendedActivities(userId, page, pageSize);
+            return (0, response_1.paginated)(res, activities, page, pageSize, total, '获取推荐活动成功');
         }
         catch (error) {
             console.error('Get recommended activities error:', error);
-            return serverError(res, '获取推荐活动失败', error);
+            return (0, response_1.serverError)(res, '获取推荐活动失败', error);
         }
     }
     /**
@@ -30,16 +33,16 @@ export class DiscoveryController {
         try {
             const userId = req.user?.id;
             if (!userId) {
-                return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
             }
             const page = parseInt(req.query.page) || 1;
             const pageSize = parseInt(req.query.page_size) || 20;
-            const { users, total } = await discoveryService.getRecommendedUsers(userId, page, pageSize);
-            return paginated(res, users, page, pageSize, total, '获取推荐用户成功');
+            const { users, total } = await DiscoveryService_1.discoveryService.getRecommendedUsers(userId, page, pageSize);
+            return (0, response_1.paginated)(res, users, page, pageSize, total, '获取推荐用户成功');
         }
         catch (error) {
             console.error('Get recommended users error:', error);
-            return serverError(res, '获取推荐用户失败', error);
+            return (0, response_1.serverError)(res, '获取推荐用户失败', error);
         }
     }
     /**
@@ -61,12 +64,12 @@ export class DiscoveryController {
                 filters.start_date = new Date(req.query.start_date);
             if (req.query.end_date)
                 filters.end_date = new Date(req.query.end_date);
-            const { activities, total } = await discoveryService.searchActivities(keyword, filters, page, pageSize, userId);
-            return paginated(res, activities, page, pageSize, total, '搜索活动成功');
+            const { activities, total } = await DiscoveryService_1.discoveryService.searchActivities(keyword, filters, page, pageSize, userId);
+            return (0, response_1.paginated)(res, activities, page, pageSize, total, '搜索活动成功');
         }
         catch (error) {
             console.error('Search activities error:', error);
-            return serverError(res, '搜索活动失败', error);
+            return (0, response_1.serverError)(res, '搜索活动失败', error);
         }
     }
     /**
@@ -83,13 +86,14 @@ export class DiscoveryController {
                 filters.gender = req.query.gender;
             if (req.query.hiking_level)
                 filters.hiking_level = req.query.hiking_level;
-            const { users, total } = await discoveryService.searchUsers(keyword, filters, page, pageSize);
-            return paginated(res, users, page, pageSize, total, '搜索用户成功');
+            const { users, total } = await DiscoveryService_1.discoveryService.searchUsers(keyword, filters, page, pageSize);
+            return (0, response_1.paginated)(res, users, page, pageSize, total, '搜索用户成功');
         }
         catch (error) {
             console.error('Search users error:', error);
-            return serverError(res, '搜索用户失败', error);
+            return (0, response_1.serverError)(res, '搜索用户失败', error);
         }
     }
 }
+exports.DiscoveryController = DiscoveryController;
 //# sourceMappingURL=DiscoveryController.js.map

@@ -1,12 +1,15 @@
-import { pool } from '../config/database';
-import { BusinessErrorCode } from '../types/api.types';
-export class UserService {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.userService = exports.UserService = void 0;
+const database_1 = require("../config/database");
+const api_types_1 = require("../types/api.types");
+class UserService {
     /**
      * 获取用户完整资料（优化版 - 使用单次查询）
      */
     async getProfile(userId) {
         // 使用单次查询获取用户基本信息、偏好和照片
-        const [rows] = await pool.query(`SELECT
+        const [rows] = await database_1.pool.query(`SELECT
         u.id, u.email, u.nickname, u.gender, u.age, u.avatar_url, u.bio,
         u.hiking_level, u.province, u.city, u.region, u.is_verified, u.created_at,
         p.id as pref_id, p.preference_type, p.preference_value, p.created_at as pref_created_at,
@@ -18,7 +21,7 @@ export class UserService {
        ORDER BY ph.sort_order ASC, ph.created_at DESC, p.created_at DESC`, [userId]);
         if (rows.length === 0) {
             throw {
-                code: BusinessErrorCode.USER_NOT_FOUND,
+                code: api_types_1.BusinessErrorCode.USER_NOT_FOUND,
                 message: '用户不存在'
             };
         }
@@ -131,21 +134,21 @@ export class UserService {
         }
         updates.push('updated_at = NOW()');
         values.push(userId);
-        await pool.query(`UPDATE users SET ${updates.join(', ')} WHERE id = ? AND deleted_at IS NULL`, values);
+        await database_1.pool.query(`UPDATE users SET ${updates.join(', ')} WHERE id = ? AND deleted_at IS NULL`, values);
         return this.getProfile(userId);
     }
     /**
      * 更新用户头像
      */
     async updateAvatar(userId, avatarUrl) {
-        await pool.query('UPDATE users SET avatar_url = ?, updated_at = NOW() WHERE id = ? AND deleted_at IS NULL', [avatarUrl, userId]);
+        await database_1.pool.query('UPDATE users SET avatar_url = ?, updated_at = NOW() WHERE id = ? AND deleted_at IS NULL', [avatarUrl, userId]);
         return { avatar_url: avatarUrl };
     }
     /**
      * 生成照片ID
      */
     async generatePhotoId() {
-        const [rows] = await pool.query('SELECT id FROM user_photos ORDER BY id DESC LIMIT 1');
+        const [rows] = await database_1.pool.query('SELECT id FROM user_photos ORDER BY id DESC LIMIT 1');
         if (rows.length === 0) {
             return 'photo-001';
         }
@@ -158,28 +161,28 @@ export class UserService {
      */
     async addPhoto(userId, photoUrl, sortOrder) {
         // 检查照片数量限制
-        const [countResult] = await pool.query('SELECT COUNT(*) as count FROM user_photos WHERE user_id = ?', [userId]);
+        const [countResult] = await database_1.pool.query('SELECT COUNT(*) as count FROM user_photos WHERE user_id = ?', [userId]);
         if (countResult[0].count >= 9) {
             throw {
-                code: BusinessErrorCode.MAX_PHOTOS_EXCEEDED,
+                code: api_types_1.BusinessErrorCode.MAX_PHOTOS_EXCEEDED,
                 message: '相册最多只能有9张照片'
             };
         }
         const photoId = await this.generatePhotoId();
         const order = sortOrder !== undefined ? sortOrder : countResult[0].count;
-        await pool.query(`INSERT INTO user_photos (id, user_id, photo_url, sort_order, created_at)
+        await database_1.pool.query(`INSERT INTO user_photos (id, user_id, photo_url, sort_order, created_at)
        VALUES (?, ?, ?, ?, NOW())`, [photoId, userId, photoUrl, order]);
-        const [photos] = await pool.query('SELECT id, photo_url, sort_order, created_at FROM user_photos WHERE id = ?', [photoId]);
+        const [photos] = await database_1.pool.query('SELECT id, photo_url, sort_order, created_at FROM user_photos WHERE id = ?', [photoId]);
         return photos[0];
     }
     /**
      * 删除相册照片
      */
     async deletePhoto(userId, photoId) {
-        const [result] = await pool.query('DELETE FROM user_photos WHERE id = ? AND user_id = ?', [photoId, userId]);
+        const [result] = await database_1.pool.query('DELETE FROM user_photos WHERE id = ? AND user_id = ?', [photoId, userId]);
         if (result.affectedRows === 0) {
             throw {
-                code: BusinessErrorCode.PHOTO_NOT_FOUND,
+                code: api_types_1.BusinessErrorCode.PHOTO_NOT_FOUND,
                 message: '照片不存在'
             };
         }
@@ -188,7 +191,7 @@ export class UserService {
      * 生成偏好ID
      */
     async generatePreferenceId() {
-        const [rows] = await pool.query('SELECT id FROM user_preferences ORDER BY created_at DESC LIMIT 1');
+        const [rows] = await database_1.pool.query('SELECT id FROM user_preferences ORDER BY created_at DESC LIMIT 1');
         if (rows.length === 0) {
             return 'pref-001';
         }
@@ -200,7 +203,7 @@ export class UserService {
      * 更新用户偏好
      */
     async updatePreferences(userId, preferences) {
-        const connection = await pool.getConnection();
+        const connection = await database_1.pool.getConnection();
         try {
             await connection.beginTransaction();
             // 删除现有偏好
@@ -237,7 +240,7 @@ export class UserService {
      * 获取用户偏好
      */
     async getPreferences(userId) {
-        const [preferences] = await pool.query(`SELECT id, preference_type, preference_value, created_at
+        const [preferences] = await database_1.pool.query(`SELECT id, preference_type, preference_value, created_at
        FROM user_preferences WHERE user_id = ?
        ORDER BY created_at DESC`, [userId]);
         return preferences;
@@ -246,9 +249,10 @@ export class UserService {
      * 检查用户是否存在
      */
     async exists(userId) {
-        const [users] = await pool.query('SELECT id FROM users WHERE id = ? AND deleted_at IS NULL', [userId]);
+        const [users] = await database_1.pool.query('SELECT id FROM users WHERE id = ? AND deleted_at IS NULL', [userId]);
         return users.length > 0;
     }
 }
-export const userService = new UserService();
+exports.UserService = UserService;
+exports.userService = new UserService();
 //# sourceMappingURL=UserService.js.map

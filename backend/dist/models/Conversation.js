@@ -1,51 +1,54 @@
-import { DataTypes, Model, } from 'sequelize';
-export class Conversation extends Model {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Conversation = void 0;
+const sequelize_1 = require("sequelize");
+class Conversation extends sequelize_1.Model {
     static initialize(sequelize) {
         return Conversation.init({
             id: {
-                type: DataTypes.INTEGER,
+                type: sequelize_1.DataTypes.INTEGER,
                 autoIncrement: true,
                 primaryKey: true,
             },
             userId1: {
-                type: DataTypes.STRING(36),
+                type: sequelize_1.DataTypes.STRING(36),
                 allowNull: false,
             },
             userId2: {
-                type: DataTypes.STRING(36),
+                type: sequelize_1.DataTypes.STRING(36),
                 allowNull: false,
             },
             lastMessageId: {
-                type: DataTypes.INTEGER,
+                type: sequelize_1.DataTypes.INTEGER,
                 allowNull: true,
             },
             lastMessageAt: {
-                type: DataTypes.DATE,
+                type: sequelize_1.DataTypes.DATE,
                 allowNull: true,
             },
             lastMessageContent: {
-                type: DataTypes.STRING(255),
+                type: sequelize_1.DataTypes.STRING(255),
                 allowNull: true,
             },
             user1UnreadCount: {
-                type: DataTypes.INTEGER,
+                type: sequelize_1.DataTypes.INTEGER,
                 defaultValue: 0,
             },
             user2UnreadCount: {
-                type: DataTypes.INTEGER,
+                type: sequelize_1.DataTypes.INTEGER,
                 defaultValue: 0,
             },
             deletedAt: {
-                type: DataTypes.DATE,
+                type: sequelize_1.DataTypes.DATE,
                 allowNull: true,
             },
             createdAt: {
-                type: DataTypes.DATE,
-                defaultValue: DataTypes.NOW,
+                type: sequelize_1.DataTypes.DATE,
+                defaultValue: sequelize_1.DataTypes.NOW,
             },
             updatedAt: {
-                type: DataTypes.DATE,
-                defaultValue: DataTypes.NOW,
+                type: sequelize_1.DataTypes.DATE,
+                defaultValue: sequelize_1.DataTypes.NOW,
             },
         }, {
             sequelize,
@@ -59,5 +62,6 @@ export class Conversation extends Model {
         // 关联关系将在 database.ts 中配置
     }
 }
-export default Conversation;
+exports.Conversation = Conversation;
+exports.default = Conversation;
 //# sourceMappingURL=Conversation.js.map

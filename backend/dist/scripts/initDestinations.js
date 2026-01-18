@@ -1,12 +1,15 @@
-import mysql from 'mysql2/promise';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import dotenv from 'dotenv';
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const promise_1 = __importDefault(require("mysql2/promise"));
+const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
+const dotenv_1 = __importDefault(require("dotenv"));
+// CommonJS: __dirname 自动可用
 // 加载环境变量 - 修正路径到backend目录
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv_1.default.config({ path: path_1.default.resolve(__dirname, '../../.env') });
 async function initDestinations() {
     let connection;
     try {
@@ -14,7 +17,7 @@ async function initDestinations() {
         console.log('初始化目的地数据库');
         console.log('========================================\n');
         // 创建数据库连接
-        connection = await mysql.createConnection({
+        connection = await promise_1.default.createConnection({
             host: process.env.DB_HOST || 'localhost',
             user: process.env.DB_USER || 'root',
             password: process.env.DB_PASSWORD || '',
@@ -23,8 +26,8 @@ async function initDestinations() {
         });
         console.log('✓ 数据库连接成功\n');
         // 读取SQL文件 - 修正路径
-        const sqlPath = path.resolve(__dirname, '../database/create_destinations.sql');
-        const sql = fs.readFileSync(sqlPath, 'utf8');
+        const sqlPath = path_1.default.resolve(__dirname, '../database/create_destinations.sql');
+        const sql = fs_1.default.readFileSync(sqlPath, 'utf8');
         console.log('✓ SQL文件读取成功\n');
         // 分割SQL语句并执行
         const statements = sql

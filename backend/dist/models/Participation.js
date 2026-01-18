@@ -1,16 +1,19 @@
-import { DataTypes, Model } from 'sequelize';
-import { User } from './User';
-import { Activity } from './Activity';
-export class Participation extends Model {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Participation = void 0;
+const sequelize_1 = require("sequelize");
+const User_1 = require("./User");
+const Activity_1 = require("./Activity");
+class Participation extends sequelize_1.Model {
     static initialize(sequelize) {
         return Participation.init({
             id: {
-                type: DataTypes.INTEGER,
+                type: sequelize_1.DataTypes.INTEGER,
                 primaryKey: true,
                 autoIncrement: true,
             },
             userId: {
-                type: DataTypes.INTEGER,
+                type: sequelize_1.DataTypes.INTEGER,
                 allowNull: false,
                 references: {
                     model: 'users',
@@ -19,7 +22,7 @@ export class Participation extends Model {
                 onDelete: 'CASCADE',
             },
             activityId: {
-                type: DataTypes.INTEGER,
+                type: sequelize_1.DataTypes.INTEGER,
                 allowNull: false,
                 references: {
                     model: 'activities',
@@ -28,29 +31,29 @@ export class Participation extends Model {
                 onDelete: 'CASCADE',
             },
             status: {
-                type: DataTypes.ENUM('joined', 'completed', 'cancelled'),
+                type: sequelize_1.DataTypes.ENUM('joined', 'completed', 'cancelled'),
                 allowNull: false,
                 defaultValue: 'joined',
             },
             joinedAt: {
-                type: DataTypes.DATE,
+                type: sequelize_1.DataTypes.DATE,
                 allowNull: false,
-                defaultValue: DataTypes.NOW,
+                defaultValue: sequelize_1.DataTypes.NOW,
             },
             completedAt: {
-                type: DataTypes.DATE,
+                type: sequelize_1.DataTypes.DATE,
                 allowNull: true,
             },
             cancelledAt: {
-                type: DataTypes.DATE,
+                type: sequelize_1.DataTypes.DATE,
                 allowNull: true,
             },
             feedback: {
-                type: DataTypes.TEXT,
+                type: sequelize_1.DataTypes.TEXT,
                 allowNull: true,
             },
             rating: {
-                type: DataTypes.DECIMAL(2, 1),
+                type: sequelize_1.DataTypes.DECIMAL(2, 1),
                 allowNull: true,
                 validate: {
                     min: 0,
@@ -58,12 +61,12 @@ export class Participation extends Model {
                 },
             },
             createdAt: {
-                type: DataTypes.DATE,
-                defaultValue: DataTypes.NOW,
+                type: sequelize_1.DataTypes.DATE,
+                defaultValue: sequelize_1.DataTypes.NOW,
             },
             updatedAt: {
-                type: DataTypes.DATE,
-                defaultValue: DataTypes.NOW,
+                type: sequelize_1.DataTypes.DATE,
+                defaultValue: sequelize_1.DataTypes.NOW,
             },
         }, {
             sequelize,
@@ -77,9 +80,10 @@ export class Participation extends Model {
         });
     }
     static associate() {
-        Participation.belongsTo(User, { foreignKey: 'userId' });
-        Participation.belongsTo(Activity, { foreignKey: 'activityId' });
+        Participation.belongsTo(User_1.User, { foreignKey: 'userId' });
+        Participation.belongsTo(Activity_1.Activity, { foreignKey: 'activityId' });
     }
 }
-export default Participation;
+exports.Participation = Participation;
+exports.default = Participation;
 //# sourceMappingURL=Participation.js.map

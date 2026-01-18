@@ -1,19 +1,22 @@
-import { pool } from '../config/database';
-export class DiscoveryService {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.discoveryService = exports.DiscoveryService = void 0;
+const database_1 = require("../config/database");
+class DiscoveryService {
     /**
      * 获取推荐活动列表
      * 基于用户偏好、历史参与等推荐合适的活动
      */
     async getRecommendedActivities(userId, page = 1, pageSize = 20) {
         // 获取用户偏好
-        const [userPrefs] = await pool.query('SELECT preference_type, preference_value FROM user_preferences WHERE user_id = ?', [userId]);
+        const [userPrefs] = await database_1.pool.query('SELECT preference_type, preference_value FROM user_preferences WHERE user_id = ?', [userId]);
         // 构建推荐查询
         // 1. 排除用户已创建的活动
         // 2. 排除用户已加入的活动
         // 3. 只显示待审批和已审批的活动
         // 4. 按开始时间倒序
         const offset = (page - 1) * pageSize;
-        const [countResult] = await pool.query(`SELECT COUNT(*) as total
+        const [countResult] = await database_1.pool.query(`SELECT COUNT(*) as total
        FROM activities a
        WHERE a.deleted_at IS NULL
        AND a.status IN ('pending', 'approved')
@@ -24,7 +27,7 @@ export class DiscoveryService {
        )
        AND a.start_time > NOW()`, [userId, userId]);
         const total = countResult[0].total;
-        const [activities] = await pool.query(`SELECT
+        const [activities] = await database_1.pool.query(`SELECT
         a.*,
         u.id as creator_id,
         u.nickname as creator_nickname,
@@ -80,13 +83,13 @@ export class DiscoveryService {
     async getRecommendedUsers(userId, page = 1, pageSize = 20) {
         const offset = (page - 1) * pageSize;
         // 获取当前用户的偏好
-        const [userPrefs] = await pool.query('SELECT preference_type, preference_value FROM user_preferences WHERE user_id = ?', [userId]);
+        const [userPrefs] = await database_1.pool.query('SELECT preference_type, preference_value FROM user_preferences WHERE user_id = ?', [userId]);
         // 查询其他用户，按共同偏好数量排序
-        const [countResult] = await pool.query(`SELECT COUNT(DISTINCT u.id) as total
+        const [countResult] = await database_1.pool.query(`SELECT COUNT(DISTINCT u.id) as total
        FROM users u
        WHERE u.id != ? AND u.deleted_at IS NULL`, [userId]);
         const total = countResult[0].total;
-        const [users] = await pool.query(`SELECT
+        const [users] = await database_1.pool.query(`SELECT
         u.id,
         u.nickname,
         u.avatar_url,
@@ -155,11 +158,11 @@ export class DiscoveryService {
         }
         const whereClause = whereConditions.join(' AND ');
         // 获取总数
-        const [countResult] = await pool.query(`SELECT COUNT(*) as total FROM activities a WHERE ${whereClause}`, params);
+        const [countResult] = await database_1.pool.query(`SELECT COUNT(*) as total FROM activities a WHERE ${whereClause}`, params);
         const total = countResult[0].total;
         // 获取列表
         const offset = (page - 1) * pageSize;
-        const [activities] = await pool.query(`SELECT
+        const [activities] = await database_1.pool.query(`SELECT
         a.*,
         u.id as creator_id,
         u.nickname as creator_nickname,
@@ -225,11 +228,11 @@ export class DiscoveryService {
         }
         const whereClause = whereConditions.join(' AND ');
         // 获取总数
-        const [countResult] = await pool.query(`SELECT COUNT(*) as total FROM users u WHERE ${whereClause}`, params);
+        const [countResult] = await database_1.pool.query(`SELECT COUNT(*) as total FROM users u WHERE ${whereClause}`, params);
         const total = countResult[0].total;
         // 获取列表
         const offset = (page - 1) * pageSize;
-        const [users] = await pool.query(`SELECT
+        const [users] = await database_1.pool.query(`SELECT
         u.id,
         u.nickname,
         u.avatar_url,
@@ -258,5 +261,6 @@ export class DiscoveryService {
         };
     }
 }
-export const discoveryService = new DiscoveryService();
+exports.DiscoveryService = DiscoveryService;
+exports.discoveryService = new DiscoveryService();
 //# sourceMappingURL=DiscoveryService.js.map

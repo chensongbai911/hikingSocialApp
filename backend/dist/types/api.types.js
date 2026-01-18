@@ -1,9 +1,12 @@
+"use strict";
 /**
  * 统一API响应类型定义
  * API Response Type Definitions
  */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ErrorMessages = exports.BusinessErrorCode = exports.HttpStatusCode = void 0;
 // HTTP状态码枚举
-export var HttpStatusCode;
+var HttpStatusCode;
 (function (HttpStatusCode) {
     HttpStatusCode[HttpStatusCode["OK"] = 200] = "OK";
     HttpStatusCode[HttpStatusCode["CREATED"] = 201] = "CREATED";
@@ -16,9 +19,9 @@ export var HttpStatusCode;
     HttpStatusCode[HttpStatusCode["UNPROCESSABLE_ENTITY"] = 422] = "UNPROCESSABLE_ENTITY";
     HttpStatusCode[HttpStatusCode["INTERNAL_SERVER_ERROR"] = 500] = "INTERNAL_SERVER_ERROR";
     HttpStatusCode[HttpStatusCode["SERVICE_UNAVAILABLE"] = 503] = "SERVICE_UNAVAILABLE";
-})(HttpStatusCode || (HttpStatusCode = {}));
+})(HttpStatusCode || (exports.HttpStatusCode = HttpStatusCode = {}));
 // 业务错误码
-export var BusinessErrorCode;
+var BusinessErrorCode;
 (function (BusinessErrorCode) {
     // 认证相关 (1xxx) - 仅用于token/登录认证失败
     BusinessErrorCode[BusinessErrorCode["INVALID_CREDENTIALS"] = 1001] = "INVALID_CREDENTIALS";
@@ -55,9 +58,9 @@ export var BusinessErrorCode;
     BusinessErrorCode[BusinessErrorCode["DATABASE_ERROR"] = 5001] = "DATABASE_ERROR";
     BusinessErrorCode[BusinessErrorCode["NETWORK_ERROR"] = 5002] = "NETWORK_ERROR";
     BusinessErrorCode[BusinessErrorCode["UNKNOWN_ERROR"] = 5999] = "UNKNOWN_ERROR";
-})(BusinessErrorCode || (BusinessErrorCode = {}));
+})(BusinessErrorCode || (exports.BusinessErrorCode = BusinessErrorCode = {}));
 // 错误信息映射
-export const ErrorMessages = {
+exports.ErrorMessages = {
     [BusinessErrorCode.INVALID_CREDENTIALS]: '用户名或密码错误',
     [BusinessErrorCode.TOKEN_EXPIRED]: '登录已过期，请重新登录',
     [BusinessErrorCode.TOKEN_INVALID]: '无效的令牌',

@@ -1,14 +1,17 @@
-import { DataTypes, Model } from 'sequelize';
-export class User extends Model {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.User = void 0;
+const sequelize_1 = require("sequelize");
+class User extends sequelize_1.Model {
     static initialize(sequelize) {
         return User.init({
             id: {
-                type: DataTypes.INTEGER,
+                type: sequelize_1.DataTypes.INTEGER,
                 primaryKey: true,
                 autoIncrement: true,
             },
             email: {
-                type: DataTypes.STRING,
+                type: sequelize_1.DataTypes.STRING,
                 allowNull: false,
                 unique: true,
                 validate: {
@@ -16,54 +19,54 @@ export class User extends Model {
                 },
             },
             passwordHash: {
-                type: DataTypes.STRING,
+                type: sequelize_1.DataTypes.STRING,
                 allowNull: false,
             },
             nickname: {
-                type: DataTypes.STRING,
+                type: sequelize_1.DataTypes.STRING,
                 allowNull: false,
             },
             avatarUrl: {
-                type: DataTypes.STRING,
+                type: sequelize_1.DataTypes.STRING,
                 allowNull: true,
             },
             gender: {
-                type: DataTypes.ENUM('male', 'female', 'other'),
+                type: sequelize_1.DataTypes.ENUM('male', 'female', 'other'),
                 allowNull: true,
             },
             age: {
-                type: DataTypes.INTEGER,
+                type: sequelize_1.DataTypes.INTEGER,
                 allowNull: true,
             },
             bio: {
-                type: DataTypes.TEXT,
+                type: sequelize_1.DataTypes.TEXT,
                 allowNull: true,
             },
             hikingLevel: {
-                type: DataTypes.ENUM('beginner', 'intermediate', 'advanced', 'expert'),
+                type: sequelize_1.DataTypes.ENUM('beginner', 'intermediate', 'advanced', 'expert'),
                 allowNull: true,
                 defaultValue: 'beginner',
             },
             isActive: {
-                type: DataTypes.BOOLEAN,
+                type: sequelize_1.DataTypes.BOOLEAN,
                 defaultValue: true,
                 allowNull: false,
             },
             isVerified: {
-                type: DataTypes.BOOLEAN,
+                type: sequelize_1.DataTypes.BOOLEAN,
                 defaultValue: false,
                 allowNull: false,
             },
             createdAt: {
-                type: DataTypes.DATE,
-                defaultValue: DataTypes.NOW,
+                type: sequelize_1.DataTypes.DATE,
+                defaultValue: sequelize_1.DataTypes.NOW,
             },
             updatedAt: {
-                type: DataTypes.DATE,
-                defaultValue: DataTypes.NOW,
+                type: sequelize_1.DataTypes.DATE,
+                defaultValue: sequelize_1.DataTypes.NOW,
             },
             deletedAt: {
-                type: DataTypes.DATE,
+                type: sequelize_1.DataTypes.DATE,
                 allowNull: true,
             },
         }, {
@@ -79,5 +82,6 @@ export class User extends Model {
         });
     }
 }
-export default User;
+exports.User = User;
+exports.default = User;
 //# sourceMappingURL=User.js.map

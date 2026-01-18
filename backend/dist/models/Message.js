@@ -1,55 +1,58 @@
-import { DataTypes, Model, } from 'sequelize';
-export class Message extends Model {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Message = void 0;
+const sequelize_1 = require("sequelize");
+class Message extends sequelize_1.Model {
     static initialize(sequelize) {
         return Message.init({
             id: {
-                type: DataTypes.INTEGER,
+                type: sequelize_1.DataTypes.INTEGER,
                 autoIncrement: true,
                 primaryKey: true,
             },
             conversationId: {
-                type: DataTypes.INTEGER,
+                type: sequelize_1.DataTypes.INTEGER,
                 allowNull: false,
             },
             senderId: {
-                type: DataTypes.STRING(36),
+                type: sequelize_1.DataTypes.STRING(36),
                 allowNull: false,
             },
             content: {
-                type: DataTypes.TEXT,
+                type: sequelize_1.DataTypes.TEXT,
                 allowNull: true,
             },
             contentType: {
-                type: DataTypes.ENUM('text', 'image', 'file'),
+                type: sequelize_1.DataTypes.ENUM('text', 'image', 'file'),
                 defaultValue: 'text',
             },
             imageUrl: {
-                type: DataTypes.STRING(500),
+                type: sequelize_1.DataTypes.STRING(500),
                 allowNull: true,
             },
             fileUrl: {
-                type: DataTypes.STRING(500),
+                type: sequelize_1.DataTypes.STRING(500),
                 allowNull: true,
             },
             isRead: {
-                type: DataTypes.BOOLEAN,
+                type: sequelize_1.DataTypes.BOOLEAN,
                 defaultValue: false,
             },
             readAt: {
-                type: DataTypes.DATE,
+                type: sequelize_1.DataTypes.DATE,
                 allowNull: true,
             },
             deletedAt: {
-                type: DataTypes.DATE,
+                type: sequelize_1.DataTypes.DATE,
                 allowNull: true,
             },
             createdAt: {
-                type: DataTypes.DATE,
-                defaultValue: DataTypes.NOW,
+                type: sequelize_1.DataTypes.DATE,
+                defaultValue: sequelize_1.DataTypes.NOW,
             },
             updatedAt: {
-                type: DataTypes.DATE,
-                defaultValue: DataTypes.NOW,
+                type: sequelize_1.DataTypes.DATE,
+                defaultValue: sequelize_1.DataTypes.NOW,
             },
         }, {
             sequelize,
@@ -63,5 +66,6 @@ export class Message extends Model {
         // 关联关系将在 database.ts 中配置
     }
 }
-export default Message;
+exports.Message = Message;
+exports.default = Message;
 //# sourceMappingURL=Message.js.map

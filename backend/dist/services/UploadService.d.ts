@@ -1,3 +1,4 @@
+type MulterFile = Express.Multer.File;
 export interface ImageProcessOptions {
     width?: number;
     height?: number;
@@ -43,7 +44,7 @@ export declare class UploadService {
     /**
      * 处理上传的文件
      */
-    static processUploadedFile(file: Express.Multer.File | undefined, uploadType?: 'avatar' | 'activity' | 'message'): string;
+    static processUploadedFile(file: MulterFile | undefined, uploadType?: 'avatar' | 'activity' | 'message'): string;
     /**
      * 删除文件
      */
@@ -51,7 +52,7 @@ export declare class UploadService {
     /**
      * 验证图片文件
      */
-    static validateImageFile(file: Express.Multer.File): void;
+    static validateImageFile(file: MulterFile): void;
     /**
      * 获取文件信息
      */

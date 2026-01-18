@@ -1,6 +1,14 @@
-import mysql from 'mysql2/promise';
-import dotenv from 'dotenv';
-dotenv.config();
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.pool = void 0;
+exports.testConnection = testConnection;
+exports.closePool = closePool;
+const promise_1 = __importDefault(require("mysql2/promise"));
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
 // 数据库配置
 const dbConfig = {
     host: process.env.DB_HOST || 'localhost',
@@ -22,13 +30,13 @@ console.log('Database config:', {
     database: dbConfig.database,
 });
 // 创建连接池
-export const pool = mysql.createPool(dbConfig);
+exports.pool = promise_1.default.createPool(dbConfig);
 /**
  * 测试数据库连接
  */
-export async function testConnection() {
+async function testConnection() {
     try {
-        const connection = await pool.getConnection();
+        const connection = await exports.pool.getConnection();
         console.log('✅ Database connected successfully');
         connection.release();
         return true;
@@ -41,8 +49,8 @@ export async function testConnection() {
 /**
  * 关闭连接池
  */
-export async function closePool() {
-    await pool.end();
+async function closePool() {
+    await exports.pool.end();
     console.log('Database pool closed');
 }
 //# sourceMappingURL=database.js.map

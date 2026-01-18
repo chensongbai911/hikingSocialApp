@@ -1,5 +1,8 @@
-import { pool } from '../config/database';
-export class DestinationService {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.DestinationService = void 0;
+const database_1 = require("../config/database");
+class DestinationService {
     // 计算两点间距离（单位：km）
     calculateDistance(lat1, lon1, lat2, lon2) {
         const R = 6371; // 地球半径（公里）
@@ -63,10 +66,10 @@ export class DestinationService {
             const offset = Number(filters?.offset) || 0;
             console.log('getDestinations - limit:', filters?.limit, 'parsed:', limit, 'offset:', filters?.offset, 'parsed:', offset);
             // 查询总数
-            const [countResult] = await pool.execute(`SELECT COUNT(*) as total FROM destinations d ${whereClause}`, params);
+            const [countResult] = await database_1.pool.execute(`SELECT COUNT(*) as total FROM destinations d ${whereClause}`, params);
             const total = countResult[0].total;
             // 查询列表
-            const [rows] = await pool.query(`SELECT
+            const [rows] = await database_1.pool.query(`SELECT
           d.*,
           0 as is_favorited
         FROM destinations d
@@ -104,7 +107,7 @@ export class DestinationService {
     // 获取目的地详情
     async getDestinationById(id, userId) {
         try {
-            const [rows] = await pool.execute(`SELECT
+            const [rows] = await database_1.pool.execute(`SELECT
           d.*,
           0 as is_favorited
         FROM destinations d
@@ -122,7 +125,7 @@ export class DestinationService {
                 }
             }
             // 增加访问次数
-            await pool.execute('UPDATE destinations SET visit_count = visit_count + 1 WHERE id = ?', [id]);
+            await database_1.pool.execute('UPDATE destinations SET visit_count = visit_count + 1 WHERE id = ?', [id]);
             return destination;
         }
         catch (error) {
@@ -135,7 +138,7 @@ export class DestinationService {
         try {
             const limitInt = Number(limit) || 10;
             console.log('getPopularDestinations - limit:', limit, 'limitInt:', limitInt, 'type:', typeof limitInt);
-            const [rows] = await pool.query(`SELECT
+            const [rows] = await database_1.pool.query(`SELECT
           d.*,
           0 as is_favorited
         FROM destinations d
@@ -163,7 +166,7 @@ export class DestinationService {
     // 获取附近目的地
     async getNearbyDestinations(latitude, longitude, radius = 50, limit = 10, userId) {
         try {
-            const [rows] = await pool.execute(`SELECT
+            const [rows] = await database_1.pool.execute(`SELECT
           d.*,
           0 as is_favorited
         FROM destinations d
@@ -196,9 +199,9 @@ export class DestinationService {
     // 记录搜索历史
     async addSearchHistory(userId, keyword, destinationId) {
         try {
-            await pool.execute('INSERT INTO destination_search_history (user_id, destination_id, search_keyword) VALUES (?, ?, ?)', [userId, destinationId || null, keyword || null]);
+            await database_1.pool.execute('INSERT INTO destination_search_history (user_id, destination_id, search_keyword) VALUES (?, ?, ?)', [userId, destinationId || null, keyword || null]);
             // 只保留最近20条记录
-            await pool.execute(`DELETE FROM destination_search_history
+            await database_1.pool.execute(`DELETE FROM destination_search_history
          WHERE user_id = ?
          AND id NOT IN (
            SELECT id FROM (
@@ -216,7 +219,7 @@ export class DestinationService {
     // 获取搜索历史
     async getSearchHistory(userId, limit = 10) {
         try {
-            const [rows] = await pool.execute(`SELECT DISTINCT
+            const [rows] = await database_1.pool.execute(`SELECT DISTINCT
           COALESCE(d.name, h.search_keyword) as keyword
         FROM destination_search_history h
         LEFT JOIN destinations d ON h.destination_id = d.id
@@ -234,15 +237,15 @@ export class DestinationService {
     async toggleFavorite(userId, destinationId) {
         try {
             // 检查是否已收藏
-            const [existing] = await pool.execute('SELECT id FROM destination_favorites WHERE user_id = ? AND destination_id = ?', [userId, destinationId]);
+            const [existing] = await database_1.pool.execute('SELECT id FROM destination_favorites WHERE user_id = ? AND destination_id = ?', [userId, destinationId]);
             if (existing.length > 0) {
                 // 取消收藏
-                await pool.execute('DELETE FROM destination_favorites WHERE user_id = ? AND destination_id = ?', [userId, destinationId]);
+                await database_1.pool.execute('DELETE FROM destination_favorites WHERE user_id = ? AND destination_id = ?', [userId, destinationId]);
                 return false;
             }
             else {
                 // 添加收藏
-                await pool.execute('INSERT INTO destination_favorites (user_id, destination_id) VALUES (?, ?)', [userId, destinationId]);
+                await database_1.pool.execute('INSERT INTO destination_favorites (user_id, destination_id) VALUES (?, ?)', [userId, destinationId]);
                 return true;
             }
         }
@@ -254,7 +257,7 @@ export class DestinationService {
     // 获取用户收藏的目的地
     async getFavoriteDestinations(userId) {
         try {
-            const [rows] = await pool.execute(`SELECT d.*, 1 as is_favorited
+            const [rows] = await database_1.pool.execute(`SELECT d.*, 1 as is_favorited
         FROM destinations d
         INNER JOIN destination_favorites f ON d.id = f.destination_id
         WHERE f.user_id = ? AND d.status = 'active'
@@ -278,5 +281,6 @@ export class DestinationService {
         }
     }
 }
-export default new DestinationService();
+exports.DestinationService = DestinationService;
+exports.default = new DestinationService();
 //# sourceMappingURL=DestinationService.js.map

@@ -1,15 +1,18 @@
-import { DataTypes, Model } from 'sequelize';
-import { User } from './User';
-export class Activity extends Model {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Activity = void 0;
+const sequelize_1 = require("sequelize");
+const User_1 = require("./User");
+class Activity extends sequelize_1.Model {
     static initialize(sequelize) {
         return Activity.init({
             id: {
-                type: DataTypes.INTEGER,
+                type: sequelize_1.DataTypes.INTEGER,
                 primaryKey: true,
                 autoIncrement: true,
             },
             creatorId: {
-                type: DataTypes.INTEGER,
+                type: sequelize_1.DataTypes.INTEGER,
                 allowNull: false,
                 references: {
                     model: 'users',
@@ -17,73 +20,73 @@ export class Activity extends Model {
                 },
             },
             title: {
-                type: DataTypes.STRING,
+                type: sequelize_1.DataTypes.STRING,
                 allowNull: false,
             },
             description: {
-                type: DataTypes.TEXT,
+                type: sequelize_1.DataTypes.TEXT,
                 allowNull: false,
             },
             coverImageUrl: {
-                type: DataTypes.STRING,
+                type: sequelize_1.DataTypes.STRING,
                 allowNull: true,
             },
             location: {
-                type: DataTypes.STRING,
+                type: sequelize_1.DataTypes.STRING,
                 allowNull: false,
             },
             latitude: {
-                type: DataTypes.DECIMAL(10, 8),
+                type: sequelize_1.DataTypes.DECIMAL(10, 8),
                 allowNull: true,
             },
             longitude: {
-                type: DataTypes.DECIMAL(11, 8),
+                type: sequelize_1.DataTypes.DECIMAL(11, 8),
                 allowNull: true,
             },
             startTime: {
-                type: DataTypes.DATE,
+                type: sequelize_1.DataTypes.DATE,
                 allowNull: false,
             },
             endTime: {
-                type: DataTypes.DATE,
+                type: sequelize_1.DataTypes.DATE,
                 allowNull: false,
             },
             distance: {
-                type: DataTypes.DECIMAL(10, 2),
+                type: sequelize_1.DataTypes.DECIMAL(10, 2),
                 allowNull: true,
             },
             difficulty: {
-                type: DataTypes.ENUM('easy', 'moderate', 'hard'),
+                type: sequelize_1.DataTypes.ENUM('easy', 'moderate', 'hard'),
                 allowNull: false,
                 defaultValue: 'moderate',
             },
             type: {
-                type: DataTypes.STRING,
+                type: sequelize_1.DataTypes.STRING,
                 allowNull: true,
             },
             status: {
-                type: DataTypes.ENUM('pending', 'approved', 'ongoing', 'completed', 'cancelled'),
+                type: sequelize_1.DataTypes.ENUM('pending', 'approved', 'ongoing', 'completed', 'cancelled'),
                 allowNull: false,
                 defaultValue: 'pending',
             },
             routeDescription: {
-                type: DataTypes.TEXT,
+                type: sequelize_1.DataTypes.TEXT,
                 allowNull: true,
             },
             equipmentRequired: {
-                type: DataTypes.TEXT,
+                type: sequelize_1.DataTypes.TEXT,
                 allowNull: true,
             },
             createdAt: {
-                type: DataTypes.DATE,
-                defaultValue: DataTypes.NOW,
+                type: sequelize_1.DataTypes.DATE,
+                defaultValue: sequelize_1.DataTypes.NOW,
             },
             updatedAt: {
-                type: DataTypes.DATE,
-                defaultValue: DataTypes.NOW,
+                type: sequelize_1.DataTypes.DATE,
+                defaultValue: sequelize_1.DataTypes.NOW,
             },
             deletedAt: {
-                type: DataTypes.DATE,
+                type: sequelize_1.DataTypes.DATE,
                 allowNull: true,
             },
         }, {
@@ -99,8 +102,9 @@ export class Activity extends Model {
         });
     }
     static associate() {
-        Activity.belongsTo(User, { foreignKey: 'creatorId', as: 'creator' });
+        Activity.belongsTo(User_1.User, { foreignKey: 'creatorId', as: 'creator' });
     }
 }
-export default Activity;
+exports.Activity = Activity;
+exports.default = Activity;
 //# sourceMappingURL=Activity.js.map

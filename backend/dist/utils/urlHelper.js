@@ -1,12 +1,16 @@
+"use strict";
 /**
  * URL 工具函数
  */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getFullUrl = getFullUrl;
+exports.processUrls = processUrls;
 /**
  * 将相对路径转换为完整URL
  * @param path 文件路径（可能是相对路径或完整URL）
  * @returns 完整URL或null
  */
-export function getFullUrl(path) {
+function getFullUrl(path) {
     if (!path)
         return null;
     // 如果已经是完整URL，直接返回
@@ -25,7 +29,7 @@ export function getFullUrl(path) {
  * @param urlField URL字段名
  * @returns 处理后的数组
  */
-export function processUrls(items, urlField) {
+function processUrls(items, urlField) {
     return items.map(item => ({
         ...item,
         [urlField]: getFullUrl(item[urlField])

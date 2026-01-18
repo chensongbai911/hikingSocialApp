@@ -1,8 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.requestLogger = void 0;
 /**
  * 请求日志中间件
  * 记录每个API请求的基本信息
  */
-export const requestLogger = (req, res, next) => {
+const requestLogger = (req, res, next) => {
     const start = Date.now();
     // 记录响应完成
     res.on('finish', () => {
@@ -17,4 +20,5 @@ export const requestLogger = (req, res, next) => {
     });
     next();
 };
+exports.requestLogger = requestLogger;
 //# sourceMappingURL=requestLogger.js.map

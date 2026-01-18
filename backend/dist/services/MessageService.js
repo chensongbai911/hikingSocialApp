@@ -1,12 +1,15 @@
-import { Message } from '../models/Message';
-import { Conversation } from '../models/Conversation';
-import { User } from '../models/User';
-import { Op } from 'sequelize';
-import { pool } from '../config/database';
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.MessageService = void 0;
+const Message_1 = require("../models/Message");
+const Conversation_1 = require("../models/Conversation");
+const User_1 = require("../models/User");
+const sequelize_1 = require("sequelize");
+const database_1 = require("../config/database");
 /**
  * 消息服务 - 处理聊天消息的业务逻辑
  */
-export class MessageService {
+class MessageService {
     /**
      * 获取或创建对话
      */
@@ -15,7 +18,7 @@ export class MessageService {
         const [minId, maxId] = userId1 < userId2 ? [userId1, userId2] : [userId2, userId1];
         try {
             // 先查询是否存在
-            const [existingConversation] = await pool.query(`SELECT id, user_id1 as userId1, user_id2 as userId2,
+            const [existingConversation] = await database_1.pool.query(`SELECT id, user_id1 as userId1, user_id2 as userId2,
                 last_message_content as lastMessageContent,
                 last_message_at as lastMessageAt,
                 user1_unread_count as user1UnreadCount,
@@ -28,11 +31,11 @@ export class MessageService {
                 return existingConversation[0];
             }
             // 如果不存在，创建新对话（让数据库自动生成 ID）
-            const insertResult = await pool.query(`INSERT INTO conversations (user_id1, user_id2, user1_unread_count, user2_unread_count, created_at, updated_at)
+            const insertResult = await database_1.pool.query(`INSERT INTO conversations (user_id1, user_id2, user1_unread_count, user2_unread_count, created_at, updated_at)
          VALUES (?, ?, 0, 0, NOW(), NOW())`, [minId, maxId]);
             const conversationId = insertResult[0].insertId;
             // 返回新创建的对话
-            const [newConversation] = await pool.query(`SELECT id, user_id1 as userId1, user_id2 as userId2,
+            const [newConversation] = await database_1.pool.query(`SELECT id, user_id1 as userId1, user_id2 as userId2,
                 last_message_content as lastMessageContent,
                 last_message_at as lastMessageAt,
                 user1_unread_count as user1UnreadCount,
@@ -55,12 +58,12 @@ export class MessageService {
         const offset = (page - 1) * limit;
         try {
             // 获取总数
-            const [countResult] = await pool.query(`SELECT COUNT(*) as count
+            const [countResult] = await database_1.pool.query(`SELECT COUNT(*) as count
          FROM conversations
          WHERE (user_id1 = ? OR user_id2 = ?) AND deleted_at IS NULL`, [userId, userId]);
             const total = countResult[0]?.count || 0;
             // 获取对话列表
-            const [conversations] = await pool.query(`SELECT
+            const [conversations] = await database_1.pool.query(`SELECT
           c.id,
           c.user_id1 as userId1,
           c.user_id2 as userId2,
@@ -83,27 +86,41 @@ export class MessageService {
         ORDER BY c.last_message_at DESC
         LIMIT ? OFFSET ?`, [userId, userId, limit, offset]);
             // 格式化数据
-            const formattedConversations = conversations.map((row) => ({
-                id: row.id,
-                userId1: row.userId1,
-                userId2: row.userId2,
-                lastMessageContent: row.lastMessageContent,
-                lastMessageAt: row.lastMessageAt,
-                user1UnreadCount: row.user1UnreadCount || 0,
-                user2UnreadCount: row.user2UnreadCount || 0,
-                createdAt: row.createdAt,
-                updatedAt: row.updatedAt,
-                user1: row.user1_id ? {
-                    id: row.user1_id,
-                    nickname: row.user1_nickname,
-                    avatarUrl: row.user1_avatarUrl,
-                } : null,
-                user2: row.user2_id ? {
-                    id: row.user2_id,
-                    nickname: row.user2_nickname,
-                    avatarUrl: row.user2_avatarUrl,
-                } : null,
-            }));
+            const formattedConversations = conversations.map((row) => {
+                // 为头像添加默认值处理（需要传入userId以生成个性化默认头像）
+                const getAvatarUrl = (avatarUrl, userId) => {
+                    if (avatarUrl) {
+                        // 如果是相对路径，添加完整URL
+                        if (avatarUrl.startsWith('/uploads/')) {
+                            return `http://localhost:3000${avatarUrl}`;
+                        }
+                        return avatarUrl;
+                    }
+                    // 默认头像 - 使用特定用户ID生成个性化头像
+                    return `https://api.dicebear.com/7.x/avataaars/svg?seed=user${userId}`;
+                };
+                return {
+                    id: row.id,
+                    userId1: row.userId1,
+                    userId2: row.userId2,
+                    lastMessageContent: row.lastMessageContent,
+                    lastMessageAt: row.lastMessageAt,
+                    user1UnreadCount: row.user1UnreadCount || 0,
+                    user2UnreadCount: row.user2UnreadCount || 0,
+                    createdAt: row.createdAt,
+                    updatedAt: row.updatedAt,
+                    user1: row.user1_id ? {
+                        id: row.user1_id,
+                        nickname: row.user1_nickname || '未知用户',
+                        avatarUrl: getAvatarUrl(row.user1_avatarUrl, row.user1_id),
+                    } : null,
+                    user2: row.user2_id ? {
+                        id: row.user2_id,
+                        nickname: row.user2_nickname || '未知用户',
+                        avatarUrl: getAvatarUrl(row.user2_avatarUrl, row.user2_id),
+                    } : null,
+                };
+            });
             return {
                 conversations: formattedConversations,
                 total,
@@ -121,11 +138,11 @@ export class MessageService {
     async getMessages(conversationId, page = 1, limit = 50) {
         const offset = (page - 1) * limit;
         // 获取总数
-        const [countResult] = await pool.query(`SELECT COUNT(*) as total FROM messages
+        const [countResult] = await database_1.pool.query(`SELECT COUNT(*) as total FROM messages
        WHERE conversation_id = ? AND deleted_at IS NULL`, [conversationId]);
         const total = countResult[0].total;
         // 获取消息列表（带用户信息）
-        const [messages] = await pool.query(`SELECT
+        const [messages] = await database_1.pool.query(`SELECT
         m.id,
         m.conversation_id as conversationId,
         m.sender_id as senderId,
@@ -146,24 +163,38 @@ export class MessageService {
        ORDER BY m.created_at DESC
        LIMIT ? OFFSET ?`, [conversationId, limit, offset]);
         // 转换嵌套对象结构
-        const formattedMessages = messages.map((msg) => ({
-            id: msg.id,
-            conversationId: msg.conversationId,
-            senderId: msg.senderId,
-            content: msg.content,
-            contentType: msg.contentType,
-            imageUrl: msg.imageUrl,
-            fileUrl: msg.fileUrl,
-            isRead: msg.isRead,
-            readAt: msg.readAt,
-            createdAt: msg.createdAt,
-            updatedAt: msg.updatedAt,
-            sender: {
-                id: msg.sender_id,
-                nickname: msg.sender_nickname,
-                avatarUrl: msg.sender_avatarUrl
-            }
-        }));
+        const formattedMessages = messages.map((msg) => {
+            // 处理发送者头像
+            const getSenderAvatarUrl = (avatarUrl, senderId) => {
+                if (avatarUrl) {
+                    // 如果是相对路径，添加完整URL
+                    if (avatarUrl.startsWith('/uploads/')) {
+                        return `http://localhost:3000${avatarUrl}`;
+                    }
+                    return avatarUrl;
+                }
+                // 默认头像
+                return `https://api.dicebear.com/7.x/avataaars/svg?seed=user${senderId}`;
+            };
+            return {
+                id: msg.id,
+                conversationId: msg.conversationId,
+                senderId: msg.senderId,
+                content: msg.content,
+                contentType: msg.contentType,
+                imageUrl: msg.imageUrl,
+                fileUrl: msg.fileUrl,
+                isRead: msg.isRead,
+                readAt: msg.readAt,
+                createdAt: msg.createdAt,
+                updatedAt: msg.updatedAt,
+                sender: {
+                    id: msg.sender_id,
+                    nickname: msg.sender_nickname || '未知用户',
+                    avatarUrl: getSenderAvatarUrl(msg.sender_avatarUrl, msg.sender_id)
+                }
+            };
+        });
         // 反向排序以显示最新消息在底部
         return {
             messages: formattedMessages.reverse(),
@@ -176,7 +207,7 @@ export class MessageService {
      */
     async sendMessage(conversationId, senderId, content, contentType = 'text', imageUrl, fileUrl) {
         // 验证对话存在且用户是参与者
-        const [conversations] = await pool.query('SELECT id, user_id1, user_id2, user1_unread_count, user2_unread_count FROM conversations WHERE id = ? AND deleted_at IS NULL', [conversationId]);
+        const [conversations] = await database_1.pool.query('SELECT id, user_id1, user_id2, user1_unread_count, user2_unread_count FROM conversations WHERE id = ? AND deleted_at IS NULL', [conversationId]);
         if (conversations.length === 0) {
             throw new Error('对话不存在');
         }
@@ -186,7 +217,7 @@ export class MessageService {
             throw new Error('用户不是对话的参与者');
         }
         // 创建消息
-        const [insertResult] = await pool.query(`INSERT INTO messages (conversation_id, sender_id, content, content_type, image_url, file_url, is_read, created_at, updated_at)
+        const [insertResult] = await database_1.pool.query(`INSERT INTO messages (conversation_id, sender_id, content, content_type, image_url, file_url, is_read, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, false, NOW(), NOW())`, [conversationId, senderId, content || '', contentType, imageUrl || null, fileUrl || null]);
         const messageId = insertResult.insertId;
         // 更新对话的最后消息信息
@@ -198,14 +229,14 @@ export class MessageService {
         const lastMessageContent = contentType === 'text'
             ? (content || '').substring(0, 100)
             : `[${contentType === 'image' ? '图片' : '文件'}]`;
-        await pool.query(`UPDATE conversations
+        await database_1.pool.query(`UPDATE conversations
        SET last_message_id = ?,
            last_message_at = NOW(),
            last_message_content = ?,
            ${unreadCountField} = ?
        WHERE id = ?`, [messageId, lastMessageContent, (currentUnreadCount || 0) + 1, conversationId]);
         // 返回完整消息对象（包括发送者信息）
-        const [messages] = await pool.query(`SELECT
+        const [messages] = await database_1.pool.query(`SELECT
         m.id, m.conversation_id as conversationId, m.sender_id as senderId,
         m.content, m.content_type as contentType, m.image_url as imageUrl,
         m.file_url as fileUrl, m.is_read as isRead, m.read_at as readAt,
@@ -241,16 +272,16 @@ export class MessageService {
      * 标记消息为已读
      */
     async markMessageAsRead(messageId) {
-        const [messages] = await pool.query('SELECT id, is_read FROM messages WHERE id = ?', [messageId]);
+        const [messages] = await database_1.pool.query('SELECT id, is_read FROM messages WHERE id = ?', [messageId]);
         if (messages.length === 0) {
             throw new Error('消息不存在');
         }
         const message = messages[0];
         if (!message.is_read) {
-            await pool.query('UPDATE messages SET is_read = true, read_at = NOW(), updated_at = NOW() WHERE id = ?', [messageId]);
+            await database_1.pool.query('UPDATE messages SET is_read = true, read_at = NOW(), updated_at = NOW() WHERE id = ?', [messageId]);
         }
         // 返回更新后的消息
-        const [updated] = await pool.query('SELECT * FROM messages WHERE id = ?', [messageId]);
+        const [updated] = await database_1.pool.query('SELECT * FROM messages WHERE id = ?', [messageId]);
         return updated[0];
     }
     /**
@@ -258,7 +289,7 @@ export class MessageService {
      */
     async markConversationAsRead(conversationId, userId) {
         // 获取对话信息
-        const [conversations] = await pool.query(`SELECT id, user_id1, user_id2 FROM conversations
+        const [conversations] = await database_1.pool.query(`SELECT id, user_id1, user_id2 FROM conversations
        WHERE id = ? AND deleted_at IS NULL`, [conversationId]);
         if (conversations.length === 0) {
             throw new Error('对话不存在');
@@ -270,7 +301,7 @@ export class MessageService {
             throw new Error('用户不是对话的参与者');
         }
         // 标记该用户的所有未读消息为已读
-        await pool.query(`UPDATE messages
+        await database_1.pool.query(`UPDATE messages
        SET is_read = 1, read_at = NOW()
        WHERE conversation_id = ?
          AND is_read = 0
@@ -278,7 +309,7 @@ export class MessageService {
          AND deleted_at IS NULL`, [conversationId, userId]);
         // 重置对话中该用户的未读计数
         const unreadCountField = conversation.user_id1 === userId ? 'user1_unread_count' : 'user2_unread_count';
-        await pool.query(`UPDATE conversations
+        await database_1.pool.query(`UPDATE conversations
        SET ${unreadCountField} = 0, updated_at = NOW()
        WHERE id = ?`, [conversationId]);
     }
@@ -286,18 +317,18 @@ export class MessageService {
      * 删除消息（软删除）
      */
     async deleteMessage(messageId) {
-        const [messages] = await pool.query('SELECT id FROM messages WHERE id = ?', [messageId]);
+        const [messages] = await database_1.pool.query('SELECT id FROM messages WHERE id = ?', [messageId]);
         if (messages.length === 0) {
             throw new Error('消息不存在');
         }
-        await pool.query('UPDATE messages SET deleted_at = NOW(), content = \'\', updated_at = NOW() WHERE id = ?', [messageId]);
+        await database_1.pool.query('UPDATE messages SET deleted_at = NOW(), content = \'\', updated_at = NOW() WHERE id = ?', [messageId]);
     }
     /**
      * 获取未读消息数量
      */
     async getUnreadCount(userId) {
         try {
-            const [rows] = await pool.query(`SELECT
+            const [rows] = await database_1.pool.query(`SELECT
           SUM(CASE
             WHEN user_id1 = ? THEN user1_unread_count
             WHEN user_id2 = ? THEN user2_unread_count
@@ -316,17 +347,17 @@ export class MessageService {
      * 搜索消息
      */
     async searchMessages(conversationId, keyword, limit = 20) {
-        return await Message.findAll({
+        return await Message_1.Message.findAll({
             where: {
                 conversationId,
                 content: {
-                    [Op.like]: `%${keyword}%`,
+                    [sequelize_1.Op.like]: `%${keyword}%`,
                 },
                 deletedAt: null,
             },
             include: [
                 {
-                    model: User,
+                    model: User_1.User,
                     as: 'sender',
                     attributes: ['id', 'nickname', 'avatarUrl'],
                 },
@@ -339,18 +370,18 @@ export class MessageService {
      * 获取用户的所有对话统计信息
      */
     async getConversationStats(userId) {
-        const conversations = await Conversation.findAll({
+        const conversations = await Conversation_1.Conversation.findAll({
             where: {
-                [Op.or]: [{ userId1: userId }, { userId2: userId }],
+                [sequelize_1.Op.or]: [{ userId1: userId }, { userId2: userId }],
                 deletedAt: null,
             },
             include: [
                 {
-                    model: User,
+                    model: User_1.User,
                     as: 'user1',
                 },
                 {
-                    model: User,
+                    model: User_1.User,
                     as: 'user2',
                 },
             ],
@@ -371,4 +402,5 @@ export class MessageService {
         };
     }
 }
+exports.MessageService = MessageService;
 //# sourceMappingURL=MessageService.js.map

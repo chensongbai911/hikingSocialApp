@@ -1,25 +1,28 @@
-import { Friendship } from '../models/Friendship';
-import { User } from '../models/User';
-import { UserPreference } from '../models/UserPreference';
-import { BusinessError, BusinessErrorCode } from '../utils/errors';
-import { Op } from 'sequelize';
-export class FriendService {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.FriendService = void 0;
+const Friendship_1 = require("../models/Friendship");
+const User_1 = require("../models/User");
+const UserPreference_1 = require("../models/UserPreference");
+const errors_1 = require("../utils/errors");
+const sequelize_1 = require("sequelize");
+class FriendService {
     /**
      * 发送好友请求
      */
     async sendFriendRequest(userId, friendId, message) {
         if (userId === friendId) {
-            throw new BusinessError(BusinessErrorCode.INVALID_REQUEST, '不能添加自己为好友');
+            throw new errors_1.BusinessError(errors_1.BusinessErrorCode.INVALID_REQUEST, '不能添加自己为好友');
         }
         // 检查对方用户是否存在
-        const friendUser = await User.findByPk(friendId);
+        const friendUser = await User_1.User.findByPk(friendId);
         if (!friendUser) {
-            throw new BusinessError(BusinessErrorCode.USER_NOT_FOUND, '用户不存在');
+            throw new errors_1.BusinessError(errors_1.BusinessErrorCode.USER_NOT_FOUND, '用户不存在');
         }
         // 检查是否已经是好友或有待处理的请求
-        const existingFriendship = await Friendship.findOne({
+        const existingFriendship = await Friendship_1.Friendship.findOne({
             where: {
-                [Op.or]: [
+                [sequelize_1.Op.or]: [
                     { userId, friendId },
                     { userId: friendId, friendId: userId },
                 ],
@@ -27,17 +30,17 @@ export class FriendService {
         });
         if (existingFriendship) {
             if (existingFriendship.status === 'accepted') {
-                throw new BusinessError(BusinessErrorCode.ALREADY_FRIENDS, '你们已经是好友了');
+                throw new errors_1.BusinessError(errors_1.BusinessErrorCode.ALREADY_FRIENDS, '你们已经是好友了');
             }
             if (existingFriendship.status === 'pending') {
-                throw new BusinessError(BusinessErrorCode.FRIEND_REQUEST_PENDING, '好友请求待处理');
+                throw new errors_1.BusinessError(errors_1.BusinessErrorCode.FRIEND_REQUEST_PENDING, '好友请求待处理');
             }
             if (existingFriendship.status === 'blocked') {
-                throw new BusinessError(BusinessErrorCode.USER_BLOCKED, '无法添加该用户为好友');
+                throw new errors_1.BusinessError(errors_1.BusinessErrorCode.USER_BLOCKED, '无法添加该用户为好友');
             }
         }
         // 创建好友请求(双向记录)
-        const friendship1 = await Friendship.create({
+        const friendship1 = await Friendship_1.Friendship.create({
             userId,
             friendId,
             status: 'pending',
@@ -45,7 +48,7 @@ export class FriendService {
             message: message || null,
         });
         // 创建反向记录
-        await Friendship.create({
+        await Friendship_1.Friendship.create({
             userId: friendId,
             friendId: userId,
             status: 'pending',
@@ -58,23 +61,23 @@ export class FriendService {
      * 接受好友请求
      */
     async acceptFriendRequest(userId, friendId) {
-        const friendship = await Friendship.findOne({
+        const friendship = await Friendship_1.Friendship.findOne({
             where: { userId, friendId, status: 'pending' },
         });
         if (!friendship) {
-            throw new BusinessError(BusinessErrorCode.FRIEND_REQUEST_NOT_FOUND, '好友请求不存在');
+            throw new errors_1.BusinessError(errors_1.BusinessErrorCode.FRIEND_REQUEST_NOT_FOUND, '好友请求不存在');
         }
         // 只有接收方可以接受请求
         if (friendship.initiatedBy === userId) {
-            throw new BusinessError(BusinessErrorCode.PERMISSION_DENIED, '不能接受自己发送的好友请求');
+            throw new errors_1.BusinessError(errors_1.BusinessErrorCode.PERMISSION_DENIED, '不能接受自己发送的好友请求');
         }
         // 更新两条记录的状态
-        await Friendship.update({
+        await Friendship_1.Friendship.update({
             status: 'accepted',
             acceptedAt: new Date(),
         }, {
             where: {
-                [Op.or]: [
+                [sequelize_1.Op.or]: [
                     { userId, friendId },
                     { userId: friendId, friendId: userId },
                 ],
@@ -85,19 +88,19 @@ export class FriendService {
      * 拒绝好友请求
      */
     async rejectFriendRequest(userId, friendId) {
-        const friendship = await Friendship.findOne({
+        const friendship = await Friendship_1.Friendship.findOne({
             where: { userId, friendId, status: 'pending' },
         });
         if (!friendship) {
-            throw new BusinessError(BusinessErrorCode.FRIEND_REQUEST_NOT_FOUND, '好友请求不存在');
+            throw new errors_1.BusinessError(errors_1.BusinessErrorCode.FRIEND_REQUEST_NOT_FOUND, '好友请求不存在');
         }
         if (friendship.initiatedBy === userId) {
-            throw new BusinessError(BusinessErrorCode.PERMISSION_DENIED, '不能拒绝自己发送的好友请求');
+            throw new errors_1.BusinessError(errors_1.BusinessErrorCode.PERMISSION_DENIED, '不能拒绝自己发送的好友请求');
         }
         // 更新两条记录的状态
-        await Friendship.update({ status: 'rejected' }, {
+        await Friendship_1.Friendship.update({ status: 'rejected' }, {
             where: {
-                [Op.or]: [
+                [sequelize_1.Op.or]: [
                     { userId, friendId },
                     { userId: friendId, friendId: userId },
                 ],
@@ -108,9 +111,9 @@ export class FriendService {
      * 删除好友
      */
     async removeFriend(userId, friendId) {
-        await Friendship.destroy({
+        await Friendship_1.Friendship.destroy({
             where: {
-                [Op.or]: [
+                [sequelize_1.Op.or]: [
                     { userId, friendId },
                     { userId: friendId, friendId: userId },
                 ],
@@ -121,14 +124,14 @@ export class FriendService {
      * 获取好友列表
      */
     async getFriends(userId) {
-        const friendships = await Friendship.findAll({
+        const friendships = await Friendship_1.Friendship.findAll({
             where: {
                 userId,
                 status: 'accepted',
             },
             include: [
                 {
-                    model: User,
+                    model: User_1.User,
                     as: 'friend',
                     attributes: ['id', 'nickname', 'avatarUrl', 'age', 'gender', 'hikingLevel', 'bio'],
                 },
@@ -141,15 +144,15 @@ export class FriendService {
      * 获取待处理的好友请求
      */
     async getPendingRequests(userId) {
-        const friendships = await Friendship.findAll({
+        const friendships = await Friendship_1.Friendship.findAll({
             where: {
                 userId,
                 status: 'pending',
-                initiatedBy: { [Op.ne]: userId }, // 不是自己发起的
+                initiatedBy: { [sequelize_1.Op.ne]: userId }, // 不是自己发起的
             },
             include: [
                 {
-                    model: User,
+                    model: User_1.User,
                     as: 'friend',
                     attributes: ['id', 'nickname', 'avatarUrl', 'age', 'gender', 'hikingLevel', 'bio'],
                 },
@@ -162,12 +165,12 @@ export class FriendService {
      * 搜索用户(按昵称或手机号)
      */
     async searchUsers(keyword, currentUserId) {
-        const users = await User.findAll({
+        const users = await User_1.User.findAll({
             where: {
-                id: { [Op.ne]: currentUserId },
-                [Op.or]: [
-                    { nickname: { [Op.like]: `%${keyword}%` } },
-                    { email: { [Op.like]: `%${keyword}%` } },
+                id: { [sequelize_1.Op.ne]: currentUserId },
+                [sequelize_1.Op.or]: [
+                    { nickname: { [sequelize_1.Op.like]: `%${keyword}%` } },
+                    { email: { [sequelize_1.Op.like]: `%${keyword}%` } },
                 ],
             },
             attributes: ['id', 'nickname', 'avatarUrl', 'age', 'gender', 'hikingLevel', 'bio'],
@@ -180,26 +183,26 @@ export class FriendService {
      */
     async getRecommendedUsers(userId, limit = 10) {
         // 获取当前用户的偏好
-        const userPreference = await UserPreference.findOne({ where: { userId } });
+        const userPreference = await UserPreference_1.UserPreference.findOne({ where: { userId } });
         // 获取已经是好友的用户ID
-        const friendships = await Friendship.findAll({
+        const friendships = await Friendship_1.Friendship.findAll({
             where: { userId, status: 'accepted' },
             attributes: ['friendId'],
         });
         const friendIds = friendships.map((f) => f.friendId);
         // 查找相似偏好的用户
-        const recommendedUsers = await User.findAll({
+        const recommendedUsers = await User_1.User.findAll({
             where: {
                 id: {
-                    [Op.notIn]: [userId, ...friendIds],
+                    [sequelize_1.Op.notIn]: [userId, ...friendIds],
                 },
             },
             include: [
                 {
-                    model: UserPreference,
+                    model: UserPreference_1.UserPreference,
                     where: userPreference
                         ? {
-                            preferenceValue: { [Op.like]: `%${userPreference.preferenceValue}%` },
+                            preferenceValue: { [sequelize_1.Op.like]: `%${userPreference.preferenceValue}%` },
                         }
                         : {},
                     required: false,
@@ -214,11 +217,12 @@ export class FriendService {
      * 检查好友关系状态
      */
     async getFriendshipStatus(userId, friendId) {
-        const friendship = await Friendship.findOne({
+        const friendship = await Friendship_1.Friendship.findOne({
             where: { userId, friendId },
         });
         return friendship ? friendship.status : null;
     }
 }
-export default new FriendService();
+exports.FriendService = FriendService;
+exports.default = new FriendService();
 //# sourceMappingURL=FriendService.js.map

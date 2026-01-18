@@ -1,5 +1,11 @@
-import DestinationService from '../services/DestinationService';
-export class DestinationController {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.DestinationController = void 0;
+const DestinationService_1 = __importDefault(require("../services/DestinationService"));
+class DestinationController {
     // 获取目的地列表
     async getDestinations(req, res) {
         try {
@@ -17,7 +23,7 @@ export class DestinationController {
                 limit: Number(pageSize),
                 offset: (Number(page) - 1) * Number(pageSize),
             };
-            const { destinations, total } = await DestinationService.getDestinations(filters, userId);
+            const { destinations, total } = await DestinationService_1.default.getDestinations(filters, userId);
             res.json({
                 code: 200,
                 message: 'Success',
@@ -46,7 +52,7 @@ export class DestinationController {
         try {
             const userId = req.user?.id;
             const { id } = req.params;
-            const destination = await DestinationService.getDestinationById(Number(id), userId);
+            const destination = await DestinationService_1.default.getDestinationById(Number(id), userId);
             if (!destination) {
                 return res.status(404).json({
                     code: 404,
@@ -73,7 +79,7 @@ export class DestinationController {
         try {
             const userId = req.user?.id;
             const { limit = 10 } = req.query;
-            const destinations = await DestinationService.getPopularDestinations(Number(limit), userId);
+            const destinations = await DestinationService_1.default.getPopularDestinations(Number(limit), userId);
             res.json({
                 code: 200,
                 message: 'Success',
@@ -100,7 +106,7 @@ export class DestinationController {
                     message: '缺少位置参数',
                 });
             }
-            const destinations = await DestinationService.getNearbyDestinations(Number(latitude), Number(longitude), Number(radius), Number(limit), userId);
+            const destinations = await DestinationService_1.default.getNearbyDestinations(Number(latitude), Number(longitude), Number(radius), Number(limit), userId);
             res.json({
                 code: 200,
                 message: 'Success',
@@ -127,7 +133,7 @@ export class DestinationController {
                 });
             }
             const { keyword, destinationId } = req.body;
-            await DestinationService.addSearchHistory(userId, keyword, destinationId);
+            await DestinationService_1.default.addSearchHistory(userId, keyword, destinationId);
             res.json({
                 code: 200,
                 message: 'Success',
@@ -153,7 +159,7 @@ export class DestinationController {
                 });
             }
             const { limit = 10 } = req.query;
-            const history = await DestinationService.getSearchHistory(userId, Number(limit));
+            const history = await DestinationService_1.default.getSearchHistory(userId, Number(limit));
             res.json({
                 code: 200,
                 message: 'Success',
@@ -180,7 +186,7 @@ export class DestinationController {
                 });
             }
             const { id } = req.params;
-            const isFavorited = await DestinationService.toggleFavorite(userId, Number(id));
+            const isFavorited = await DestinationService_1.default.toggleFavorite(userId, Number(id));
             res.json({
                 code: 200,
                 message: isFavorited ? '收藏成功' : '取消收藏成功',
@@ -206,7 +212,7 @@ export class DestinationController {
                     message: '未登录',
                 });
             }
-            const destinations = await DestinationService.getFavoriteDestinations(userId);
+            const destinations = await DestinationService_1.default.getFavoriteDestinations(userId);
             res.json({
                 code: 200,
                 message: 'Success',
@@ -223,5 +229,6 @@ export class DestinationController {
         }
     }
 }
-export default new DestinationController();
+exports.DestinationController = DestinationController;
+exports.default = new DestinationController();
 //# sourceMappingURL=DestinationController.js.map

@@ -1,15 +1,18 @@
-import { DataTypes, Model } from 'sequelize';
-import { User } from './User';
-export class UserPhoto extends Model {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.UserPhoto = void 0;
+const sequelize_1 = require("sequelize");
+const User_1 = require("./User");
+class UserPhoto extends sequelize_1.Model {
     static initialize(sequelize) {
         return UserPhoto.init({
             id: {
-                type: DataTypes.INTEGER,
+                type: sequelize_1.DataTypes.INTEGER,
                 primaryKey: true,
                 autoIncrement: true,
             },
             userId: {
-                type: DataTypes.INTEGER,
+                type: sequelize_1.DataTypes.INTEGER,
                 allowNull: false,
                 references: {
                     model: 'users',
@@ -18,21 +21,21 @@ export class UserPhoto extends Model {
                 onDelete: 'CASCADE',
             },
             photoUrl: {
-                type: DataTypes.STRING,
+                type: sequelize_1.DataTypes.STRING,
                 allowNull: false,
             },
             sortOrder: {
-                type: DataTypes.INTEGER,
+                type: sequelize_1.DataTypes.INTEGER,
                 allowNull: false,
                 defaultValue: 0,
             },
             createdAt: {
-                type: DataTypes.DATE,
-                defaultValue: DataTypes.NOW,
+                type: sequelize_1.DataTypes.DATE,
+                defaultValue: sequelize_1.DataTypes.NOW,
             },
             updatedAt: {
-                type: DataTypes.DATE,
-                defaultValue: DataTypes.NOW,
+                type: sequelize_1.DataTypes.DATE,
+                defaultValue: sequelize_1.DataTypes.NOW,
             },
         }, {
             sequelize,
@@ -45,8 +48,9 @@ export class UserPhoto extends Model {
         });
     }
     static associate() {
-        UserPhoto.belongsTo(User, { foreignKey: 'userId' });
+        UserPhoto.belongsTo(User_1.User, { foreignKey: 'userId' });
     }
 }
-export default UserPhoto;
+exports.UserPhoto = UserPhoto;
+exports.default = UserPhoto;
 //# sourceMappingURL=UserPhoto.js.map

@@ -1,10 +1,13 @@
-import { userDetailService } from '../services/UserDetailService';
-import { success, businessError, validationError, serverError } from '../utils/response';
-import { BusinessErrorCode } from '../types/api.types';
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.UserDetailController = void 0;
+const UserDetailService_1 = require("../services/UserDetailService");
+const response_1 = require("../utils/response");
+const api_types_1 = require("../types/api.types");
 // 简单的内存缓存（关注状态缓存，5秒过期）
 const followStatusCache = new Map();
 const CACHE_TTL = 5000; // 5秒
-export class UserDetailController {
+class UserDetailController {
     /**
      * 获取用户详情
      * GET /api/v1/users/:userId/detail
@@ -13,17 +16,17 @@ export class UserDetailController {
         try {
             const { userId } = req.params;
             if (!userId) {
-                return validationError(res, '缺少用户ID参数');
+                return (0, response_1.validationError)(res, '缺少用户ID参数');
             }
-            const userDetail = await userDetailService.getUserDetail(userId);
-            return success(res, userDetail, '获取用户详情成功');
+            const userDetail = await UserDetailService_1.userDetailService.getUserDetail(userId);
+            return (0, response_1.success)(res, userDetail, '获取用户详情成功');
         }
         catch (error) {
             console.error('Get user detail error:', error);
-            if (error.code === BusinessErrorCode.USER_NOT_FOUND) {
-                return businessError(res, error.code, error.message);
+            if (error.code === api_types_1.BusinessErrorCode.USER_NOT_FOUND) {
+                return (0, response_1.businessError)(res, error.code, error.message);
             }
-            return serverError(res, '获取用户详情失败', error);
+            return (0, response_1.serverError)(res, '获取用户详情失败', error);
         }
     }
     /**
@@ -35,23 +38,23 @@ export class UserDetailController {
             const currentUserId = req.user?.id;
             const { userId } = req.params;
             if (!currentUserId) {
-                return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
             }
             if (!userId) {
-                return validationError(res, '缺少用户ID参数');
+                return (0, response_1.validationError)(res, '缺少用户ID参数');
             }
-            await userDetailService.followUser(currentUserId, userId);
+            await UserDetailService_1.userDetailService.followUser(currentUserId, userId);
             // 清除关注状态缓存
             const cacheKey = `${currentUserId}:${userId}`;
             followStatusCache.delete(cacheKey);
-            return success(res, { following: true }, '关注成功');
+            return (0, response_1.success)(res, { following: true }, '关注成功');
         }
         catch (error) {
             console.error('Follow user error:', error);
-            if (error.code === BusinessErrorCode.USER_NOT_FOUND || error.code === 2001) {
-                return businessError(res, error.code, error.message);
+            if (error.code === api_types_1.BusinessErrorCode.USER_NOT_FOUND || error.code === 2001) {
+                return (0, response_1.businessError)(res, error.code, error.message);
             }
-            return serverError(res, '关注失败', error);
+            return (0, response_1.serverError)(res, '关注失败', error);
         }
     }
     /**
@@ -63,23 +66,23 @@ export class UserDetailController {
             const currentUserId = req.user?.id;
             const { userId } = req.params;
             if (!currentUserId) {
-                return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
             }
             if (!userId) {
-                return validationError(res, '缺少用户ID参数');
+                return (0, response_1.validationError)(res, '缺少用户ID参数');
             }
-            await userDetailService.unfollowUser(currentUserId, userId);
+            await UserDetailService_1.userDetailService.unfollowUser(currentUserId, userId);
             // 清除关注状态缓存
             const cacheKey = `${currentUserId}:${userId}`;
             followStatusCache.delete(cacheKey);
-            return success(res, { following: false }, '取消关注成功');
+            return (0, response_1.success)(res, { following: false }, '取消关注成功');
         }
         catch (error) {
             console.error('Unfollow user error:', error);
             if (error.code === 2001) {
-                return businessError(res, error.code, error.message);
+                return (0, response_1.businessError)(res, error.code, error.message);
             }
-            return serverError(res, '取消关注失败', error);
+            return (0, response_1.serverError)(res, '取消关注失败', error);
         }
     }
     /**
@@ -91,10 +94,10 @@ export class UserDetailController {
             const currentUserId = req.user?.id;
             const { userId } = req.params;
             if (!currentUserId) {
-                return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
             }
             if (!userId) {
-                return validationError(res, '缺少用户ID参数');
+                return (0, response_1.validationError)(res, '缺少用户ID参数');
             }
             // 构建缓存键
             const cacheKey = `${currentUserId}:${userId}`;
@@ -102,10 +105,10 @@ export class UserDetailController {
             // 检查缓存
             const cached = followStatusCache.get(cacheKey);
             if (cached && (now - cached.timestamp) < CACHE_TTL) {
-                return success(res, { is_following: cached.isFollowing }, '获取关注状态成功(缓存)');
+                return (0, response_1.success)(res, { is_following: cached.isFollowing }, '获取关注状态成功(缓存)');
             }
             // 查询数据库
-            const isFollowing = await userDetailService.isFollowing(currentUserId, userId);
+            const isFollowing = await UserDetailService_1.userDetailService.isFollowing(currentUserId, userId);
             // 更新缓存
             followStatusCache.set(cacheKey, { isFollowing, timestamp: now });
             // 定期清理过期缓存（防止内存泄漏）
@@ -116,12 +119,13 @@ export class UserDetailController {
                     }
                 }
             }
-            return success(res, { is_following: isFollowing }, '获取关注状态成功');
+            return (0, response_1.success)(res, { is_following: isFollowing }, '获取关注状态成功');
         }
         catch (error) {
             console.error('Get follow status error:', error);
-            return serverError(res, '获取关注状态失败', error);
+            return (0, response_1.serverError)(res, '获取关注状态失败', error);
         }
     }
 }
+exports.UserDetailController = UserDetailController;
 //# sourceMappingURL=UserDetailController.js.map

@@ -1,15 +1,18 @@
-import { DataTypes, Model } from 'sequelize';
-import { User } from './User';
-export class UserPreference extends Model {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.UserPreference = void 0;
+const sequelize_1 = require("sequelize");
+const User_1 = require("./User");
+class UserPreference extends sequelize_1.Model {
     static initialize(sequelize) {
         return UserPreference.init({
             id: {
-                type: DataTypes.INTEGER,
+                type: sequelize_1.DataTypes.INTEGER,
                 primaryKey: true,
                 autoIncrement: true,
             },
             userId: {
-                type: DataTypes.INTEGER,
+                type: sequelize_1.DataTypes.INTEGER,
                 allowNull: false,
                 references: {
                     model: 'users',
@@ -18,20 +21,20 @@ export class UserPreference extends Model {
                 onDelete: 'CASCADE',
             },
             preferenceType: {
-                type: DataTypes.ENUM('time', 'type', 'special', 'distance', 'interest'),
+                type: sequelize_1.DataTypes.ENUM('time', 'type', 'special', 'distance', 'interest'),
                 allowNull: false,
             },
             preferenceValue: {
-                type: DataTypes.STRING,
+                type: sequelize_1.DataTypes.STRING,
                 allowNull: false,
             },
             createdAt: {
-                type: DataTypes.DATE,
-                defaultValue: DataTypes.NOW,
+                type: sequelize_1.DataTypes.DATE,
+                defaultValue: sequelize_1.DataTypes.NOW,
             },
             updatedAt: {
-                type: DataTypes.DATE,
-                defaultValue: DataTypes.NOW,
+                type: sequelize_1.DataTypes.DATE,
+                defaultValue: sequelize_1.DataTypes.NOW,
             },
         }, {
             sequelize,
@@ -45,8 +48,9 @@ export class UserPreference extends Model {
         });
     }
     static associate() {
-        UserPreference.belongsTo(User, { foreignKey: 'userId' });
+        UserPreference.belongsTo(User_1.User, { foreignKey: 'userId' });
     }
 }
-export default UserPreference;
+exports.UserPreference = UserPreference;
+exports.default = UserPreference;
 //# sourceMappingURL=UserPreference.js.map
