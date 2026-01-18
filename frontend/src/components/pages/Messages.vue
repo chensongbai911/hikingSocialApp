@@ -13,6 +13,7 @@
           type="text"
           placeholder="搜索联系人或聊天记录"
           class="w-full pl-12 pr-4 py-3 bg-gray-50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500"
+          @focus="showSearchResults = true"
         />
         <svg
           class="w-6 h-6 text-teal-500 absolute left-4 top-1/2 -translate-y-1/2"
@@ -27,6 +28,32 @@
             d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
           />
         </svg>
+
+        <!-- 搜索结果下拉框 -->
+        <div
+          v-if="showSearchResults && searchQuery.trim() && filteredChats.length > 0"
+          class="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-2xl shadow-lg z-20 max-h-80 overflow-y-auto"
+        >
+          <div
+            v-for="chat in filteredChats"
+            :key="chat.id"
+            @click="handleSearchResultClick(chat)"
+            class="flex items-center p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer active:bg-gray-100 transition-colors"
+          >
+            <img
+              :src="chat.avatar || fallbackAvatar"
+              :alt="chat.name"
+              class="w-10 h-10 rounded-full object-cover flex-shrink-0"
+            />
+            <div class="ml-3 flex-1 min-w-0">
+              <h4 class="font-medium text-gray-800 truncate">{{ chat.name || '陌生人' }}</h4>
+              <p class="text-sm text-gray-500 truncate">{{ chat.lastMessage || '暂无消息' }}</p>
+            </div>
+            <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        </div>
       </div>
       <div class="flex justify-end mt-2 space-x-2 text-sm">
         <button
@@ -139,6 +166,7 @@ const route = useRoute()
 const userStore = useUserStore()
 
 const searchQuery = ref('')
+const showSearchResults = ref(false)
 const loading = ref(false)
 const loadingMore = ref(false)
 const page = ref(1)
@@ -280,6 +308,13 @@ const handleLoadMore = throttle(() => {
 const handleRefresh = throttle(() => {
   if (!loading.value) loadConversations(true)
 }, 500)
+
+// 搜索结果点击处理 - 展开对话但不关闭搜索框
+const handleSearchResultClick = (chat: ChatItem) => {
+  openChat(chat)
+  // 不清空搜索框，保持搜索状态
+  showSearchResults.value = false
+}
 
 const openChat = (chat: ChatItem) => {
   chats.value = chats.value.map((c) => (c.id === chat.id ? { ...c, unreadCount: 0 } : c))

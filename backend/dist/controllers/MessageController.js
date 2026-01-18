@@ -466,12 +466,12 @@ class MessageController {
             // 确保限制表存在，避免清空对话时缺表
             await ChatPolicyService_1.chatPolicyService.ensureTablesReady();
             // 校验参与者
-            const [convRows] = await database_1.pool.query('SELECT id, user_id1, user_id2 FROM conversations WHERE id = ? LIMIT 1', [conversationId]);
+            const [convRows] = await database_1.pool.query('SELECT id, user1_id, user2_id FROM conversations WHERE id = ? LIMIT 1', [conversationId]);
             if (!convRows || convRows.length === 0) {
                 return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.RESOURCE_NOT_FOUND, '对话不存在');
             }
             const conv = convRows[0];
-            if (String(conv.user_id1) !== String(userId) && String(conv.user_id2) !== String(userId)) {
+            if (String(conv.user1_id) !== String(userId) && String(conv.user2_id) !== String(userId)) {
                 return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.FORBIDDEN, '用户不是对话的参与者');
             }
             // 事务：归档 -> 删除消息 -> 重置对话 -> 清理限制

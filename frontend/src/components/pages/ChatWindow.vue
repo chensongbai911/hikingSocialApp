@@ -93,7 +93,7 @@
             <div
               v-if="message.contentType === 'text' && !message.isRecalled"
               :class="[
-                'px-4 py-2 rounded-2xl',
+                'px-4 py-2 rounded-2xl break-words whitespace-pre-wrap',
                 message.senderId === userStore.userId
                   ? 'bg-teal-500 text-white rounded-br-sm'
                   : 'bg-white text-gray-800 rounded-bl-sm',

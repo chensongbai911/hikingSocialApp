@@ -607,14 +607,14 @@ export class MessageController {
 
       // 校验参与者
       const [convRows] = await pool.query<any[]>(
-        'SELECT id, user_id1, user_id2 FROM conversations WHERE id = ? LIMIT 1',
+        'SELECT id, user1_id, user2_id FROM conversations WHERE id = ? LIMIT 1',
         [conversationId]
       )
       if (!convRows || convRows.length === 0) {
         return businessError(res, BusinessErrorCode.RESOURCE_NOT_FOUND, '对话不存在')
       }
       const conv = convRows[0]
-      if (String(conv.user_id1) !== String(userId) && String(conv.user_id2) !== String(userId)) {
+      if (String(conv.user1_id) !== String(userId) && String(conv.user2_id) !== String(userId)) {
         return businessError(res, BusinessErrorCode.FORBIDDEN, '用户不是对话的参与者')
       }
 
