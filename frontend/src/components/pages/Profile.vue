@@ -420,15 +420,24 @@ const userProfile = computed(() => {
   // 提取偏好标签的显示文本
   const preferenceLabels = (currentUser.value.preferences || []).map((p) => p.preference_value)
   // 提取照片数据（包含id和url）
-  const photos = (currentUser.value.photos || []).map((p) => ({
-    id: p.id,
-    photo_url: p.photo_url,
-  }))
+  const photos = (currentUser.value.photos || []).map((p) => {
+    let photoUrl = p.photo_url || ''
+    // 如果照片URL是相对路径且没有完整URL前缀，添加基础URL
+    if (photoUrl && !photoUrl.startsWith('http') && photoUrl.startsWith('/')) {
+      const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://115.190.252.62'
+      photoUrl = `${baseURL}${photoUrl}`
+    }
+    return {
+      id: p.id,
+      photo_url: photoUrl,
+    }
+  })
 
   // 确保头像 URL 是完整路径
   let avatarUrl = currentUser.value.avatar_url || defaultAvatar
-  if (avatarUrl && avatarUrl.startsWith('/')) {
-    const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+  // 如果是相对路径且还没有完整URL前缀，添加基础URL
+  if (avatarUrl && !avatarUrl.startsWith('http') && avatarUrl.startsWith('/')) {
+    const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://115.190.252.62'
     avatarUrl = `${baseURL}${avatarUrl}`
   }
 
