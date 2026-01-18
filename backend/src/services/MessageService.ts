@@ -127,7 +127,7 @@ export class MessageService {
           if (avatarUrl) {
             // 如果是相对路径，添加完整URL
             if (avatarUrl.startsWith('/uploads/')) {
-              return `http://localhost:3000${avatarUrl}`;
+              return `http://115.190.252.62${avatarUrl}`;
             }
             return avatarUrl;
           }
@@ -223,7 +223,7 @@ export class MessageService {
         if (avatarUrl) {
           // 如果是相对路径，添加完整URL
           if (avatarUrl.startsWith('/uploads/')) {
-            return `http://localhost:3000${avatarUrl}`;
+            return `http://115.190.252.62${avatarUrl}`;
           }
           return avatarUrl;
         }

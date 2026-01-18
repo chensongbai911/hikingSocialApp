@@ -51,7 +51,8 @@ export const getMessages = async (
  */
 export const getConversationInfo = async (conversationId: string) => {
   const response = await request.get(`/messages/conversations/${conversationId}/info`)
-  return response.data.data
+  // 响应拦截器已经返回了response.data，即 { code, data, message }
+  return response.data || response
 }
 
 /**
@@ -108,7 +109,7 @@ export const deleteMessage = async (messageId: string) => {
  */
 export const recallMessage = async (messageId: string) => {
   const response = await request.post(`/messages/${messageId}/recall`)
-  return response.data.data
+  return response.data || response
 }
 
 /**
