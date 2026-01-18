@@ -9,7 +9,7 @@
       <!-- 标签页导航 -->
       <div class="flex gap-0 border-b border-gray-200">
         <button
-          @click="activeTab = 'joined'"
+          @click="handleTabChange('joined')"
           :class="[
             'flex-1 py-3 px-4 font-medium text-center transition-all relative',
             activeTab === 'joined' ? 'text-teal-600' : 'text-gray-600 hover:text-gray-800',
@@ -22,7 +22,7 @@
           ></div>
         </button>
         <button
-          @click="activeTab = 'created'"
+          @click="handleTabChange('created')"
           :class="[
             'flex-1 py-3 px-4 font-medium text-center transition-all relative',
             activeTab === 'created' ? 'text-teal-600' : 'text-gray-600 hover:text-gray-800',
@@ -443,6 +443,13 @@ const joinedActivities = computed(() => {
 const createdActivities = computed(() => {
   return activityStore.createdActivities.map(transformActivity)
 })
+
+// Tab切换时滚动到顶部
+const handleTabChange = (tab: 'joined' | 'created') => {
+  activeTab.value = tab
+  // 滚动到页面顶部
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
 
 // 页面加载时获取数据
 onMounted(async () => {

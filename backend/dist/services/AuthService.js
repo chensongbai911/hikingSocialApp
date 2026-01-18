@@ -125,41 +125,64 @@ class AuthService {
     }
     /**
      * 获取当前用户信息（优化版本 - 使用并行查询）
+     * @param userId 用户ID
+     * @param includePhotos 是否包含照片（默认false以优化性能）
+     * @param includePreferences 是否包含偏好（默认false以优化性能）
      */
-    async getCurrentUser(userId) {
-        // 使用 Promise.all 并行查询，大幅提升性能
-        const [[users], [preferences], [photos]] = await Promise.all([
-            database_1.pool.query(`SELECT id, email, nickname, gender, age, avatar_url, bio, hiking_level, province, city, region, created_at
-         FROM users WHERE id = ? AND deleted_at IS NULL`, [userId]),
-            database_1.pool.query(`SELECT id, preference_type, preference_value, created_at
-         FROM user_preferences
-         WHERE user_id = ?
-         ORDER BY created_at DESC`, [userId]),
-            database_1.pool.query(`SELECT id, photo_url, sort_order, created_at
-         FROM user_photos
-         WHERE user_id = ?
-         ORDER BY sort_order ASC, created_at DESC`, [userId])
-        ]);
-        if (users.length === 0) {
-            throw {
-                code: api_types_1.BusinessErrorCode.USER_NOT_FOUND,
-                message: '用户不存在'
-            };
+    async getCurrentUser(userId, includePhotos = false, includePreferences = false) {
+        try {
+            // 并行查询基本用户信息和可选的扩展数据
+            const queries = [
+                database_1.pool.query(`SELECT id, email, nickname, gender, age, avatar_url, bio, hiking_level, province, city, region, created_at
+           FROM users WHERE id = ? AND deleted_at IS NULL`, [userId])
+            ];
+            // 仅在需要时查询照片和偏好
+            if (includePhotos) {
+                queries.push(database_1.pool.query(`SELECT id, photo_url, sort_order, created_at
+             FROM user_photos
+             WHERE user_id = ?
+             ORDER BY sort_order ASC, created_at DESC`, [userId]));
+            }
+            if (includePreferences) {
+                queries.push(database_1.pool.query(`SELECT id, preference_type, preference_value, created_at
+             FROM user_preferences
+             WHERE user_id = ?
+             ORDER BY created_at DESC`, [userId]));
+            }
+            const results = await Promise.all(queries);
+            const [[users], ...optionalResults] = results;
+            if (users.length === 0) {
+                throw {
+                    code: api_types_1.BusinessErrorCode.USER_NOT_FOUND,
+                    message: '用户不存在'
+                };
+            }
+            const user = users[0];
+            // 使用统一的 URL 工具函数处理头像 URL
+            user.avatar_url = (0, urlHelper_1.getFullUrl)(user.avatar_url);
+            // 如果需要，处理照片 URL
+            if (includePhotos && optionalResults.length > 0) {
+                const photos = optionalResults[0][0];
+                const photosWithFullUrl = photos.map((photo) => ({
+                    ...photo,
+                    photo_url: (0, urlHelper_1.getFullUrl)(photo.photo_url)
+                }));
+                user.photos = photosWithFullUrl;
+            }
+            // 如果需要，添加偏好
+            if (includePreferences) {
+                const preferencesIndex = includePhotos ? 1 : 0;
+                if (optionalResults.length > preferencesIndex) {
+                    const preferences = optionalResults[preferencesIndex][0];
+                    user.preferences = preferences;
+                }
+            }
+            return user;
         }
-        const user = users[0];
-        // 使用统一的 URL 工具函数处理头像和照片 URL
-        user.avatar_url = (0, urlHelper_1.getFullUrl)(user.avatar_url);
-        // 批量处理照片 URL
-        const photosWithFullUrl = photos.map((photo) => ({
-            ...photo,
-            photo_url: (0, urlHelper_1.getFullUrl)(photo.photo_url)
-        }));
-        // 返回包含偏好和照片的完整用户信息
-        return {
-            ...user,
-            preferences: preferences,
-            photos: photosWithFullUrl
-        };
+        catch (error) {
+            console.error('getCurrentUser error:', error);
+            throw error;
+        }
     }
     /**
      * 验证Token

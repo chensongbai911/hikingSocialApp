@@ -1,5 +1,5 @@
 <template>
-  <div id="app" class="app" :class="{ 'pb-20': shouldShowTabBar }">
+  <div id="app" class="app" :class="{ 'pb-20': shouldShowTabBar, 'pt-safe': true }">
     <!-- 路由视图 -->
     <RouterView />
     <!-- 底部导航栏 - 只在特定页面显示 -->

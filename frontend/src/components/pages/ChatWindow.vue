@@ -491,11 +491,8 @@ const loadConversation = async () => {
 }
 
 const handleBack = () => {
-  if (fromState?.from === 'messages') {
-    router.push({ name: 'Messages' })
-  } else {
-    router.back()
-  }
+  // 总是返回到消息页面
+  router.push({ name: 'Messages' })
 }
 
 const handleSendMessage = async (

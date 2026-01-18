@@ -658,8 +658,8 @@ const loadUserProfile = async () => {
     if (shouldShowSkeleton) {
       isLoading.value = true
     }
-    // 每次进入页面都从服务器获取最新数据
-    await userStore.fetchCurrentUser()
+    // 每次进入页面都从服务器获取最新数据，并包含照片
+    await userStore.fetchCurrentUser(false, true)
     console.log('用户资料加载成功', currentUser.value)
   } catch (error) {
     console.error('加载用户资料失败:', error)

@@ -122,10 +122,16 @@ export const useUserStore = defineStore('user', () => {
   }
 
   // 获取当前用户信息
-  const fetchCurrentUser = async (silent = false) => {
+  /**
+   * @param silent 是否静默模式（不输出错误日志）
+   * @param includePhotos 是否包含用户的所有照片
+   * @param includePreferences 是否包含用户偏好设置
+   */
+  const fetchCurrentUser = async (silent = false, includePhotos = false, includePreferences = false) => {
     try {
       loading.value = true
-      const response = await authApi.getCurrentUser()
+      // 添加查询参数来请求包含照片/偏好设置的用户数据
+      const response = await authApi.getCurrentUser(false, includePhotos, includePreferences)
 
       if (response.code === 200 && response.data) {
         setCurrentUser(response.data)

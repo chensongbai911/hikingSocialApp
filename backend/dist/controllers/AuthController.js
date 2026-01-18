@@ -122,7 +122,10 @@ class AuthController {
     }
     /**
      * 获取当前用户信息
-     * GET /api/v1/auth/me
+     * GET /api/v1/auth/me?includePhotos=true&includePreferences=true
+     * 支持查询参数控制返回数据：
+     * - includePhotos: 是否包含用户照片（默认false）
+     * - includePreferences: 是否包含用户偏好（默认false）
      */
     static async getCurrentUser(req, res) {
         try {
@@ -131,7 +134,10 @@ class AuthController {
             if (!userId) {
                 return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
             }
-            const user = await AuthService_1.authService.getCurrentUser(userId);
+            // 从查询参数读取选项
+            const includePhotos = req.query.includePhotos === 'true';
+            const includePreferences = req.query.includePreferences === 'true';
+            const user = await AuthService_1.authService.getCurrentUser(userId, includePhotos, includePreferences);
             return (0, response_1.success)(res, user, '获取用户信息成功');
         }
         catch (error) {

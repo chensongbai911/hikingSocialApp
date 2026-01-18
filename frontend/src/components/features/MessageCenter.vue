@@ -5,7 +5,7 @@
       <div
         class="tab"
         :class="{ active: activeTab === 'conversations' }"
-        @click="activeTab = 'conversations'"
+        @click="handleTabChange('conversations')"
       >
         <span>私信</span>
         <span v-if="unreadConversations > 0" class="badge">{{ unreadConversations }}</span>
@@ -13,7 +13,7 @@
       <div
         class="tab"
         :class="{ active: activeTab === 'notifications' }"
-        @click="activeTab = 'notifications'"
+        @click="handleTabChange('notifications')"
       >
         <span>通知</span>
         <span v-if="unreadNotifications > 0" class="badge">{{ unreadNotifications }}</span>
@@ -21,7 +21,7 @@
       <div
         class="tab"
         :class="{ active: activeTab === 'activity' }"
-        @click="activeTab = 'activity'"
+        @click="handleTabChange('activity')"
       >
         <span>活动消息</span>
         <span v-if="unreadActivity > 0" class="badge">{{ unreadActivity }}</span>
@@ -128,6 +128,13 @@ import type { Conversation } from '../../types'
 const router = useRouter()
 
 const activeTab = ref<'conversations' | 'notifications' | 'activity'>('conversations')
+
+// Tab切换时滚动到顶部
+const handleTabChange = (tab: 'conversations' | 'notifications' | 'activity') => {
+  activeTab.value = tab
+  // 滚动到页面顶部
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
 
 // 模拟数据 (实际应从store获取)
 const conversations = ref<Conversation[]>([

@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-gray-50">
-    <div class="bg-white p-4 sticky top-0 z-10">
+    <div class="sticky-header bg-white p-4 border-b border-gray-100">
       <div class="flex items-center justify-between mb-4">
         <h1 class="text-2xl font-bold text-gray-800">消息中心</h1>
         <span v-if="totalUnread > 0" class="text-xs px-2 py-1 bg-red-100 text-red-600 rounded-full"

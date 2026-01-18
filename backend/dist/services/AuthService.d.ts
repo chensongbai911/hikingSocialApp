@@ -58,8 +58,11 @@ export declare class AuthService {
     }>;
     /**
      * 获取当前用户信息（优化版本 - 使用并行查询）
+     * @param userId 用户ID
+     * @param includePhotos 是否包含照片（默认false以优化性能）
+     * @param includePreferences 是否包含偏好（默认false以优化性能）
      */
-    getCurrentUser(userId: string): Promise<UserInfo>;
+    getCurrentUser(userId: string, includePhotos?: boolean, includePreferences?: boolean): Promise<UserInfo>;
     /**
      * 验证Token
      */

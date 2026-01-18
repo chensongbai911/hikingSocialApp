@@ -22,7 +22,10 @@ export declare class AuthController {
     static refreshToken(req: Request, res: Response): Promise<void>;
     /**
      * 获取当前用户信息
-     * GET /api/v1/auth/me
+     * GET /api/v1/auth/me?includePhotos=true&includePreferences=true
+     * 支持查询参数控制返回数据：
+     * - includePhotos: 是否包含用户照片（默认false）
+     * - includePreferences: 是否包含用户偏好（默认false）
      */
     static getCurrentUser(req: Request, res: Response): Promise<void>;
 }
