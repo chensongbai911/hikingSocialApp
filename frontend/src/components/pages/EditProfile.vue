@@ -20,9 +20,10 @@
       <div class="flex flex-col items-center mb-6">
         <div class="relative mb-2">
           <img
-            :src="formData.avatar_url || 'https://via.placeholder.com/112'"
+            :src="formData.avatar_url || defaultAvatar"
             alt="avatar"
             class="w-28 h-28 rounded-full object-cover border-4 border-white shadow-lg"
+            @error="handleAvatarError"
           />
           <button
             @click="uploadAvatar"
@@ -185,10 +186,12 @@ import { useUserStore } from '@/stores/user';
 import type { UpdateProfileData } from '@/types';
 import { compressImage } from '@/utils/imageUpload';
 import { getAllProvinces, getCitiesByProvince } from '@/utils/chinaRegions';
+import { DEFAULT_CONFIG } from '@/utils/constants';
 import toast from '@/utils/toast';
 
 const router = useRouter();
 const userStore = useUserStore();
+const defaultAvatar = DEFAULT_CONFIG.AVATAR;
 
 // 从store获取当前用户
 const currentUser = computed(() => userStore.currentUser);
@@ -205,6 +208,11 @@ const formData = ref<UpdateProfileData & { preferences: string[] }>({
   region: '',
   preferences: []
 });
+
+const handleAvatarError = (e: Event) => {
+  const target = e.target as HTMLImageElement;
+  if (target) target.src = defaultAvatar;
+};
 
 // 是否显示推荐标签
 const showSuggestedTags = ref(false);
@@ -384,7 +392,11 @@ onMounted(() => {
 <style scoped>
 .edit-profile-page {
   min-height: 100vh;
+  max-height: 100vh;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
   background: linear-gradient(180deg, #f0fdfa 0%, #ffffff 100%);
+  padding-bottom: env(safe-area-inset-bottom, 16px);
 }
 
 /* 去除数字输入框的上下箭头 */

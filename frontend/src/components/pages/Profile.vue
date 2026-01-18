@@ -28,6 +28,7 @@
             :alt="userProfile.nickname"
             class="w-28 h-28 rounded-full object-cover border-4 border-white shadow-lg cursor-pointer hover:opacity-80 transition-opacity"
             @click="openAvatarUpload"
+            @error="handleAvatarError"
           />
           <div
             class="absolute bottom-0 right-0 w-10 h-10 bg-teal-500 rounded-full flex items-center justify-center border-4 border-white cursor-pointer hover:bg-teal-600 transition-colors"
@@ -146,6 +147,7 @@
               :alt="'photo-' + index"
               class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
               @click="previewPhoto(index)"
+              @error="handlePhotoError"
             />
             <!-- 删除按钮 -->
             <button
@@ -383,8 +385,9 @@ import toast from '@/utils/toast'
 const router = useRouter()
 const userStore = useUserStore()
 
-// 默认头像
+// 媒体占位图
 const defaultAvatar = DEFAULT_CONFIG.AVATAR
+const photoFallback = 'https://placehold.co/200x200?text=photo'
 const showAvatarUpload = ref(false)
 const avatarFile = ref<File | null>(null)
 const avatarTimestamp = ref(Date.now())
@@ -418,7 +421,9 @@ const userProfile = computed(() => {
   }
 
   // 提取偏好标签的显示文本
-  const preferenceLabels = (currentUser.value.preferences || []).map((p) => p.preference_value)
+  const preferenceLabels = (currentUser.value.preferences || [])
+    .map((p) => p.preference_value || (p as any).value || (p as any).name || (p as any).tag)
+    .filter(Boolean)
   // 提取照片数据（包含id和url）
   const getPublicBaseUrl = () => {
     const envBase = import.meta.env.VITE_API_BASE_URL
@@ -432,6 +437,10 @@ const userProfile = computed(() => {
     if (photoUrl && !photoUrl.startsWith('http') && photoUrl.startsWith('/')) {
       const baseURL = getPublicBaseUrl()
       photoUrl = `${baseURL}${photoUrl}`
+    }
+    // 如果仍然缺少URL，使用占位图，避免空链接导致加载失败
+    if (!photoUrl) {
+      photoUrl = photoFallback
     }
     return {
       id: p.id,
@@ -460,6 +469,17 @@ const userProfile = computed(() => {
     photos: photos,
   }
 })
+
+// 图片加载失败兜底
+const handleAvatarError = (e: Event) => {
+  const target = e.target as HTMLImageElement
+  if (target) target.src = defaultAvatar
+}
+
+const handlePhotoError = (e: Event) => {
+  const target = e.target as HTMLImageElement
+  if (target) target.src = photoFallback
+}
 
 // 返回上一页
 const goBack = () => {
@@ -677,6 +697,10 @@ onMounted(() => {
 <style scoped>
 .profile-page {
   min-height: 100vh;
+  max-height: 100vh;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
   background: linear-gradient(180deg, #f0fdfa 0%, #ffffff 100%);
+  padding-bottom: env(safe-area-inset-bottom, 16px);
 }
 </style>
