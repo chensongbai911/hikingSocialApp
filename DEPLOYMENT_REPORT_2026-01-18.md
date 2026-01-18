@@ -38,7 +38,7 @@ curl http://115.190.252.62/
   - 可配置的 TTL 过期时间
   - 用户信息缓存 10 分钟
   - 自动过期清理
-  
+
 ```typescript
 export const CACHE_TTL = {
   USER_INFO: 10 * 60 * 1000,    // 10分钟
@@ -220,6 +220,6 @@ DB_NAME=hiking_app
 
 ---
 
-**部署完成时间**: 2026-01-18 16:30:00 UTC+8  
-**部署人员**: GitHub Copilot  
+**部署完成时间**: 2026-01-18 16:30:00 UTC+8
+**部署人员**: GitHub Copilot
 **部署版本**: v1.2.1

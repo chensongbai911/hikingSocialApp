@@ -76,6 +76,10 @@ onMounted(() => {
   if (route.query.password) {
     form.value.password = route.query.password as string
   }
+  // 保存新用户标记
+  if (route.query.isNewUser === 'true') {
+    sessionStorage.setItem('isNewUser', 'true')
+  }
 })
 
 const handleLogin = async () => {
@@ -88,7 +92,15 @@ const handleLogin = async () => {
       // 初始化WebSocket连接
       initWebSocket()
       toast.success('登录成功')
-      router.push('/discover')
+
+      // 检查是否为新用户
+      const isNewUser = sessionStorage.getItem('isNewUser')
+      if (isNewUser === 'true') {
+        sessionStorage.removeItem('isNewUser')
+        router.push('/user-guide')
+      } else {
+        router.push('/discover')
+      }
     } else {
       errorMsg.value = userStore.error || '登录失败，请检查邮箱和密码'
       toast.error(errorMsg.value)

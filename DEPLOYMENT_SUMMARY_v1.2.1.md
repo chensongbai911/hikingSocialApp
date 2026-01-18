@@ -31,7 +31,7 @@
   - 可配置的 TTL（毫秒级）
   - 自动过期检查
   - 线程安全操作
-  
+
 ```typescript
 const cache = new CacheManager()
 const data = cache.get<User>('current_user')  // 获取
@@ -199,7 +199,7 @@ Changes:
   - backend/src/services/AuthService.ts
   - 4 其他前端组件
   - 编译输出文件
-  
+
 Stats: 54 files changed, 387 insertions(+), 145 deletions(-)
 ```
 
@@ -313,8 +313,8 @@ console.log('缓存测试:', {
 
 ---
 
-**部署日期**: 2026-01-18  
-**部署版本**: v1.2.1  
-**部署环境**: 生产 (115.190.252.62)  
-**部署人员**: GitHub Copilot  
+**部署日期**: 2026-01-18
+**部署版本**: v1.2.1
+**部署环境**: 生产 (115.190.252.62)
+**部署人员**: GitHub Copilot
 **状态**: ✅ 完成并验证

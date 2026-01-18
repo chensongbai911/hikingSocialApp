@@ -18,10 +18,43 @@
           <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-teal-500 text-xl">🔍</span>
           <input
             v-model="searchQuery"
+            @focus="showSearchSuggestions = true"
             type="text"
             placeholder="搜索山峰、路线、景区"
-            class="w-full pl-12 pr-4 py-3 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-teal-500"
+            class="w-full pl-12 pr-10 py-3 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
+          <!-- 清空按钮 -->
+          <button
+            v-if="searchQuery"
+            @click="searchQuery = ''; showSearchSuggestions = false"
+            class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+          >
+            ✕
+          </button>
+
+          <!-- 搜索结果下拉建议 -->
+          <div
+            v-if="showSearchSuggestions && searchQuery && filteredDestinations.length > 0"
+            class="absolute top-full left-4 right-4 mt-2 bg-white border border-gray-200 rounded-2xl shadow-lg max-h-64 overflow-y-auto z-50"
+          >
+            <div
+              v-for="destination in filteredDestinations.slice(0, 8)"
+              :key="destination.name"
+              @click="selectDestination(destination.name)"
+              class="px-4 py-3 border-b border-gray-100 last:border-b-0 hover:bg-teal-50 cursor-pointer transition flex items-center gap-3"
+            >
+              <img
+                :src="destination.image"
+                :alt="destination.name"
+                class="w-10 h-10 rounded-lg object-cover flex-shrink-0"
+              />
+              <div class="flex-1 min-w-0">
+                <div class="font-medium text-gray-800 text-sm truncate">{{ destination.name }}</div>
+                <div class="text-xs text-gray-500 mt-0.5 truncate">📍 {{ destination.area }}</div>
+              </div>
+              <span class="text-gray-400 text-xs flex-shrink-0">→</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -108,7 +141,7 @@
       <div id="amap-container" class="absolute inset-0 bg-gray-100"></div>
 
       <!-- 顶部工具栏 - 未选中位置时显示 -->
-      <div v-if="!selectedMapLocation" class="absolute top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-200 p-4 z-20">
+      <div v-if="!selectedMapLocation" class="absolute top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-200 p-4 z-30">
         <div class="flex gap-2">
           <!-- 返回列表按钮 -->
           <button
@@ -124,10 +157,36 @@
               v-model="mapSearchQuery"
               @input="onMapSearch"
               @keyup.enter="onMapSearchEnter"
+              @focus="showMapSearchResults = true"
               type="text"
               placeholder="搜索地点或点击地图选择位置"
               class="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm"
             />
+
+            <!-- 搜索结果下拉列表 -->
+            <div
+              v-if="showMapSearchResults && mapSearchResults.length > 0"
+              class="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-2xl shadow-lg max-h-60 overflow-y-auto z-40"
+            >
+              <div
+                v-for="(result, index) in mapSearchResults"
+                :key="index"
+                @click="selectMapSearchResult(result)"
+                class="px-4 py-3 border-b border-gray-100 last:border-b-0 hover:bg-teal-50 cursor-pointer transition"
+              >
+                <div class="font-medium text-gray-800 text-sm">📍 {{ result.name }}</div>
+                <div class="text-xs text-gray-500 mt-1">{{ result.address }}</div>
+              </div>
+            </div>
+
+            <!-- 清空搜索按钮 -->
+            <button
+              v-if="mapSearchQuery"
+              @click="mapSearchQuery = ''; showMapSearchResults = false; mapSearchResults = []"
+              class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              ✕
+            </button>
           </div>
           <!-- 定位按钮 -->
           <button
@@ -151,25 +210,45 @@
       </button>
 
       <!-- 地图底部确认栏 - 选中位置后显示 -->
-      <div v-if="selectedMapLocation" class="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t-2 border-teal-500 p-4 pb-safe z-20">
-        <div class="mb-3">
-          <div class="text-xs text-teal-600 font-medium mb-1">✓ 已选中位置</div>
-          <div class="font-bold text-gray-900 text-lg">{{ selectedMapLocation.name || '未命名地点' }}</div>
-          <div class="text-sm text-gray-600 mt-1">{{ selectedMapLocation.address || '点击地图可重新选择' }}</div>
-        </div>
-        <div class="flex gap-3">
-          <button
-            @click="cancelMapSelection"
-            class="flex-1 py-3.5 bg-gray-100 text-gray-700 rounded-full font-medium hover:bg-gray-200 transition text-base"
-          >
-            重新选择
-          </button>
-          <button
-            @click="confirmMapSelection"
-            class="flex-1 py-3.5 bg-gradient-to-r from-teal-500 to-emerald-500 text-white rounded-full font-bold hover:from-teal-600 hover:to-emerald-600 transition shadow-lg text-base"
-          >
-            ✓ 确认此位置
-          </button>
+      <div v-if="selectedMapLocation" class="absolute bottom-0 left-0 right-0 bg-gradient-to-b from-transparent via-white/90 to-white backdrop-blur-sm border-t border-teal-200 z-20" style="padding-bottom: max(16px, env(safe-area-inset-bottom));">
+        <div class="px-4 pt-4 pb-4">
+          <!-- 已选中提示 -->
+          <div class="flex items-center gap-2 mb-3 text-teal-600">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+            </svg>
+            <span class="text-xs font-semibold">已选中位置</span>
+          </div>
+
+          <!-- 位置卡片 -->
+          <div class="bg-gradient-to-br from-teal-50 to-emerald-50 rounded-2xl p-4 mb-4 border border-teal-100">
+            <div class="flex gap-3">
+              <div class="w-12 h-12 bg-teal-500 rounded-full flex items-center justify-center text-white flex-shrink-0 text-xl">📍</div>
+              <div class="flex-1 min-w-0">
+                <div class="font-bold text-gray-900 text-base truncate">{{ selectedMapLocation.name || '未命名地点' }}</div>
+                <div class="text-sm text-gray-600 mt-1 line-clamp-2">{{ selectedMapLocation.address || '位置信息' }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 操作按钮 -->
+          <div class="flex gap-3">
+            <button
+              @click="cancelMapSelection"
+              class="flex-1 py-3 bg-white text-teal-600 rounded-xl font-semibold hover:bg-gray-50 transition border border-gray-200 text-base"
+            >
+              重新选择
+            </button>
+            <button
+              @click="confirmMapSelection"
+              class="flex-1 py-3 bg-gradient-to-r from-teal-500 to-emerald-500 text-white rounded-xl font-bold hover:from-teal-600 hover:to-emerald-600 transition shadow-lg text-base flex items-center justify-center gap-2"
+            >
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+              </svg>
+              确认此位置
+            </button>
+          </div>
         </div>
       </div>
 
@@ -297,8 +376,11 @@ const emit = defineEmits<{
 // 模式切换
 const isMapMode = ref(false)
 const searchQuery = ref('')
+const showSearchSuggestions = ref(false)
 const mapSearchQuery = ref('')
 const loading = ref(false)
+const showMapSearchResults = ref(false)
+const mapSearchResults = ref<Array<{name: string; address: string; location: {lng: number; lat: number}}>>([])
 
 // 地图相关
 let map: any = null
@@ -668,10 +750,15 @@ const addDestinationMarkers = () => {
   })
 }
 
-// 地图搜索（实时搜索 - 仅移动地图）
+// 地图搜索（实时搜索 - 显示下拉列表）
 let searchTimeout: any = null
 const onMapSearch = () => {
-  if (!mapSearchQuery.value || !placeSearch) return
+  showMapSearchResults.value = true
+
+  if (!mapSearchQuery.value || !placeSearch) {
+    mapSearchResults.value = []
+    return
+  }
 
   // 搜索防抖
   clearTimeout(searchTimeout)
@@ -679,15 +766,31 @@ const onMapSearch = () => {
     placeSearch.search(mapSearchQuery.value, (status: string, result: any) => {
       if (status === 'complete' && result.poiList) {
         const pois = result.poiList.pois
-        if (pois.length > 0) {
-          // 仅居中到第一个搜索结果，不自动选择
-          const firstPoi = pois[0]
-          map.setCenter([firstPoi.location.lng, firstPoi.location.lat])
-          map.setZoom(15)
+        if (pois && pois.length > 0) {
+          // 格式化搜索结果显示在下拉列表
+          mapSearchResults.value = pois.slice(0, 10).map((poi: any) => ({
+            name: poi.name,
+            address: poi.address || `${poi.pname}${poi.cityname}${poi.adname}`,
+            location: poi.location
+          }))
+        } else {
+          mapSearchResults.value = []
         }
+      } else {
+        mapSearchResults.value = []
       }
     })
-  }, 500)
+  }, 300)
+}
+
+// 选择搜索结果
+const selectMapSearchResult = (result: any) => {
+  if (result && result.location) {
+    selectLocationOnMap(result.location.lng, result.location.lat)
+    showMapSearchResults.value = false
+    mapSearchQuery.value = ''
+    mapSearchResults.value = []
+  }
 }
 
 // 切换到列表模式
@@ -898,32 +1001,112 @@ const clearRecentSearches = () => {
   toast.success('已清除搜索记录')
 }
 
-// 定位到当前位置
+// 定位到当前位置 - 改进版本
 const centerToCurrentLocation = () => {
-  if (isMapMode.value && map && geolocation) {
-    geolocation.getCurrentPosition((status: string, result: any) => {
-      if (status === 'complete') {
-        const position = result.position
-        map.setCenter([position.lng, position.lat])
-        map.setZoom(13)
+  if (!window.AMap) {
+    toast.error('地图未加载，请稍后重试')
+    return
+  }
 
-        userLocation.value = {
-          latitude: position.lat,
-          longitude: position.lng
+  // 更新按钮状态
+  const button = document.querySelector('[title="定位到我的位置"]') as HTMLButtonElement
+  if (button) {
+    button.disabled = true
+    const originalHtml = button.innerHTML
+    button.innerHTML = '<span class="animate-spin text-lg">⏳</span>'
+
+    // 设置超时恢复按钮
+    setTimeout(() => {
+      button.disabled = false
+      button.innerHTML = originalHtml
+    }, 15000)
+  }
+
+  if (isMapMode.value && map && geolocation) {
+    geolocation.getCurrentPosition(
+      (status: string, result: any) => {
+        const button = document.querySelector('[title="定位到我的位置"]') as HTMLButtonElement
+        if (button) {
+          button.disabled = false
+          button.innerHTML = '<span class="text-xl">📍</span>'
         }
 
-        toast.success('定位成功')
+        if (status === 'complete' && result.position) {
+          const { lng, lat } = result.position
 
-        // 重新加载附近目的地
-        loadNearbyDestinations()
-      } else {
-        toast.error('定位失败')
+          // 设置地图中心和缩放
+          map.setCenter([lng, lat])
+          map.setZoom(14)
+
+          userLocation.value = {
+            latitude: lat,
+            longitude: lng
+          }
+
+          // 更新位置信息
+          updateMapLocationInfoFromCoords(lng, lat)
+
+          toast.success('📍 定位成功')
+
+          // 重新加载附近目的地
+          loadNearbyDestinations()
+        } else {
+          toast.error('❌ 定位失败: ' + (result?.message || '无法获取位置信息'))
+          console.error('Geolocation error:', status, result)
+        }
+      },
+      (error: any) => {
+        const button = document.querySelector('[title="定位到我的位置"]') as HTMLButtonElement
+        if (button) {
+          button.disabled = false
+          button.innerHTML = '<span class="text-xl">📍</span>'
+        }
+
+        toast.error('❌ 定位出错: ' + error?.message || '请检查位置权限')
+        console.error('Geolocation error:', error)
       }
-    })
+    )
   } else {
     getUserLocation()
     toast.info('正在定位...')
   }
+}
+
+// 从坐标更新地点信息
+const updateMapLocationInfoFromCoords = (lng: number, lat: number) => {
+  if (!geocoder) return
+
+  geocoder.getAddress([lng, lat], (status: string, result: any) => {
+    if (status === 'complete' && result.info === 'OK') {
+      try {
+        const addressComponent = result.regeocode.addressComponent || {}
+        const formattedAddress = result.regeocode.formattedAddress || '位置信息'
+        const pois = result.regeocode.pois || []
+
+        let locationName = ''
+
+        // 优先使用POI名称
+        if (pois.length > 0) {
+          locationName = pois[0].name
+        } else {
+          // 从地址组件中提取最具体的地名
+          locationName = addressComponent.township ||
+                        addressComponent.district ||
+                        addressComponent.city ||
+                        '未知地点'
+        }
+
+        selectedMapLocation.value = {
+          name: locationName || '选中的位置',
+          address: formattedAddress,
+          lat,
+          lng
+        }
+      } catch (err) {
+        console.error('Error updating location info:', err)
+      }
+    }
+  })
 }
 
 // 切换图层菜单

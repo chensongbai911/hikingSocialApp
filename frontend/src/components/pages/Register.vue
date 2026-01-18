@@ -98,7 +98,7 @@ const handleRegister = async () => {
           path: '/login',
           query: {
             email: form.value.email,
-            password: form.value.password
+            isNewUser: 'true'
           }
         })
       }, 1500)

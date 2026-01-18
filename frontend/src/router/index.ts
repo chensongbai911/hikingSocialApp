@@ -103,6 +103,12 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/components/features/MessageCenter.vue'),
     meta: { requiresAuth: true },
   },
+  {
+    path: '/user-guide',
+    name: 'UserGuide',
+    component: () => import('@/components/pages/UserGuide.vue'),
+    meta: { requiresAuth: true },
+  },
 ]
 
 const router = createRouter({
