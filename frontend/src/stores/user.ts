@@ -11,7 +11,10 @@ export const useUserStore = defineStore('user', () => {
   const token = ref<string | null>(localStorage.getItem('token'))
 
   const getBaseUrl = () => {
-    const base = import.meta.env.VITE_API_BASE_URL || window.location.origin || 'http://localhost:3000'
+    const envBase = import.meta.env.VITE_API_BASE_URL
+    const base = envBase && /^https?:\/\//i.test(envBase)
+      ? envBase
+      : (window.location.origin || 'http://localhost:3000')
     return base.endsWith('/') ? base.slice(0, -1) : base
   }
 
