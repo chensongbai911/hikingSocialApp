@@ -697,9 +697,6 @@ onMounted(() => {
 <style scoped>
 .profile-page {
   min-height: 100vh;
-  max-height: 100vh;
-  overflow-y: auto;
-  overscroll-behavior-y: contain;
   background: linear-gradient(180deg, #f0fdfa 0%, #ffffff 100%);
   padding-bottom: env(safe-area-inset-bottom, 16px);
 }
