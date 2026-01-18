@@ -4,10 +4,21 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 
-// 加载环境变量
-const envPath = path.resolve(__dirname, '../.env');
+// 加载环境变量 - 支持多种路径
+let envPath = path.resolve(__dirname, '../.env');
+// 如果从dist目录运行，尝试替代路径
+if (!require('fs').existsSync(envPath)) {
+  envPath = path.resolve(__dirname, '../../.env');
+}
+// 最后的兜底 - 当前工作目录下的.env
+if (!require('fs').existsSync(envPath)) {
+  envPath = path.resolve(process.cwd(), '.env');
+}
 console.log('Loading .env from:', envPath);
 dotenv.config({ path: envPath });
+console.log('[Server] NODE_ENV:', process.env.NODE_ENV);
+console.log('[Server] API_BASE_URL:', process.env.API_BASE_URL || 'NOT SET');
+console.log('[Server] PORT:', process.env.PORT);
 
 // 导入数据库配置
 import { pool, testConnection } from './config/database';

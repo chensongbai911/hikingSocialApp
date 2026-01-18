@@ -11,11 +11,11 @@ const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 // 数据库配置
 const dbConfig = {
-    host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT || '3306'),
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || 'senbochen',
-    database: process.env.DB_NAME || 'hiking_app',
+    host: process.env.DATABASE_HOST || process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DATABASE_PORT || process.env.DB_PORT || '3306'),
+    user: process.env.DATABASE_USER || process.env.DB_USER || 'root',
+    password: process.env.DATABASE_PASSWORD || process.env.DB_PASSWORD || 'senbochen',
+    database: process.env.DATABASE_NAME || process.env.DB_NAME || 'hiking_app',
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
@@ -27,7 +27,7 @@ console.log('Database config:', {
     port: dbConfig.port,
     user: dbConfig.user,
     password: dbConfig.password ? '***' : 'EMPTY',
-    database: dbConfig.database,
+    database: dbConfig.database
 });
 // 创建连接池
 exports.pool = promise_1.default.createPool(dbConfig);

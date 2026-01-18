@@ -79,7 +79,7 @@
           :class="[
             'flex',
             message.senderId === userStore.userId ? 'flex-row-reverse' : 'flex-row',
-            'items-end space-x-2',
+            'items-end space-x-2 w-[100%]',
           ]"
         >
           <img
@@ -122,7 +122,7 @@
                 :class="message.senderId === userStore.userId ? 'justify-end' : 'justify-start'"
               >
                 <span class="whitespace-nowrap">{{ formatTime(new Date(message.createdAt)) }}</span>
-                <template v-if="message.senderId === userStore.userId && !message.isRecalled">
+                <template v-if="message.senderId === userStore.userId && !message.isRecalled && canRecallMessage(message.createdAt)">
                   <button class="hover:text-red-500" @click="handleRecall(message.id)">撤回</button>
                 </template>
                 <template v-else-if="!message.isRecalled">
@@ -712,6 +712,14 @@ const adjustTextareaHeight = () => {
     const newHeight = Math.min(textInput.value.scrollHeight, 128)
     textInput.value.style.height = `${newHeight}px`
   }
+}
+
+const canRecallMessage = (createdAt: string): boolean => {
+  const messageTime = new Date(createdAt).getTime()
+  const now = Date.now()
+  const diffMs = now - messageTime
+  // 2分钟 = 120000毫秒
+  return diffMs < 120000
 }
 
 const handleSendTyping = (typing: boolean) => {

@@ -118,7 +118,7 @@
       <div class="bg-white rounded-2xl shadow-sm p-5 mb-4">
         <div class="flex items-center justify-between mb-3">
           <h3 class="text-sm font-semibold text-gray-500">生活相册</h3>
-          <span class="text-xs text-gray-400">{{ userProfile.photos.length }}/9</span>
+          <span class="text-xs text-gray-400">{{ userProfile.photos.length }}/6</span>
         </div>
 
         <!-- 空状态提示 -->
@@ -161,7 +161,7 @@
           </div>
           <!-- 添加照片按钮 -->
           <div
-            v-if="userProfile.photos.length < 9"
+            v-if="userProfile.photos.length < 6"
             class="aspect-square rounded-2xl overflow-hidden bg-gray-50 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 hover:border-teal-400 transition-all"
             @click="addPhoto"
           >
@@ -388,7 +388,7 @@ const defaultAvatar = DEFAULT_CONFIG.AVATAR
 const showAvatarUpload = ref(false)
 const avatarFile = ref<File | null>(null)
 const avatarTimestamp = ref(Date.now())
-const isLoading = ref(true)
+const isLoading = ref(!userStore.currentUser)
 
 // 照片预览相关状态
 const showPreview = ref(false)
@@ -483,10 +483,11 @@ const addPhoto = () => {
     const files = target.files
     if (files && files.length > 0) {
       try {
-        // 检查照片数量（最多9张）
+        // 检查照片数量（最多6张，与后端限制一致）
         const currentPhotoCount = userProfile.value.photos.length
-        if (currentPhotoCount + files.length > 9) {
-          toast.warning(`最多只能上传9张照片，当前已有${currentPhotoCount}张`)
+        const maxPhotos = 6
+        if (currentPhotoCount + files.length > maxPhotos) {
+          toast.warning(`最多只能上传${maxPhotos}张照片，当前已有${currentPhotoCount}张`)
           return
         }
 
@@ -647,7 +648,10 @@ const getLocationText = () => {
 // 加载用户资料
 const loadUserProfile = async () => {
   try {
-    isLoading.value = true
+    const shouldShowSkeleton = !currentUser.value
+    if (shouldShowSkeleton) {
+      isLoading.value = true
+    }
     // 每次进入页面都从服务器获取最新数据
     await userStore.fetchCurrentUser()
     console.log('用户资料加载成功', currentUser.value)

@@ -55,10 +55,11 @@ export interface UserPreference {
 
 export interface UserPhoto {
   id: string
-  user_id: string
+  user_id?: string
   photo_url: string
   thumbnail_url?: string
-  display_order: number
+  sort_order?: number
+  display_order?: number
   created_at?: string
 }
 
@@ -119,29 +120,11 @@ export interface UserPreference {
   created_at?: string
 }
 
-export interface UserPhoto {
-  id: string
-  user_id: string
-  photo_url: string
-  thumbnail_url?: string
-  display_order: number
-  created_at?: string
-} feedback ?: string
-rating ?: number
-}
-
 export interface UserPreference {
   id: number
   userId: number
   preferenceType: 'time' | 'type' | 'special' | 'distance' | 'interest'
   preferenceValue: string
-}
-
-export interface UserPhoto {
-  id: number
-  userId: number
-  photoUrl: string
-  sortOrder: number
 }
 // 消息相关
 export interface Message {

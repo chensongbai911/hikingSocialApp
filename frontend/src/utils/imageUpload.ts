@@ -1,5 +1,5 @@
 // 图片上传工具函数
-import { userApi } from '@/api'
+import { uploadApi } from '@/api'
 import type { UserPhoto } from '@/types'
 
 /**
@@ -40,32 +40,25 @@ export const uploadAvatar = async (file: File): Promise<string> => {
 }
 
 /**
- * 上传照片到相册
- * @param file 图片文件
- * @returns 上传后的照片对象
+ * 上传照片到相册（使用后端上传接口返回真实URL）
  */
 export const uploadPhoto = async (file: File): Promise<UserPhoto> => {
-  // 先转换为 Base64
-  const base64 = await fileToBase64(file)
-
-  // 调用API保存到数据库
-  const response = await userApi.addPhoto(base64)
-
-  if (response.code === 200 && response.data) {
-    return response.data
+  const response = await uploadApi.uploadPhotos([file])
+  if (response.code === 200 && response.data && response.data.photos.length > 0) {
+    return response.data.photos[0] as unknown as UserPhoto
   }
-
   throw new Error(response.message || '上传照片失败')
 }
 
 /**
  * 批量上传照片
- * @param files 图片文件数组
- * @returns 上传后的照片对象数组
  */
 export const uploadPhotos = async (files: File[]): Promise<UserPhoto[]> => {
-  const uploadPromises = files.map(file => uploadPhoto(file))
-  return Promise.all(uploadPromises)
+  const response = await uploadApi.uploadPhotos(files)
+  if (response.code === 200 && response.data) {
+    return response.data.photos as unknown as UserPhoto[]
+  }
+  throw new Error(response.message || '上传照片失败')
 }
 
 /**

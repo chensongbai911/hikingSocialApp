@@ -10,6 +10,31 @@ export const useUserStore = defineStore('user', () => {
   const currentUser = ref<User | null>(null)
   const token = ref<string | null>(localStorage.getItem('token'))
 
+  const getBaseUrl = () => {
+    const base = import.meta.env.VITE_API_BASE_URL || window.location.origin || 'http://localhost:3000'
+    return base.endsWith('/') ? base.slice(0, -1) : base
+  }
+
+  const withFullUrl = (url?: string | null) => {
+    if (!url) return ''
+    const lower = url.toLowerCase()
+    if (lower.startsWith('http://') || lower.startsWith('https://') || lower.startsWith('data:')) {
+      return url
+    }
+    const normalized = url.startsWith('/') ? url : `/${url}`
+    return `${getBaseUrl()}${normalized}`
+  }
+
+  const normalizeUserMedia = (user: User | null): User | null => {
+    if (!user) return null
+    const photos = (user.photos || []).map((p) => ({ ...p, photo_url: withFullUrl(p.photo_url) }))
+    return {
+      ...user,
+      avatar_url: withFullUrl(user.avatar_url),
+      photos,
+    }
+  }
+
   // 初始化时从本地缓存恢复用户信息，避免刷新后 token 还在但 currentUser 为空导致路由拦截/401
   const cachedUser = localStorage.getItem('currentUser')
   if (!currentUser.value && cachedUser) {
@@ -40,9 +65,9 @@ export const useUserStore = defineStore('user', () => {
 
   // 设置用户信息
   const setCurrentUser = (user: User | null) => {
-    currentUser.value = user
-    if (user) {
-      localStorage.setItem('currentUser', JSON.stringify(user))
+    currentUser.value = normalizeUserMedia(user)
+    if (currentUser.value) {
+      localStorage.setItem('currentUser', JSON.stringify(currentUser.value))
     } else {
       localStorage.removeItem('currentUser')
     }
@@ -195,7 +220,7 @@ export const useUserStore = defineStore('user', () => {
       if (!currentUser.value.photos) {
         currentUser.value.photos = []
       }
-      currentUser.value.photos.push(photo)
+      currentUser.value.photos.push({ ...photo, photo_url: withFullUrl(photo.photo_url) })
       // 更新localStorage
       localStorage.setItem('currentUser', JSON.stringify(currentUser.value))
     }
@@ -247,7 +272,7 @@ export const useUserStore = defineStore('user', () => {
     const savedUser = localStorage.getItem('currentUser')
     if (savedUser) {
       try {
-        currentUser.value = JSON.parse(savedUser)
+        currentUser.value = normalizeUserMedia(JSON.parse(savedUser))
       } catch (err) {
         localStorage.removeItem('currentUser')
       }
@@ -267,15 +292,8 @@ export const useUserStore = defineStore('user', () => {
 
       if (response.code === 200 && response.data) {
         // 获取头像URL（可能是相对路径）
-        let avatarUrl = response.data.avatar_url || response.data.url
+        const avatarUrl = withFullUrl(response.data.avatar_url || response.data.url)
 
-        // 如果是相对路径，拼接完整URL
-        if (avatarUrl && avatarUrl.startsWith('/')) {
-          const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
-          avatarUrl = `${baseURL}${avatarUrl}`
-        }
-
-        // 更新当前用户头像
         if (currentUser.value) {
           currentUser.value.avatar_url = avatarUrl
           localStorage.setItem('currentUser', JSON.stringify(currentUser.value))
