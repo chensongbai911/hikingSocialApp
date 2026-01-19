@@ -1,21 +1,14 @@
 -- Patch 2026-01-18: Fix message_reports table and SQL errors
 -- Purpose: Ensure message_reports table exists and fix SQL queries
 
--- 1. Check and recreate message_reports table if needed
-DROP TABLE IF EXISTS message_reports;
-
-CREATE TABLE message_reports (
+-- 1. message_reports 表（若不存在则创建，存在则跳过）
+CREATE TABLE IF NOT EXISTS message_reports (
     id INT PRIMARY KEY AUTO_INCREMENT,
     message_id INT NOT NULL,
     reporter_id VARCHAR(50) NOT NULL,
     reason VARCHAR(255) NOT NULL,
     extra JSON NULL,
-    status ENUM(
-        'pending',
-        'reviewing',
-        'resolved',
-        'rejected'
-    ) DEFAULT 'pending',
+    status ENUM('pending','reviewing','resolved','rejected') DEFAULT 'pending',
     handled_by VARCHAR(50) NULL,
     handled_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -25,15 +18,28 @@ CREATE TABLE message_reports (
     INDEX idx_status (status)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
--- 2. Verify messages table has receiver_id column
--- If not present, add it
-ALTER TABLE messages ADD COLUMN IF NOT EXISTS receiver_id VARCHAR(50) AFTER sender_id;
+-- 2. 若 messages.receiver_id 不存在则添加
+SET @col_exists := (
+    SELECT COUNT(*) FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'messages'
+        AND COLUMN_NAME = 'receiver_id'
+);
+SET @ddl := IF(@col_exists = 0,
+    'ALTER TABLE messages ADD COLUMN receiver_id VARCHAR(50) AFTER sender_id',
+    'SELECT 1'
+);
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- 3. Add index on receiver_id if not exists
-ALTER TABLE messages ADD INDEX idx_receiver (receiver_id);
-
--- 4. Ensure conversations table uses correct field names
--- (user1_id and user2_id instead of user_id1/user_id2 in some queries)
--- Adding aliases for compatibility
-ALTER TABLE conversations ADD COLUMN IF NOT EXISTS user_id1 VARCHAR(50) AS (user1_id) VIRTUAL;
-ALTER TABLE conversations ADD COLUMN IF NOT EXISTS user_id2 VARCHAR(50) AS (user2_id) VIRTUAL;
+-- 3. 若 messages.receiver_id 索引不存在则添加
+SET @idx_exists := (
+    SELECT COUNT(*) FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'messages'
+        AND INDEX_NAME = 'idx_receiver'
+);
+SET @ddl2 := IF(@idx_exists = 0,
+    'ALTER TABLE messages ADD INDEX idx_receiver (receiver_id)',
+    'SELECT 1'
+);
+PREPARE stmt2 FROM @ddl2; EXECUTE stmt2; DEALLOCATE PREPARE stmt2;
