@@ -9,7 +9,7 @@ export class ApplicationController {
    * POST /api/v1/applications
    */
   applyToActivity = asyncHandler(async (req: Request, res: Response) => {
-    const userId = typeof req.user!.id === 'string' ? parseInt(req.user!.id) : req.user!.id
+    const userId = req.user!.id
     const { activity_id, message } = req.body
 
     const application = await ApplicationService.applyToActivity(userId, activity_id, message)
@@ -26,8 +26,8 @@ export class ApplicationController {
    * GET /api/v1/activities/:id/applications/pending
    */
   getPendingApplications = asyncHandler(async (req: Request, res: Response) => {
-    const activityId = parseInt(req.params.id)
-    const organizerId = typeof req.user!.id === 'string' ? parseInt(req.user!.id) : req.user!.id
+    const activityId = req.params.id
+    const organizerId = req.user!.id
 
     const applications = await ApplicationService.getPendingApplications(activityId, organizerId)
 
@@ -59,8 +59,8 @@ export class ApplicationController {
    * PUT /api/v1/applications/:id/review
    */
   reviewApplication = asyncHandler(async (req: Request, res: Response) => {
-    const applicationId = parseInt(req.params.id)
-    const reviewerId = typeof req.user!.id === 'string' ? parseInt(req.user!.id) : req.user!.id
+    const applicationId = parseInt(req.params.id) // applicationId 是 Application 表的 INTEGER 自增 ID
+    const reviewerId = req.user!.id // reviewerId 是用户字符串 ID
     const { action } = req.body // 'approve' or 'reject'
 
     if (!['approve', 'reject'].includes(action)) {
@@ -81,7 +81,7 @@ export class ApplicationController {
    * GET /api/v1/applications/my
    */
   getMyApplications = asyncHandler(async (req: Request, res: Response) => {
-    const userId = typeof req.user!.id === 'string' ? parseInt(req.user!.id) : req.user!.id
+    const userId = req.user!.id
     const status = req.query.status as 'pending' | 'approved' | 'rejected' | undefined
 
     const applications = await ApplicationService.getUserApplications(userId, status)
@@ -113,7 +113,7 @@ export class ApplicationController {
    * GET /api/v1/activities/:id/participants
    */
   getApprovedParticipants = asyncHandler(async (req: Request, res: Response) => {
-    const activityId = parseInt(req.params.id)
+    const activityId = req.params.id
 
     const participants = await ApplicationService.getApprovedParticipants(activityId)
 

@@ -14,7 +14,7 @@ class ApplicationController {
          * POST /api/v1/applications
          */
         this.applyToActivity = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
-            const userId = typeof req.user.id === 'string' ? parseInt(req.user.id) : req.user.id;
+            const userId = req.user.id;
             const { activity_id, message } = req.body;
             const application = await ApplicationService_1.default.applyToActivity(userId, activity_id, message);
             (0, response_1.success)(res, {
@@ -28,8 +28,8 @@ class ApplicationController {
          * GET /api/v1/activities/:id/applications/pending
          */
         this.getPendingApplications = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
-            const activityId = parseInt(req.params.id);
-            const organizerId = typeof req.user.id === 'string' ? parseInt(req.user.id) : req.user.id;
+            const activityId = req.params.id;
+            const organizerId = req.user.id;
             const applications = await ApplicationService_1.default.getPendingApplications(activityId, organizerId);
             const data = applications.map((app) => ({
                 application_id: app.id,
@@ -57,8 +57,8 @@ class ApplicationController {
          * PUT /api/v1/applications/:id/review
          */
         this.reviewApplication = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
-            const applicationId = parseInt(req.params.id);
-            const reviewerId = typeof req.user.id === 'string' ? parseInt(req.user.id) : req.user.id;
+            const applicationId = parseInt(req.params.id); // applicationId 是 Application 表的 INTEGER 自增 ID
+            const reviewerId = req.user.id; // reviewerId 是用户字符串 ID
             const { action } = req.body; // 'approve' or 'reject'
             if (!['approve', 'reject'].includes(action)) {
                 return (0, response_1.businessError)(res, 4001, 'action必须是approve或reject');
@@ -75,7 +75,7 @@ class ApplicationController {
          * GET /api/v1/applications/my
          */
         this.getMyApplications = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
-            const userId = typeof req.user.id === 'string' ? parseInt(req.user.id) : req.user.id;
+            const userId = req.user.id;
             const status = req.query.status;
             const applications = await ApplicationService_1.default.getUserApplications(userId, status);
             const data = applications.map((app) => ({
@@ -103,7 +103,7 @@ class ApplicationController {
          * GET /api/v1/activities/:id/participants
          */
         this.getApprovedParticipants = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
-            const activityId = parseInt(req.params.id);
+            const activityId = req.params.id;
             const participants = await ApplicationService_1.default.getApprovedParticipants(activityId);
             const data = participants.map((p) => ({
                 participation_id: p.id,

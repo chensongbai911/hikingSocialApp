@@ -5,7 +5,9 @@ import { useUserStore } from '@/stores/user'
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
-    redirect: '/discover',
+    name: 'Home',
+    component: () => import('@/components/pages/Home.vue'),
+    meta: { requiresAuth: true },
   },
   {
     path: '/login',
@@ -53,6 +55,12 @@ const routes: RouteRecordRaw[] = [
     path: '/activity/:id',
     name: 'ActivityDetail',
     component: () => import('@/components/pages/ActivityDetail.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/activity/:id/applicants',
+    name: 'ActivityApplicants',
+    component: () => import('@/components/pages/ActivityApplicants.vue'),
     meta: { requiresAuth: true },
   },
   {
@@ -182,10 +190,10 @@ router.beforeEach(async (to, _from, next) => {
     console.log('Redirecting to login')
     next('/login')
   }
-  // 已登录访问登录/注册页，重定向到发现页
+  // 已登录访问登录/注册页，重定向到首页
   else if ((to.path === '/login' || to.path === '/register') && userStore.isLoggedIn) {
-    console.log('Already logged in, redirecting to discover')
-    next('/discover')
+    console.log('Already logged in, redirecting to home')
+    next('/')
   }
   else {
     console.log('Navigation allowed')

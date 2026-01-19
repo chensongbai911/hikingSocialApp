@@ -1,7 +1,11 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ActivityController = void 0;
 const ActivityService_1 = require("../services/ActivityService");
+const ApplicationService_1 = __importDefault(require("../services/ApplicationService"));
 const response_1 = require("../utils/response");
 const api_types_1 = require("../types/api.types");
 class ActivityController {
@@ -349,6 +353,69 @@ class ActivityController {
         catch (error) {
             console.error('Get my created activities error:', error);
             return (0, response_1.serverError)(res, '获取创建的活动列表失败', error);
+        }
+    }
+    /**
+     * 获取活动的申请者列表（创建者专用）
+     * GET /api/v1/activities/:id/applicants
+     */
+    static async getActivityApplicants(req, res) {
+        try {
+            const { id: activityId } = req.params;
+            const organizerId = req.user?.id;
+            if (!organizerId) {
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+            }
+            const applications = await ApplicationService_1.default.getPendingApplications(activityId, organizerId);
+            return (0, response_1.success)(res, applications, '获取活动申请者列表成功');
+        }
+        catch (error) {
+            console.error('Get activity applicants error:', error);
+            return (0, response_1.serverError)(res, '获取活动申请者列表失败', error);
+        }
+    }
+    /**
+     * 同意活动申请（创建者专用）
+     * POST /api/v1/activities/:id/approve
+     */
+    static async approveApplication(req, res) {
+        try {
+            const { applicationId } = req.body;
+            const reviewerId = req.user?.id;
+            if (!reviewerId) {
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+            }
+            if (!applicationId) {
+                return (0, response_1.validationError)(res, { applicationId: '申请ID不能为空' });
+            }
+            const application = await ApplicationService_1.default.reviewApplication(applicationId, reviewerId, 'approve');
+            return (0, response_1.success)(res, application, '已同意该申请');
+        }
+        catch (error) {
+            console.error('Approve application error:', error);
+            return (0, response_1.serverError)(res, '同意申请失败', error);
+        }
+    }
+    /**
+     * 拒绝活动申请（创建者专用）
+     * POST /api/v1/activities/:id/reject
+     */
+    static async rejectApplication(req, res) {
+        try {
+            const { applicationId } = req.body;
+            const reviewerId = req.user?.id;
+            if (!reviewerId) {
+                return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+            }
+            if (!applicationId) {
+                return (0, response_1.validationError)(res, { applicationId: '申请ID不能为空' });
+            }
+            const application = await ApplicationService_1.default.reviewApplication(applicationId, reviewerId, 'reject');
+            return (0, response_1.success)(res, application, '已拒绝该申请');
+        }
+        catch (error) {
+            console.error('Reject application error:', error);
+            return (0, response_1.serverError)(res, '拒绝申请失败', error);
         }
     }
 }

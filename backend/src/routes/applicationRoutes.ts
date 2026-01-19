@@ -10,7 +10,7 @@ router.use(authMiddleware)
 // 申请加入活动
 router.post('/', ApplicationController.applyToActivity)
 
-// 获取我的申请记录
+// 获取我的申请记录（必须在 /:id 之前）
 router.get('/my', ApplicationController.getMyApplications)
 
 // 审核申请

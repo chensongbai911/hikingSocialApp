@@ -1,7 +1,7 @@
 import { Model, Sequelize, ForeignKey } from 'sequelize';
 import { User } from './User';
 export interface ActivityAttributes {
-    id: number;
+    id: string;
     creatorId: ForeignKey<User['id']>;
     title: string;
     description: string;
@@ -22,7 +22,7 @@ export interface ActivityAttributes {
     deletedAt?: Date;
 }
 export declare class Activity extends Model<ActivityAttributes> implements ActivityAttributes {
-    id: number;
+    id: string;
     creatorId: ForeignKey<User['id']>;
     title: string;
     description: string;

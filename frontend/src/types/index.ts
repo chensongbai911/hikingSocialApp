@@ -88,6 +88,9 @@ export interface Activity {
   creator?: User
   participant_count?: number
   is_joined?: boolean
+  created_at?: string
+  updated_at?: string
+}
 export interface Participant {
   id: string
   user_id: string

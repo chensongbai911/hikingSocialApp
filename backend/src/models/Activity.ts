@@ -2,7 +2,7 @@ import { DataTypes, Model, Sequelize, ForeignKey } from 'sequelize'
 import { User } from './User'
 
 export interface ActivityAttributes {
-  id: number
+  id: string
   creatorId: ForeignKey<User['id']>
   title: string
   description: string
@@ -24,7 +24,7 @@ export interface ActivityAttributes {
 }
 
 export class Activity extends Model<ActivityAttributes> implements ActivityAttributes {
-  declare id: number
+  declare id: string
   declare creatorId: ForeignKey<User['id']>
   declare title: string
   declare description: string
@@ -48,12 +48,12 @@ export class Activity extends Model<ActivityAttributes> implements ActivityAttri
     return Activity.init(
       {
         id: {
-          type: DataTypes.INTEGER,
+          type: DataTypes.STRING(36),
           primaryKey: true,
-          autoIncrement: true,
+          allowNull: false,
         },
         creatorId: {
-          type: DataTypes.INTEGER,
+          type: DataTypes.STRING(36),
           allowNull: false,
           references: {
             model: 'users',

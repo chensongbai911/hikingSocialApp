@@ -5,7 +5,10 @@ export interface ParticipationAttributes {
     id: number;
     userId: ForeignKey<User['id']>;
     activityId: ForeignKey<Activity['id']>;
-    status: 'joined' | 'completed' | 'cancelled';
+    status: 'pending' | 'joined' | 'completed' | 'cancelled' | 'rejected';
+    appliedAt?: Date;
+    approvedAt?: Date;
+    rejectedAt?: Date;
     joinedAt: Date;
     completedAt?: Date;
     cancelledAt?: Date;
@@ -18,7 +21,10 @@ export declare class Participation extends Model<ParticipationAttributes> implem
     id: number;
     userId: ForeignKey<User['id']>;
     activityId: ForeignKey<Activity['id']>;
-    status: 'joined' | 'completed' | 'cancelled';
+    status: 'pending' | 'joined' | 'completed' | 'cancelled' | 'rejected';
+    appliedAt: Date | undefined;
+    approvedAt: Date | undefined;
+    rejectedAt: Date | undefined;
     joinedAt: Date;
     completedAt: Date | undefined;
     cancelledAt: Date | undefined;

@@ -32,6 +32,12 @@ router.delete('/:id', authMiddleware_1.authMiddleware, ActivityController_1.Acti
 router.post('/:id/join', authMiddleware_1.authMiddleware, ActivityController_1.ActivityController.joinActivity);
 // 退出活动
 router.post('/:id/leave', authMiddleware_1.authMiddleware, ActivityController_1.ActivityController.leaveActivity);
+// 获取活动申请者列表（创建者专用）
+router.get('/:id/applicants', authMiddleware_1.authMiddleware, ActivityController_1.ActivityController.getActivityApplicants);
+// 同意活动申请（创建者专用）
+router.post('/:id/approve', authMiddleware_1.authMiddleware, ActivityController_1.ActivityController.approveApplication);
+// 拒绝活动申请（创建者专用）
+router.post('/:id/reject', authMiddleware_1.authMiddleware, ActivityController_1.ActivityController.rejectApplication);
 // 获取活动的待审核申请列表
 router.get('/:id/applications/pending', authMiddleware_1.authMiddleware, ApplicationController_1.default.getPendingApplications);
 // 获取活动的已通过成员列表

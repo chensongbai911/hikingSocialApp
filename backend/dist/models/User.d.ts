@@ -1,6 +1,6 @@
 import { Model, Sequelize } from 'sequelize';
 export interface UserAttributes {
-    id: number;
+    id: string;
     email: string;
     passwordHash: string;
     nickname: string;
@@ -16,7 +16,7 @@ export interface UserAttributes {
     deletedAt?: Date;
 }
 export declare class User extends Model<UserAttributes> implements UserAttributes {
-    id: number;
+    id: string;
     email: string;
     passwordHash: string;
     nickname: string;

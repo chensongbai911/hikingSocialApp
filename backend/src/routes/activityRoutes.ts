@@ -40,6 +40,15 @@ router.post('/:id/join', authMiddleware, ActivityController.joinActivity);
 // 退出活动
 router.post('/:id/leave', authMiddleware, ActivityController.leaveActivity);
 
+// 获取活动申请者列表（创建者专用）
+router.get('/:id/applicants', authMiddleware, ActivityController.getActivityApplicants);
+
+// 同意活动申请（创建者专用）
+router.post('/:id/approve', authMiddleware, ActivityController.approveApplication);
+
+// 拒绝活动申请（创建者专用）
+router.post('/:id/reject', authMiddleware, ActivityController.rejectApplication);
+
 // 获取活动的待审核申请列表
 router.get('/:id/applications/pending', authMiddleware, ApplicationController.getPendingApplications);
 

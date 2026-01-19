@@ -1,7 +1,7 @@
 import { DataTypes, Model, Sequelize } from 'sequelize'
 
 export interface UserAttributes {
-  id: number
+  id: string
   email: string
   passwordHash: string
   nickname: string
@@ -18,7 +18,7 @@ export interface UserAttributes {
 }
 
 export class User extends Model<UserAttributes> implements UserAttributes {
-  declare id: number
+  declare id: string
   declare email: string
   declare passwordHash: string
   declare nickname: string
@@ -37,9 +37,9 @@ export class User extends Model<UserAttributes> implements UserAttributes {
     return User.init(
       {
         id: {
-          type: DataTypes.INTEGER,
+          type: DataTypes.STRING(36),
           primaryKey: true,
-          autoIncrement: true,
+          allowNull: false,
         },
         email: {
           type: DataTypes.STRING,

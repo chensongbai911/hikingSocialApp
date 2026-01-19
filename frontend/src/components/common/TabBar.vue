@@ -1,18 +1,58 @@
 <template>
   <nav class="fixed bottom-0 left-0 right-0 glass-bg border-t border-white/10 shadow-lg z-40">
-    <div class="flex justify-around max-w-xl mx-auto px-2 py-2">
+    <div class="flex justify-around max-w-xl mx-auto px-1 py-2">
+      <!-- 首页 -->
+      <router-link
+        to="/"
+        :class="[
+          'flex flex-col items-center justify-center flex-1 py-2 px-1 rounded-2xl transition-all duration-300',
+          isActive('/') ? 'text-teal-500' : 'text-gray-500',
+        ]"
+      >
+        <div class="relative">
+          <svg
+            :class="[
+              'w-6 h-6 transition-all duration-300',
+              isActive('/') ? 'scale-110' : 'scale-100',
+            ]"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+            />
+          </svg>
+          <div
+            v-if="isActive('/')"
+            class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-teal-500 rounded-full"
+          ></div>
+        </div>
+        <div
+          :class="[
+            'text-xs mt-1 font-medium',
+            isActive('/') ? 'text-teal-500' : 'text-gray-500',
+          ]"
+        >
+          首页
+        </div>
+      </router-link>
+
       <!-- 发现 -->
       <router-link
         to="/discover"
         :class="[
-          'flex flex-col items-center justify-center flex-1 py-2 px-2 rounded-2xl transition-all duration-300',
+          'flex flex-col items-center justify-center flex-1 py-2 px-1 rounded-2xl transition-all duration-300',
           isActive('/discover') ? 'text-teal-500' : 'text-gray-500',
         ]"
       >
         <div class="relative">
           <svg
             :class="[
-              'w-7 h-7 transition-all duration-300',
+              'w-6 h-6 transition-all duration-300',
               isActive('/discover') ? 'scale-110' : 'scale-100',
             ]"
             fill="none"
@@ -176,14 +216,14 @@
       <router-link
         to="/profile"
         :class="[
-          'flex flex-col items-center justify-center flex-1 py-2 px-2 rounded-2xl transition-all duration-300',
+          'flex flex-col items-center justify-center flex-1 py-2 px-1 rounded-2xl transition-all duration-300',
           isActive('/profile') ? 'text-teal-500' : 'text-gray-500',
         ]"
       >
         <div class="relative">
           <svg
             :class="[
-              'w-7 h-7 transition-all duration-300',
+              'w-6 h-6 transition-all duration-300',
               isActive('/profile') ? 'scale-110' : 'scale-100',
             ]"
             fill="none"
@@ -238,6 +278,10 @@ if (userStore.isLoggedIn) {
 }
 
 const isActive = (path: string) => {
+  if (path === '/') {
+    // 首页精确匹配
+    return route.path === '/' || route.path === '/home'
+  }
   return route.path === path || route.path.startsWith(path + '/')
 }
 </script>

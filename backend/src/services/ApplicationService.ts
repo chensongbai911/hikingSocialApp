@@ -8,7 +8,7 @@ export class ApplicationService {
   /**
    * 申请加入活动
    */
-  async applyToActivity(userId: number, activityId: number, message?: string): Promise<Application> {
+  async applyToActivity(userId: string, activityId: string, message?: string): Promise<Application> {
     // 检查活动是否存在
     const activity = await Activity.findByPk(activityId)
     if (!activity) {
@@ -57,7 +57,7 @@ export class ApplicationService {
   /**
    * 获取活动的待审核申请列表
    */
-  async getPendingApplications(activityId: number, organizerId: number) {
+  async getPendingApplications(activityId: string, organizerId: string) {
     // 验证是否是组织者
     const activity = await Activity.findByPk(activityId)
     if (!activity) {
@@ -90,7 +90,7 @@ export class ApplicationService {
    */
   async reviewApplication(
     applicationId: number,
-    reviewerId: number,
+    reviewerId: string,
     action: 'approve' | 'reject'
   ): Promise<Application> {
     const application = await Application.findByPk(applicationId, {
@@ -132,7 +132,7 @@ export class ApplicationService {
   /**
    * 获取用户的申请记录
    */
-  async getUserApplications(userId: number, status?: 'pending' | 'approved' | 'rejected') {
+  async getUserApplications(userId: string, status?: 'pending' | 'approved' | 'rejected') {
     const where: any = { userId }
     if (status) {
       where.status = status
@@ -155,7 +155,7 @@ export class ApplicationService {
   /**
    * 获取活动的已通过成员列表
    */
-  async getApprovedParticipants(activityId: number) {
+  async getApprovedParticipants(activityId: string) {
     const participants = await Participation.findAll({
       where: {
         activityId,

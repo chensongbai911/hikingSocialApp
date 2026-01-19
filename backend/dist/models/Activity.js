@@ -7,12 +7,12 @@ class Activity extends sequelize_1.Model {
     static initialize(sequelize) {
         return Activity.init({
             id: {
-                type: sequelize_1.DataTypes.INTEGER,
+                type: sequelize_1.DataTypes.STRING(36),
                 primaryKey: true,
-                autoIncrement: true,
+                allowNull: false,
             },
             creatorId: {
-                type: sequelize_1.DataTypes.INTEGER,
+                type: sequelize_1.DataTypes.STRING(36),
                 allowNull: false,
                 references: {
                     model: 'users',

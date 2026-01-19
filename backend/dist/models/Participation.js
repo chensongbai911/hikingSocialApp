@@ -31,9 +31,24 @@ class Participation extends sequelize_1.Model {
                 onDelete: 'CASCADE',
             },
             status: {
-                type: sequelize_1.DataTypes.ENUM('joined', 'completed', 'cancelled'),
+                type: sequelize_1.DataTypes.ENUM('pending', 'joined', 'completed', 'cancelled', 'rejected'),
                 allowNull: false,
-                defaultValue: 'joined',
+                defaultValue: 'pending',
+            },
+            appliedAt: {
+                type: sequelize_1.DataTypes.DATE,
+                allowNull: true,
+                field: 'applied_at',
+            },
+            approvedAt: {
+                type: sequelize_1.DataTypes.DATE,
+                allowNull: true,
+                field: 'approved_at',
+            },
+            rejectedAt: {
+                type: sequelize_1.DataTypes.DATE,
+                allowNull: true,
+                field: 'rejected_at',
             },
             joinedAt: {
                 type: sequelize_1.DataTypes.DATE,

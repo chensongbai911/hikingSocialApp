@@ -8,7 +8,7 @@ export class FriendService {
   /**
    * 发送好友请求
    */
-  async sendFriendRequest(userId: number, friendId: number, message?: string): Promise<Friendship> {
+  async sendFriendRequest(userId: string, friendId: string, message?: string): Promise<Friendship> {
     if (userId === friendId) {
       throw new BusinessError(BusinessErrorCode.INVALID_REQUEST, '不能添加自己为好友')
     }
@@ -65,7 +65,7 @@ export class FriendService {
   /**
    * 接受好友请求
    */
-  async acceptFriendRequest(userId: number, friendId: number): Promise<void> {
+  async acceptFriendRequest(userId: string, friendId: string): Promise<void> {
     const friendship = await Friendship.findOne({
       where: { userId, friendId, status: 'pending' },
     })
@@ -99,7 +99,7 @@ export class FriendService {
   /**
    * 拒绝好友请求
    */
-  async rejectFriendRequest(userId: number, friendId: number): Promise<void> {
+  async rejectFriendRequest(userId: string, friendId: string): Promise<void> {
     const friendship = await Friendship.findOne({
       where: { userId, friendId, status: 'pending' },
     })
@@ -129,7 +129,7 @@ export class FriendService {
   /**
    * 删除好友
    */
-  async removeFriend(userId: number, friendId: number): Promise<void> {
+  async removeFriend(userId: string, friendId: string): Promise<void> {
     await Friendship.destroy({
       where: {
         [Op.or]: [
@@ -143,7 +143,7 @@ export class FriendService {
   /**
    * 获取好友列表
    */
-  async getFriends(userId: number) {
+  async getFriends(userId: string) {
     const friendships = await Friendship.findAll({
       where: {
         userId,
@@ -165,7 +165,7 @@ export class FriendService {
   /**
    * 获取待处理的好友请求
    */
-  async getPendingRequests(userId: number) {
+  async getPendingRequests(userId: string) {
     const friendships = await Friendship.findAll({
       where: {
         userId,
@@ -188,7 +188,7 @@ export class FriendService {
   /**
    * 搜索用户(按昵称或手机号)
    */
-  async searchUsers(keyword: string, currentUserId: number) {
+  async searchUsers(keyword: string, currentUserId: string) {
     const users = await User.findAll({
       where: {
         id: { [Op.ne]: currentUserId },
@@ -207,7 +207,7 @@ export class FriendService {
   /**
    * 推荐可能感兴趣的人
    */
-  async getRecommendedUsers(userId: number, limit: number = 10) {
+  async getRecommendedUsers(userId: string, limit: number = 10) {
     // 获取当前用户的偏好
     const userPreference = await UserPreference.findOne({ where: { userId } })
 
@@ -246,7 +246,7 @@ export class FriendService {
   /**
    * 检查好友关系状态
    */
-  async getFriendshipStatus(userId: number, friendId: number): Promise<string | null> {
+  async getFriendshipStatus(userId: string, friendId: string): Promise<string | null> {
     const friendship = await Friendship.findOne({
       where: { userId, friendId },
     })

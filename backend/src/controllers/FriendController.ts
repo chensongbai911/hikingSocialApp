@@ -9,7 +9,7 @@ export class FriendController {
    * POST /api/v1/friends/request
    */
   sendFriendRequest = asyncHandler(async (req: Request, res: Response) => {
-    const userId = typeof req.user!.id === 'string' ? parseInt(req.user!.id) : req.user!.id
+    const userId = req.user!.id
     const { friend_id, message } = req.body
 
     const friendship = await FriendService.sendFriendRequest(userId, friend_id, message)
@@ -26,8 +26,8 @@ export class FriendController {
    * PUT /api/v1/friends/:friendId/accept
    */
   acceptFriendRequest = asyncHandler(async (req: Request, res: Response) => {
-    const userId = typeof req.user!.id === 'string' ? parseInt(req.user!.id) : req.user!.id
-    const friendId = parseInt(req.params.friendId)
+    const userId = req.user!.id
+    const friendId = req.params.friendId
 
     await FriendService.acceptFriendRequest(userId, friendId)
 
@@ -39,8 +39,8 @@ export class FriendController {
    * PUT /api/v1/friends/:friendId/reject
    */
   rejectFriendRequest = asyncHandler(async (req: Request, res: Response) => {
-    const userId = typeof req.user!.id === 'string' ? parseInt(req.user!.id) : req.user!.id
-    const friendId = parseInt(req.params.friendId)
+    const userId = req.user!.id
+    const friendId = req.params.friendId
 
     await FriendService.rejectFriendRequest(userId, friendId)
 
@@ -52,8 +52,8 @@ export class FriendController {
    * DELETE /api/v1/friends/:friendId
    */
   removeFriend = asyncHandler(async (req: Request, res: Response) => {
-    const userId = typeof req.user!.id === 'string' ? parseInt(req.user!.id) : req.user!.id
-    const friendId = parseInt(req.params.friendId)
+    const userId = req.user!.id
+    const friendId = req.params.friendId
 
     await FriendService.removeFriend(userId, friendId)
 
@@ -65,7 +65,7 @@ export class FriendController {
    * GET /api/v1/friends
    */
   getFriends = asyncHandler(async (req: Request, res: Response) => {
-    const userId = typeof req.user!.id === 'string' ? parseInt(req.user!.id) : req.user!.id
+    const userId = req.user!.id
 
     const friends = await FriendService.getFriends(userId)
 
@@ -87,7 +87,7 @@ export class FriendController {
    * GET /api/v1/friends/requests/pending
    */
   getPendingRequests = asyncHandler(async (req: Request, res: Response) => {
-    const userId = typeof req.user!.id === 'string' ? parseInt(req.user!.id) : req.user!.id
+    const userId = req.user!.id
 
     const requests = await FriendService.getPendingRequests(userId)
 
@@ -117,7 +117,7 @@ export class FriendController {
    * GET /api/v1/friends/search
    */
   searchUsers = asyncHandler(async (req: Request, res: Response) => {
-    const userId = typeof req.user!.id === 'string' ? parseInt(req.user!.id) : req.user!.id
+    const userId = req.user!.id
     const keyword = req.query.keyword as string
 
     if (!keyword || keyword.trim().length === 0) {
@@ -144,7 +144,7 @@ export class FriendController {
    * GET /api/v1/friends/recommendations
    */
   getRecommendedUsers = asyncHandler(async (req: Request, res: Response) => {
-    const userId = typeof req.user!.id === 'string' ? parseInt(req.user!.id) : req.user!.id
+    const userId = req.user!.id
     const limit = parseInt(req.query.limit as string) || 10
 
     const users = await FriendService.getRecommendedUsers(userId, limit)
@@ -168,8 +168,8 @@ export class FriendController {
    * GET /api/v1/friends/:friendId/status
    */
   getFriendshipStatus = asyncHandler(async (req: Request, res: Response) => {
-    const userId = typeof req.user!.id === 'string' ? parseInt(req.user!.id) : req.user!.id
-    const friendId = parseInt(req.params.friendId)
+    const userId = req.user!.id
+    const friendId = req.params.friendId
 
     const status = await FriendService.getFriendshipStatus(userId, friendId)
 

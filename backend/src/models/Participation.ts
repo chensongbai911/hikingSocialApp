@@ -6,7 +6,10 @@ export interface ParticipationAttributes {
   id: number
   userId: ForeignKey<User['id']>
   activityId: ForeignKey<Activity['id']>
-  status: 'joined' | 'completed' | 'cancelled'
+  status: 'pending' | 'joined' | 'completed' | 'cancelled' | 'rejected'
+  appliedAt?: Date
+  approvedAt?: Date
+  rejectedAt?: Date
   joinedAt: Date
   completedAt?: Date
   cancelledAt?: Date
@@ -20,7 +23,10 @@ export class Participation extends Model<ParticipationAttributes> implements Par
   declare id: number
   declare userId: ForeignKey<User['id']>
   declare activityId: ForeignKey<Activity['id']>
-  declare status: 'joined' | 'completed' | 'cancelled'
+  declare status: 'pending' | 'joined' | 'completed' | 'cancelled' | 'rejected'
+  declare appliedAt: Date | undefined
+  declare approvedAt: Date | undefined
+  declare rejectedAt: Date | undefined
   declare joinedAt: Date
   declare completedAt: Date | undefined
   declare cancelledAt: Date | undefined
@@ -56,9 +62,24 @@ export class Participation extends Model<ParticipationAttributes> implements Par
           onDelete: 'CASCADE',
         },
         status: {
-          type: DataTypes.ENUM('joined', 'completed', 'cancelled'),
+          type: DataTypes.ENUM('pending', 'joined', 'completed', 'cancelled', 'rejected'),
           allowNull: false,
-          defaultValue: 'joined',
+          defaultValue: 'pending',
+        },
+        appliedAt: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          field: 'applied_at',
+        },
+        approvedAt: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          field: 'approved_at',
+        },
+        rejectedAt: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          field: 'rejected_at',
         },
         joinedAt: {
           type: DataTypes.DATE,

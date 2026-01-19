@@ -4,24 +4,24 @@ import { Activity } from './Activity'
 
 export interface ApplicationAttributes {
   id: number
-  userId: ForeignKey<User['id']>
-  activityId: ForeignKey<Activity['id']>
+  userId: string
+  activityId: string
   status: 'pending' | 'approved' | 'rejected'
   message: string | null
   reviewedAt: Date | null
-  reviewedBy: ForeignKey<User['id']> | null
+  reviewedBy: string | null
   createdAt: Date
   updatedAt: Date
 }
 
 export class Application extends Model<ApplicationAttributes> implements ApplicationAttributes {
   declare id: number
-  declare userId: ForeignKey<User['id']>
-  declare activityId: ForeignKey<Activity['id']>
+  declare userId: string
+  declare activityId: string
   declare status: 'pending' | 'approved' | 'rejected'
   declare message: string | null
   declare reviewedAt: Date | null
-  declare reviewedBy: ForeignKey<User['id']> | null
+  declare reviewedBy: string | null
   declare readonly createdAt: Date
   declare readonly updatedAt: Date
 

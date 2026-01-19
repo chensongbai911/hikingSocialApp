@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { activityService } from '../services/ActivityService';
+import ApplicationService from '../services/ApplicationService';
 import {
   success,
   created,
@@ -435,6 +436,77 @@ export class ActivityController {
     } catch (error: any) {
       console.error('Get my created activities error:', error);
       return serverError(res, '获取创建的活动列表失败', error);
+    }
+  }
+
+  /**
+   * 获取活动的申请者列表（创建者专用）
+   * GET /api/v1/activities/:id/applicants
+   */
+  static async getActivityApplicants(req: Request, res: Response): Promise<void> {
+    try {
+      const { id: activityId } = req.params;
+      const organizerId = req.user?.id;
+
+      if (!organizerId) {
+        return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+      }
+
+      const applications = await ApplicationService.getPendingApplications(activityId, organizerId);
+      return success(res, applications, '获取活动申请者列表成功');
+    } catch (error: any) {
+      console.error('Get activity applicants error:', error);
+      return serverError(res, '获取活动申请者列表失败', error);
+    }
+  }
+
+  /**
+   * 同意活动申请（创建者专用）
+   * POST /api/v1/activities/:id/approve
+   */
+  static async approveApplication(req: Request, res: Response): Promise<void> {
+    try {
+      const { applicationId } = req.body;
+      const reviewerId = req.user?.id;
+
+      if (!reviewerId) {
+        return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+      }
+
+      if (!applicationId) {
+        return validationError(res, { applicationId: '申请ID不能为空' });
+      }
+
+      const application = await ApplicationService.reviewApplication(applicationId, reviewerId, 'approve');
+      return success(res, application, '已同意该申请');
+    } catch (error: any) {
+      console.error('Approve application error:', error);
+      return serverError(res, '同意申请失败', error);
+    }
+  }
+
+  /**
+   * 拒绝活动申请（创建者专用）
+   * POST /api/v1/activities/:id/reject
+   */
+  static async rejectApplication(req: Request, res: Response): Promise<void> {
+    try {
+      const { applicationId } = req.body;
+      const reviewerId = req.user?.id;
+
+      if (!reviewerId) {
+        return businessError(res, BusinessErrorCode.UNAUTHORIZED, '未授权访问');
+      }
+
+      if (!applicationId) {
+        return validationError(res, { applicationId: '申请ID不能为空' });
+      }
+
+      const application = await ApplicationService.reviewApplication(applicationId, reviewerId, 'reject');
+      return success(res, application, '已拒绝该申请');
+    } catch (error: any) {
+      console.error('Reject application error:', error);
+      return serverError(res, '拒绝申请失败', error);
     }
   }
 }

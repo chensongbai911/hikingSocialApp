@@ -6,9 +6,9 @@ class User extends sequelize_1.Model {
     static initialize(sequelize) {
         return User.init({
             id: {
-                type: sequelize_1.DataTypes.INTEGER,
+                type: sequelize_1.DataTypes.STRING(36),
                 primaryKey: true,
-                autoIncrement: true,
+                allowNull: false,
             },
             email: {
                 type: sequelize_1.DataTypes.STRING,

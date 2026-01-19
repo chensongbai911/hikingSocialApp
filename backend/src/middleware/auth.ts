@@ -15,8 +15,7 @@ declare global {
   namespace Express {
     interface Request {
       user?: {
-        id: number
-        username: string
+        id: string
         email: string
       }
     }
@@ -39,8 +38,8 @@ export const authenticateToken = (
     if (!token) {
       res.json(
         createErrorResponse(
-          ResponseCode.UNAUTHORIZED,
-          '未提供认证令牌，请先登录'
+          '未提供认证令牌，请先登录',
+          ResponseCode.UNAUTHORIZED
         )
       )
       return
@@ -53,8 +52,7 @@ export const authenticateToken = (
     }
 
     const decoded = jwt.verify(token, secret) as {
-      id: number
-      username: string
+      id: string
       email: string
     }
 
@@ -66,8 +64,8 @@ export const authenticateToken = (
     if (error.name === 'TokenExpiredError') {
       res.json(
         createErrorResponse(
-          ResponseCode.UNAUTHORIZED,
-          '认证令牌已过期，请重新登录'
+          '认证令牌已过期，请重新登录',
+          ResponseCode.UNAUTHORIZED
         )
       )
       return
@@ -76,8 +74,8 @@ export const authenticateToken = (
     if (error.name === 'JsonWebTokenError') {
       res.json(
         createErrorResponse(
-          ResponseCode.UNAUTHORIZED,
-          '无效的认证令牌'
+          '无效的认证令牌',
+          ResponseCode.UNAUTHORIZED
         )
       )
       return
@@ -85,8 +83,8 @@ export const authenticateToken = (
 
     res.json(
       createErrorResponse(
-        ResponseCode.INTERNAL_SERVER_ERROR,
-        '认证失败'
+        '认证失败',
+        ResponseCode.INTERNAL_SERVER_ERROR
       )
     )
   }
@@ -108,8 +106,7 @@ export const optionalAuth = (
       const secret = process.env.JWT_SECRET
       if (secret) {
         const decoded = jwt.verify(token, secret) as {
-          id: number
-          username: string
+          id: string
           email: string
         }
         req.user = decoded
@@ -127,8 +124,7 @@ export const optionalAuth = (
  * 生成 JWT token
  */
 export const generateToken = (payload: {
-  id: number
-  username: string
+  id: string
   email: string
 }): string => {
   const secret = process.env.JWT_SECRET
@@ -145,7 +141,7 @@ export const generateToken = (payload: {
  * 生成刷新 token
  */
 export const generateRefreshToken = (payload: {
-  id: number
+  id: string
 }): string => {
   const secret = process.env.JWT_SECRET
   if (!secret) {

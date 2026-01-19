@@ -430,8 +430,8 @@ const transformActivity = (activity: ActivityType): Activity => {
     status: getActivityStatus(activity),
     difficulty: activity.difficulty || 'easy',
     participantCount: activity.participant_count || 0,
-    participants: [],
-    applicants: [],
+    participants: activity.participants || [],
+    applicants: activity.applicants || [],
   }
 }
 

@@ -11,7 +11,7 @@ const router = (0, express_1.Router)();
 router.use(authMiddleware_1.authMiddleware);
 // 申请加入活动
 router.post('/', ApplicationController_1.default.applyToActivity);
-// 获取我的申请记录
+// 获取我的申请记录（必须在 /:id 之前）
 router.get('/my', ApplicationController_1.default.getMyApplications);
 // 审核申请
 router.put('/:id/review', ApplicationController_1.default.reviewApplication);

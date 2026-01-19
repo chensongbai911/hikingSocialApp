@@ -50,5 +50,20 @@ export declare class ActivityController {
      * GET /api/v1/activities/my-created
      */
     static getMyCreatedActivities(req: Request, res: Response): Promise<void>;
+    /**
+     * 获取活动的申请者列表（创建者专用）
+     * GET /api/v1/activities/:id/applicants
+     */
+    static getActivityApplicants(req: Request, res: Response): Promise<void>;
+    /**
+     * 同意活动申请（创建者专用）
+     * POST /api/v1/activities/:id/approve
+     */
+    static approveApplication(req: Request, res: Response): Promise<void>;
+    /**
+     * 拒绝活动申请（创建者专用）
+     * POST /api/v1/activities/:id/reject
+     */
+    static rejectApplication(req: Request, res: Response): Promise<void>;
 }
 //# sourceMappingURL=ActivityController.d.ts.map
