@@ -109,15 +109,69 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/components/pages/UserGuide.vue'),
     meta: { requiresAuth: true },
   },
+  {
+    path: '/hiking-mode',
+    name: 'HikingMode',
+    component: () => import('@/components/pages/HikingMode.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/hiking-report/:id',
+    name: 'HikingReport',
+    component: () => import('@/components/pages/HikingReport.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/route-creator',
+    name: 'RouteCreator',
+    component: () => import('@/components/pages/RouteCreator.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/offline-map',
+    name: 'OfflineMap',
+    component: () => import('@/components/pages/OfflineMap.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/routes',
+    name: 'RouteList',
+    component: () => import('@/components/pages/RouteList.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/route/:id',
+    name: 'RouteDetail',
+    component: () => import('@/components/pages/RouteDetail.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/track-recorder',
+    name: 'TrackRecorder',
+    component: () => import('@/components/pages/TrackRecorder.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/track/:id',
+    name: 'TrackDetail',
+    component: () => import('@/components/pages/TrackDetail.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/hiking-report',
+    name: 'HikingReport',
+    component: () => import('@/components/pages/HikingReport.vue'),
+    meta: { requiresAuth: true },
+  },
 ]
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory((import.meta as any).env.BASE_URL),
   routes,
 })
 
 // 导航守卫
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to, _from, next) => {
   const userStore = useUserStore()
   const requiresAuth = to.meta.requiresAuth !== false // 默认需要登录
 
