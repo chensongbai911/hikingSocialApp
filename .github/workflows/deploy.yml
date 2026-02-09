@@ -331,10 +331,14 @@ jobs:
           echo "🔄 重启后端服务..."
           if pm2 list | grep -q "hiking-app-backend"; then
             echo "重启现有服务..."
-            pm2 restart hiking-app-backend || (echo "❌ 重启失败" && exit 1)
+            pm2 restart hiking-app-backend --update-env || (
+              echo "⚠️ 重启失败，尝试重新启动..." &&
+              pm2 delete hiking-app-backend || true &&
+              pm2 start ecosystem.config.cjs --env production --update-env || (echo "❌ 启动失败" && exit 1)
+            )
           else
             echo "首次启动服务..."
-            pm2 start ecosystem.config.cjs --env production || (echo "❌ 启动失败" && exit 1)
+            pm2 start ecosystem.config.cjs --env production --update-env || (echo "❌ 启动失败" && exit 1)
           fi
           pm2 save
 
