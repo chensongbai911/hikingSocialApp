@@ -91,7 +91,7 @@ class ApplicationController {
                         title: app.Activity.title,
                         location: app.Activity.location,
                         start_time: app.Activity.startTime,
-                        cover_image: app.Activity.coverImage,
+                        cover_image: app.Activity.coverImageUrl,
                         status: app.Activity.status,
                     }
                     : null,
@@ -105,16 +105,16 @@ class ApplicationController {
         this.getApprovedParticipants = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
             const activityId = req.params.id;
             const participants = await ApplicationService_1.default.getApprovedParticipants(activityId);
-            const data = participants.map((p) => ({
-                participation_id: p.id,
-                user_id: p.userId,
-                joined_at: p.joinedAt,
-                user: p.User
+            const data = participants.map((app) => ({
+                application_id: app.id,
+                user_id: app.userId,
+                approved_at: app.reviewedAt,
+                user: app.applicant
                     ? {
-                        user_id: p.User.id,
-                        nickname: p.User.nickname,
-                        avatar_url: p.User.avatarUrl,
-                        hiking_level: p.User.hikingLevel,
+                        user_id: app.applicant.id,
+                        nickname: app.applicant.nickname,
+                        avatar_url: app.applicant.avatarUrl,
+                        hiking_level: app.applicant.hikingLevel,
                     }
                     : null,
             }));

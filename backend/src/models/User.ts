@@ -106,10 +106,11 @@ export class User extends Model<UserAttributes> implements UserAttributes {
         tableName: 'users',
         timestamps: true,
         paranoid: true, // 启用软删除
+        underscored: true, // 自动将驼峰转为下划线
         indexes: [
           { fields: ['email'] },
-          { fields: ['createdAt'] },
-          { fields: ['hikingLevel'] },
+          { fields: ['created_at'] },
+          { fields: ['hiking_level'] },
         ],
       }
     )

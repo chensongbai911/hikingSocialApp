@@ -25,6 +25,7 @@ console.log('[Server] API_BASE_URL:', process.env.API_BASE_URL || 'NOT SET');
 console.log('[Server] PORT:', process.env.PORT);
 // 导入数据库配置
 const database_1 = require("./config/database");
+const sequelize_1 = require("./config/sequelize");
 // 导入路由
 const authRoutes_1 = __importDefault(require("./routes/authRoutes"));
 const userRoutes_1 = __importDefault(require("./routes/userRoutes"));
@@ -106,6 +107,10 @@ app.use(errorHandler_1.errorHandler);
 // 启动服务器
 const startServer = async () => {
     try {
+        // 初始化Sequelize模型
+        (0, sequelize_1.initializeModels)();
+        // 测试Sequelize连接
+        await (0, sequelize_1.testSequelizeConnection)();
         // 测试数据库连接
         const isConnected = await (0, database_1.testConnection)();
         if (!isConnected) {

@@ -51,19 +51,19 @@ class Activity extends sequelize_1.Model {
                 type: sequelize_1.DataTypes.DATE,
                 allowNull: false,
             },
-            distance: {
-                type: sequelize_1.DataTypes.DECIMAL(10, 2),
-                allowNull: true,
-            },
+            // distance: {
+            //   type: DataTypes.DECIMAL(10, 2),
+            //   allowNull: true,
+            // },
             difficulty: {
                 type: sequelize_1.DataTypes.ENUM('easy', 'moderate', 'hard'),
                 allowNull: false,
                 defaultValue: 'moderate',
             },
-            type: {
-                type: sequelize_1.DataTypes.STRING,
-                allowNull: true,
-            },
+            // type: {
+            //   type: DataTypes.STRING,
+            //   allowNull: true,
+            // },
             status: {
                 type: sequelize_1.DataTypes.ENUM('pending', 'approved', 'ongoing', 'completed', 'cancelled'),
                 allowNull: false,
@@ -94,10 +94,11 @@ class Activity extends sequelize_1.Model {
             tableName: 'activities',
             timestamps: true,
             paranoid: true,
+            underscored: true, // 自动将驼峰转为下划线
             indexes: [
                 { fields: ['status'] },
-                { fields: ['startTime'] },
-                { fields: ['creatorId'] },
+                { fields: ['start_time'] },
+                { fields: ['creator_id'] },
             ],
         });
     }

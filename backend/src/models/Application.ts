@@ -88,11 +88,12 @@ export class Application extends Model<ApplicationAttributes> implements Applica
         sequelize,
         tableName: 'applications',
         timestamps: true,
+        underscored: true, // 自动将驼峰转为下划线
         indexes: [
-          { fields: ['userId'] },
-          { fields: ['activityId'] },
+          { fields: ['user_id'] },
+          { fields: ['activity_id'] },
           { fields: ['status'] },
-          { fields: ['userId', 'activityId'], unique: true },
+          { fields: ['user_id', 'activity_id'], unique: true },
         ],
       }
     )

@@ -4,7 +4,6 @@ exports.ApplicationService = void 0;
 const Application_1 = require("../models/Application");
 const User_1 = require("../models/User");
 const Activity_1 = require("../models/Activity");
-const Participation_1 = require("../models/Participation");
 const errors_1 = require("../utils/errors");
 class ApplicationService {
     /**
@@ -15,13 +14,6 @@ class ApplicationService {
         const activity = await Activity_1.Activity.findByPk(activityId);
         if (!activity) {
             throw new errors_1.BusinessError(errors_1.BusinessErrorCode.ACTIVITY_NOT_FOUND, '活动不存在');
-        }
-        // 检查是否已经是参与者
-        const existingParticipation = await Participation_1.Participation.findOne({
-            where: { userId, activityId },
-        });
-        if (existingParticipation) {
-            throw new errors_1.BusinessError(errors_1.BusinessErrorCode.ALREADY_PARTICIPATED, '您已经是该活动的参与者');
         }
         // 检查是否已经申请过
         const existingApplication = await Application_1.Application.findOne({
@@ -101,15 +93,7 @@ class ApplicationService {
         application.reviewedAt = new Date();
         application.reviewedBy = reviewerId;
         await application.save();
-        // 如果通过,创建参与记录
-        if (action === 'approve') {
-            await Participation_1.Participation.create({
-                userId: application.userId,
-                activityId: application.activityId,
-                status: 'joined',
-                joinedAt: new Date(),
-            });
-        }
+        // 注意: 不再创建Participation记录，approved状态的Application即表示已加入
         return application;
     }
     /**
@@ -125,7 +109,7 @@ class ApplicationService {
             include: [
                 {
                     model: Activity_1.Activity,
-                    attributes: ['id', 'title', 'location', 'startTime', 'coverImage', 'status'],
+                    attributes: ['id', 'title', 'location', 'startTime', 'coverImageUrl', 'status'],
                 },
             ],
             order: [['createdAt', 'DESC']],
@@ -136,20 +120,21 @@ class ApplicationService {
      * 获取活动的已通过成员列表
      */
     async getApprovedParticipants(activityId) {
-        const participants = await Participation_1.Participation.findAll({
+        const applications = await Application_1.Application.findAll({
             where: {
                 activityId,
-                status: 'joined',
+                status: 'approved',
             },
             include: [
                 {
                     model: User_1.User,
+                    as: 'applicant',
                     attributes: ['id', 'nickname', 'avatarUrl', 'hikingLevel'],
                 },
             ],
-            order: [['joinedAt', 'ASC']],
+            order: [['createdAt', 'ASC']],
         });
-        return participants;
+        return applications;
     }
 }
 exports.ApplicationService = ApplicationService;

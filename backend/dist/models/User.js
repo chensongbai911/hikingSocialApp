@@ -74,10 +74,11 @@ class User extends sequelize_1.Model {
             tableName: 'users',
             timestamps: true,
             paranoid: true, // 启用软删除
+            underscored: true, // 自动将驼峰转为下划线
             indexes: [
                 { fields: ['email'] },
-                { fields: ['createdAt'] },
-                { fields: ['hikingLevel'] },
+                { fields: ['created_at'] },
+                { fields: ['hiking_level'] },
             ],
         });
     }

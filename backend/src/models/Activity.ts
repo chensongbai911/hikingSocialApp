@@ -12,9 +12,9 @@ export interface ActivityAttributes {
   longitude?: number
   startTime: Date
   endTime: Date
-  distance?: number
+  // distance?: number
   difficulty: 'easy' | 'moderate' | 'hard'
-  type?: string
+  // type?: string
   status: 'pending' | 'approved' | 'ongoing' | 'completed' | 'cancelled'
   routeDescription?: string
   equipmentRequired?: string
@@ -34,9 +34,9 @@ export class Activity extends Model<ActivityAttributes> implements ActivityAttri
   declare longitude: number | undefined
   declare startTime: Date
   declare endTime: Date
-  declare distance: number | undefined
+  // declare distance: number | undefined
   declare difficulty: 'easy' | 'moderate' | 'hard'
-  declare type: string | undefined
+  // declare type: string | undefined
   declare status: 'pending' | 'approved' | 'ongoing' | 'completed' | 'cancelled'
   declare routeDescription: string | undefined
   declare equipmentRequired: string | undefined
@@ -92,19 +92,19 @@ export class Activity extends Model<ActivityAttributes> implements ActivityAttri
           type: DataTypes.DATE,
           allowNull: false,
         },
-        distance: {
-          type: DataTypes.DECIMAL(10, 2),
-          allowNull: true,
-        },
+        // distance: {
+        //   type: DataTypes.DECIMAL(10, 2),
+        //   allowNull: true,
+        // },
         difficulty: {
           type: DataTypes.ENUM('easy', 'moderate', 'hard'),
           allowNull: false,
           defaultValue: 'moderate',
         },
-        type: {
-          type: DataTypes.STRING,
-          allowNull: true,
-        },
+        // type: {
+        //   type: DataTypes.STRING,
+        //   allowNull: true,
+        // },
         status: {
           type: DataTypes.ENUM('pending', 'approved', 'ongoing', 'completed', 'cancelled'),
           allowNull: false,
@@ -136,10 +136,11 @@ export class Activity extends Model<ActivityAttributes> implements ActivityAttri
         tableName: 'activities',
         timestamps: true,
         paranoid: true,
+        underscored: true,  // 自动将驼峰转为下划线
         indexes: [
           { fields: ['status'] },
-          { fields: ['startTime'] },
-          { fields: ['creatorId'] },
+          { fields: ['start_time'] },
+          { fields: ['creator_id'] },
         ],
       }
     )

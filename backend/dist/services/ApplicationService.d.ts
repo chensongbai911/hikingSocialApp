@@ -1,5 +1,4 @@
 import { Application } from '../models/Application';
-import { Participation } from '../models/Participation';
 export declare class ApplicationService {
     /**
      * 申请加入活动
@@ -20,7 +19,7 @@ export declare class ApplicationService {
     /**
      * 获取活动的已通过成员列表
      */
-    getApprovedParticipants(activityId: string): Promise<Participation[]>;
+    getApprovedParticipants(activityId: string): Promise<Application[]>;
 }
 declare const _default: ApplicationService;
 export default _default;

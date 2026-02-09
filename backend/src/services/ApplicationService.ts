@@ -15,14 +15,6 @@ export class ApplicationService {
       throw new BusinessError(BusinessErrorCode.ACTIVITY_NOT_FOUND, '活动不存在')
     }
 
-    // 检查是否已经是参与者
-    const existingParticipation = await Participation.findOne({
-      where: { userId, activityId },
-    })
-    if (existingParticipation) {
-      throw new BusinessError(BusinessErrorCode.ALREADY_PARTICIPATED, '您已经是该活动的参与者')
-    }
-
     // 检查是否已经申请过
     const existingApplication = await Application.findOne({
       where: { userId, activityId },
@@ -116,15 +108,7 @@ export class ApplicationService {
     application.reviewedBy = reviewerId
     await application.save()
 
-    // 如果通过,创建参与记录
-    if (action === 'approve') {
-      await Participation.create({
-        userId: application.userId,
-        activityId: application.activityId,
-        status: 'joined',
-        joinedAt: new Date(),
-      } as any)
-    }
+    // 注意: 不再创建Participation记录，approved状态的Application即表示已加入
 
     return application
   }
@@ -143,7 +127,7 @@ export class ApplicationService {
       include: [
         {
           model: Activity,
-          attributes: ['id', 'title', 'location', 'startTime', 'coverImage', 'status'],
+          attributes: ['id', 'title', 'location', 'startTime', 'coverImageUrl', 'status'],
         },
       ],
       order: [['createdAt', 'DESC']],
@@ -156,21 +140,22 @@ export class ApplicationService {
    * 获取活动的已通过成员列表
    */
   async getApprovedParticipants(activityId: string) {
-    const participants = await Participation.findAll({
+    const applications = await Application.findAll({
       where: {
         activityId,
-        status: 'joined',
+        status: 'approved',
       },
       include: [
         {
           model: User,
+          as: 'applicant',
           attributes: ['id', 'nickname', 'avatarUrl', 'hikingLevel'],
         },
       ],
-      order: [['joinedAt', 'ASC']],
+      order: [['createdAt', 'ASC']],
     })
 
-    return participants
+    return applications
   }
 }
 

@@ -99,7 +99,7 @@ export class ApplicationController {
           title: app.Activity.title,
           location: app.Activity.location,
           start_time: app.Activity.startTime,
-          cover_image: app.Activity.coverImage,
+          cover_image: app.Activity.coverImageUrl,
           status: app.Activity.status,
         }
         : null,
@@ -117,16 +117,16 @@ export class ApplicationController {
 
     const participants = await ApplicationService.getApprovedParticipants(activityId)
 
-    const data = participants.map((p: any) => ({
-      participation_id: p.id,
-      user_id: p.userId,
-      joined_at: p.joinedAt,
-      user: p.User
+    const data = participants.map((app: any) => ({
+      application_id: app.id,
+      user_id: app.userId,
+      approved_at: app.reviewedAt,
+      user: app.applicant
         ? {
-          user_id: p.User.id,
-          nickname: p.User.nickname,
-          avatar_url: p.User.avatarUrl,
-          hiking_level: p.User.hikingLevel,
+          user_id: app.applicant.id,
+          nickname: app.applicant.nickname,
+          avatar_url: app.applicant.avatarUrl,
+          hiking_level: app.applicant.hikingLevel,
         }
         : null,
     }))

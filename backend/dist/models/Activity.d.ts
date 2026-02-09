@@ -11,9 +11,7 @@ export interface ActivityAttributes {
     longitude?: number;
     startTime: Date;
     endTime: Date;
-    distance?: number;
     difficulty: 'easy' | 'moderate' | 'hard';
-    type?: string;
     status: 'pending' | 'approved' | 'ongoing' | 'completed' | 'cancelled';
     routeDescription?: string;
     equipmentRequired?: string;
@@ -32,9 +30,7 @@ export declare class Activity extends Model<ActivityAttributes> implements Activ
     longitude: number | undefined;
     startTime: Date;
     endTime: Date;
-    distance: number | undefined;
     difficulty: 'easy' | 'moderate' | 'hard';
-    type: string | undefined;
     status: 'pending' | 'approved' | 'ongoing' | 'completed' | 'cancelled';
     routeDescription: string | undefined;
     equipmentRequired: string | undefined;

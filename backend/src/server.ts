@@ -22,6 +22,7 @@ console.log('[Server] PORT:', process.env.PORT);
 
 // 导入数据库配置
 import { pool, testConnection } from './config/database';
+import { initializeModels, testSequelizeConnection } from './config/sequelize';
 
 // 导入路由
 import authRoutes from './routes/authRoutes';
@@ -119,6 +120,12 @@ app.use(errorHandler);
 // 启动服务器
 const startServer = async () => {
   try {
+    // 初始化Sequelize模型
+    initializeModels();
+
+    // 测试Sequelize连接
+    await testSequelizeConnection();
+
     // 测试数据库连接
     const isConnected = await testConnection();
 
