@@ -4,7 +4,7 @@
  * 任务编号: T0.5
  */
 
-import { request } from '../http'
+import request from '../http'
 import type { ApiResponse, ApiOptions } from './types'
 
 class ApiService {
