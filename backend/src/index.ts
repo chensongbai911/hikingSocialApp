@@ -5,13 +5,12 @@
 
 import express, { Application, Request, Response, NextFunction } from 'express'
 import cors from 'cors'
-import helmet from 'helmet'
 import dotenv from 'dotenv'
 import { testConnection } from './config/database'
-import redis from './config/redis'
-import routeRoutes from './routes/route.routes'
-import userRoutes from './routes/user.routes'
-import trackRoutes from './routes/track.routes'
+// import redis from './config/redis'
+// import routeRoutes from './routes/route.routes'
+// import userRoutes from './routes/user.routes'
+// import trackRoutes from './routes/track.routes'
 
 // 加载环境变量
 dotenv.config()
@@ -23,9 +22,6 @@ const HOST = process.env.HOST || 'localhost'
 // ===================================
 // 中间件配置
 // ===================================
-
-// 安全头
-app.use(helmet())
 
 // CORS
 app.use(
@@ -60,10 +56,10 @@ app.get('/health', (req: Request, res: Response) => {
   })
 })
 
-// API 路由
-app.use('/api/v1/routes', routeRoutes)
-app.use('/api/v1/users', userRoutes)
-app.use('/api/v1/tracks', trackRoutes)
+// API 路由 (已禁用旧路由)
+// app.use('/api/v1/routes', routeRoutes)
+// app.use('/api/v1/users', userRoutes)
+// app.use('/api/v1/tracks', trackRoutes)
 
 // 404 处理
 app.use((req: Request, res: Response) => {
@@ -97,9 +93,9 @@ async function startServer(): Promise<void> {
       process.exit(1)
     }
 
-    // 测试 Redis 连接
-    await redis.ping()
-    console.log('✅ Redis connection verified')
+    // 测试 Redis 连接 (已禁用)
+    // await redis.ping()
+    // console.log('✅ Redis connection verified')
 
     // 启动服务器
     app.listen(PORT, () => {

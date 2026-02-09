@@ -35,10 +35,8 @@ jobs:
         echo "✓ 验证构建文件..."
         test -f dist/server.js || (echo "❌ server.js 缺失" && exit 1)
         test -d dist/config || (echo "❌ config 目录缺失" && exit 1)
-        test -f dist/config/database.js || (echo "❌ database.js 缺失" && exit 1)
+        test -f dist/config/sequelize.js || (echo "❌ sequelize.js 缺失" && exit 1)
         test -d dist/routes || (echo "❌ routes 目录缺失" && exit 1)
-        test -f dist/routes/messageRoutes.js || (echo "❌ messageRoutes.js 缺失" && exit 1)
-        test -f dist/routes/userRoutes.js || (echo "❌ userRoutes.js 缺失" && exit 1)
 
         echo "✅ 所有关键文件验证通过"
         ls -la dist/

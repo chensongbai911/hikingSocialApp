@@ -45,18 +45,6 @@ export function initializeModels() {
   ActivityPhoto.initialize(sequelize)
   Participation.initialize(sequelize)
 
-  // 设置模型关联
-  User.associate?.()
-  Activity.associate?.()
-  Application.associate?.()
-  Friendship.associate?.()
-  Conversation.associate?.()
-  Message.associate?.()
-  UserPreference.associate?.()
-  UserPhoto.associate?.()
-  ActivityPhoto.associate?.()
-  Participation.associate?.()
-
   console.log('✅ All Sequelize models initialized')
 }
 

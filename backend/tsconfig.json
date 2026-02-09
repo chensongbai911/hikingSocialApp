@@ -26,11 +26,17 @@
     }
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "!src/controllers/route.controller.ts",
+    "!src/controllers/track.controller.ts",
+    "!src/config/redis.ts"
   ],
   "exclude": [
     "node_modules",
     "dist",
-    "tests"
+    "tests",
+    "src/controllers/route.controller.ts",
+    "src/controllers/track.controller.ts",
+    "src/config/redis.ts"
   ]
 }

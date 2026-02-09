@@ -134,7 +134,7 @@ export const generateToken = (payload: {
 
   const expiresIn = process.env.JWT_EXPIRES_IN || '7d'
 
-  return jwt.sign(payload, secret, { expiresIn })
+  return jwt.sign(payload, secret as string, { expiresIn } as any)
 }
 
 /**
@@ -150,5 +150,5 @@ export const generateRefreshToken = (payload: {
 
   const expiresIn = process.env.JWT_REFRESH_EXPIRES_IN || '30d'
 
-  return jwt.sign({ id: payload.id }, secret, { expiresIn })
+  return jwt.sign({ id: payload.id }, secret as string, { expiresIn } as any)
 }

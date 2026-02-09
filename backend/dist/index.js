@@ -9,13 +9,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
-const helmet_1 = __importDefault(require("helmet"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const database_1 = require("./config/database");
-const redis_1 = __importDefault(require("./config/redis"));
-const route_routes_1 = __importDefault(require("./routes/route.routes"));
-const user_routes_1 = __importDefault(require("./routes/user.routes"));
-const track_routes_1 = __importDefault(require("./routes/track.routes"));
+// import redis from './config/redis'
+// import routeRoutes from './routes/route.routes'
+// import userRoutes from './routes/user.routes'
+// import trackRoutes from './routes/track.routes'
 // 加载环境变量
 dotenv_1.default.config();
 const app = (0, express_1.default)();
@@ -24,8 +23,6 @@ const HOST = process.env.HOST || 'localhost';
 // ===================================
 // 中间件配置
 // ===================================
-// 安全头
-app.use((0, helmet_1.default)());
 // CORS
 app.use((0, cors_1.default)({
     origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
@@ -52,10 +49,10 @@ app.get('/health', (req, res) => {
         uptime: process.uptime(),
     });
 });
-// API 路由
-app.use('/api/v1/routes', route_routes_1.default);
-app.use('/api/v1/users', user_routes_1.default);
-app.use('/api/v1/tracks', track_routes_1.default);
+// API 路由 (已禁用旧路由)
+// app.use('/api/v1/routes', routeRoutes)
+// app.use('/api/v1/users', userRoutes)
+// app.use('/api/v1/tracks', trackRoutes)
 // 404 处理
 app.use((req, res) => {
     res.status(404).json({
@@ -84,9 +81,9 @@ async function startServer() {
             console.error('❌ Failed to connect to database');
             process.exit(1);
         }
-        // 测试 Redis 连接
-        await redis_1.default.ping();
-        console.log('✅ Redis connection verified');
+        // 测试 Redis 连接 (已禁用)
+        // await redis.ping()
+        // console.log('✅ Redis connection verified')
         // 启动服务器
         app.listen(PORT, () => {
             console.log('\n' + '='.repeat(50));

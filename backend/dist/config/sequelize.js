@@ -58,17 +58,6 @@ function initializeModels() {
     UserPhoto_1.UserPhoto.initialize(exports.sequelize);
     ActivityPhoto_1.ActivityPhoto.initialize(exports.sequelize);
     Participation_1.Participation.initialize(exports.sequelize);
-    // 设置模型关联
-    User_1.User.associate?.();
-    Activity_1.Activity.associate?.();
-    Application_1.Application.associate?.();
-    Friendship_1.Friendship.associate?.();
-    Conversation_1.Conversation.associate?.();
-    Message_1.Message.associate?.();
-    UserPreference_1.UserPreference.associate?.();
-    UserPhoto_1.UserPhoto.associate?.();
-    ActivityPhoto_1.ActivityPhoto.associate?.();
-    Participation_1.Participation.associate?.();
     console.log('✅ All Sequelize models initialized');
 }
 // 测试数据库连接
