@@ -17,7 +17,7 @@ const userStore = useUserStore()
 const route = useRoute()
 
 // 不需要显示TabBar的页面列表
-const noTabBarPages = ['/login', '/register', '/chat']
+const noTabBarPages = ['/login', '/register', '/chat', '/create-activity']
 
 // 判断是否应该显示TabBar
 const shouldShowTabBar = computed(() => {
