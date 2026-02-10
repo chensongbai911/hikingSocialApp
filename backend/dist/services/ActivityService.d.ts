@@ -15,6 +15,17 @@ export interface Activity {
     status: 'pending' | 'approved' | 'ongoing' | 'completed' | 'cancelled' | 'recruiting';
     route_description: string | null;
     equipment_required: string | null;
+    distance?: number;
+    elevation_gain?: number;
+    elevation_loss?: number;
+    max_elevation?: number;
+    min_elevation?: number;
+    meeting_point?: string;
+    estimated_duration?: number;
+    highlights?: string;
+    precautions?: string;
+    weather_tips?: string;
+    best_season?: string;
     created_at: Date;
     updated_at: Date;
     deleted_at: Date | null;

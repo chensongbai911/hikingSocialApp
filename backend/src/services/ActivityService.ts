@@ -1,6 +1,7 @@
 import { pool } from '../config/database';
 import { RowDataPacket, ResultSetHeader } from 'mysql2/promise';
 import { BusinessErrorCode } from '../types/api.types';
+import { DiscoveryService } from './DiscoveryService';
 
 // 类型定义
 export interface Activity {
@@ -20,6 +21,18 @@ export interface Activity {
   status: 'pending' | 'approved' | 'ongoing' | 'completed' | 'cancelled' | 'recruiting';
   route_description: string | null;
   equipment_required: string | null;
+  // 扩展字段
+  distance?: number; // 距离(km)
+  elevation_gain?: number; // 爬升(m)
+  elevation_loss?: number; // 下降(m)
+  max_elevation?: number; // 最高海拔(m)
+  min_elevation?: number; // 最低海拔(m)
+  meeting_point?: string; // 集合地点
+  estimated_duration?: number; // 预计时长(分钟)
+  highlights?: string; // 活动亮点
+  precautions?: string; // 注意事项
+  weather_tips?: string; // 天气提示
+  best_season?: string; // 最佳季节
   created_at: Date;
   updated_at: Date;
   deleted_at: Date | null;
@@ -212,6 +225,16 @@ export class ActivityService {
    * 获取活动详情
    */
   async getActivityById(activityId: string, currentUserId?: string): Promise<ActivityWithCreator> {
+    // 首先检查是否为 preset 活动
+    if (activityId.startsWith('preset-activity-')) {
+      const discoveryService = new DiscoveryService();
+      const presetActivities = discoveryService.getPresetActivities();
+      const presetActivity = presetActivities.find((a) => a.id === activityId);
+      if (presetActivity) {
+        return presetActivity;
+      }
+    }
+
     const [activities] = await pool.query<RowDataPacket[]>(
       `SELECT
         a.*,

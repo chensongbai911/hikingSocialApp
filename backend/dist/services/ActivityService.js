@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.activityService = exports.ActivityService = void 0;
 const database_1 = require("../config/database");
 const api_types_1 = require("../types/api.types");
+const DiscoveryService_1 = require("./DiscoveryService");
 class ActivityService {
     /**
      * 生成活动ID
@@ -102,6 +103,15 @@ class ActivityService {
      * 获取活动详情
      */
     async getActivityById(activityId, currentUserId) {
+        // 首先检查是否为 preset 活动
+        if (activityId.startsWith('preset-activity-')) {
+            const discoveryService = new DiscoveryService_1.DiscoveryService();
+            const presetActivities = discoveryService.getPresetActivities();
+            const presetActivity = presetActivities.find((a) => a.id === activityId);
+            if (presetActivity) {
+                return presetActivity;
+            }
+        }
         const [activities] = await database_1.pool.query(`SELECT
         a.*,
         u.id as creator_id,
