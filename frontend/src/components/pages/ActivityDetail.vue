@@ -28,7 +28,7 @@
     </div>
 
     <!-- 内容区域 -->
-    <div class="flex-1 overflow-y-auto">
+    <div class="flex-1 overflow-y-auto pb-24">
       <!-- 活动封面图 -->
       <div class="relative">
         <img :src="activity.coverImage" :alt="activity.title" class="w-full h-64 object-cover" />

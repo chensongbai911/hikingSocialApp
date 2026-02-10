@@ -324,7 +324,7 @@ export class ActivityController {
 
       const participation = await activityService.joinActivity(id, userId);
 
-      return created(res, participation, '成功加入活动');
+      return created(res, { participation_id: participation.id }, '成功加入活动');
     } catch (error: any) {
       console.error('Join activity error:', error);
 

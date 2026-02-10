@@ -1,7 +1,7 @@
 <template>
   <div class="offline-map min-h-screen bg-gray-50">
     <!-- 顶部导航栏 -->
-    <div class="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
+    <div class="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 safe-area-inset-top">
       <div class="flex items-center justify-between px-4 h-14">
         <button @click="$router.back()" class="p-2">
           <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">

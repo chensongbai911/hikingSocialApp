@@ -260,7 +260,7 @@ class ActivityController {
                 return (0, response_1.businessError)(res, api_types_1.BusinessErrorCode.UNAUTHORIZED, '未授权访问');
             }
             const participation = await ActivityService_1.activityService.joinActivity(id, userId);
-            return (0, response_1.created)(res, participation, '成功加入活动');
+            return (0, response_1.created)(res, { participation_id: participation.id }, '成功加入活动');
         }
         catch (error) {
             console.error('Join activity error:', error);
