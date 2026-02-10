@@ -7,7 +7,7 @@ target 'HikingSocialApp' do
 
   # Lynx Framework
   pod 'lynx', '~> 0.13.0'
-  
+
   # 高德地图
   pod 'AMap3DMap', '~> 9.7.0'
   pod 'AMapSearch', '~> 9.7.0'
