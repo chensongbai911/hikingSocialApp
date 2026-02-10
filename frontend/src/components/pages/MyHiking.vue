@@ -1,7 +1,7 @@
 <template>
-  <div class="my-hiking-page">
+  <div class="my-hiking-page h-screen flex flex-col overflow-hidden">
     <!-- 页面头部 -->
-    <div class="sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm">
+    <div class="sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm flex-shrink-0">
       <div class="px-4 py-4">
         <h1 class="text-2xl font-bold text-gray-800 text-center">徒步记录</h1>
       </div>
@@ -38,7 +38,7 @@
     </div>
 
     <!-- 内容区域 -->
-    <div class="px-4 py-4 pb-20">
+    <div class="flex-1 overflow-y-auto px-4 py-4 pb-20">
       <!-- 我加入的活动 -->
       <div v-if="activeTab === 'joined'">
         <div v-if="joinedActivities.length > 0" class="space-y-4">

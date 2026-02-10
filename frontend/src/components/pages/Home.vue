@@ -303,31 +303,27 @@ const joinActivity = async (e: Event, activityId: string) => {
 
   try {
     joiningActivityId.value = activityId
-    const response = await api.post(`/api/v1/activities/${activityId}/join`, {})
+    // 使用 store 中的 joinActivity 方法
+    await activityStore.joinActivity(activityId)
 
-    if (response.code === 0 || response.code === 200) {
-      // 加入成功，更新参与人数
-      const activity = recommendedActivities.value.find(a => a.id === activityId)
-      if (activity) {
-        activity.participant_count = (activity.participant_count || 0) + 1
-        activity.is_joined = true
-      }
-
-      // 显示成功消息
-      joinSuccessMessage.value = '成功加入活动！'
-      setTimeout(() => {
-        joinSuccessMessage.value = ''
-      }, 3000)
-
-      console.log('成功加入活动:', activityId)
-    } else {
-      console.error('加入活动失败:', response.message)
-      alert(response.message || '加入活动失败，请重试')
+    // 加入成功，更新参与人数
+    const activity = recommendedActivities.value.find(a => a.id === activityId)
+    if (activity) {
+      activity.participant_count = (activity.participant_count || 0) + 1
+      activity.is_joined = true
     }
+
+    // 显示成功消息
+    joinSuccessMessage.value = '成功加入活动！'
+    setTimeout(() => {
+      joinSuccessMessage.value = ''
+    }, 3000)
+
+    console.log('成功加入活动:', activityId)
   } catch (error: any) {
     console.error('加入活动异常:', error)
-    const errorMsg = error.response?.data?.message || '加入活动失败，请检查网络连接'
-    alert(errorMsg)
+    const errorMsg = error.message || '加入活动失败，请检查网络连接'
+    toast.error(errorMsg)
   } finally {
     joiningActivityId.value = null
   }

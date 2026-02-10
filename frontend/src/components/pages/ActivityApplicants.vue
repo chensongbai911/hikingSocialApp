@@ -1,7 +1,7 @@
 <template>
-  <div class="activity-applicants-page min-h-screen bg-gray-50">
+  <div class="activity-applicants-page min-h-screen bg-gray-50 flex flex-col overflow-hidden">
     <!-- 顶部导航栏 -->
-    <div class="bg-white border-b border-gray-100 sticky top-0 z-10">
+    <div class="bg-white border-b border-gray-100 sticky top-0 z-10 flex-shrink-0">
       <div class="flex items-center justify-between px-4 py-4">
         <button @click="goBack" class="w-10 h-10 flex items-center justify-center">
           <span class="text-2xl">←</span>
@@ -18,7 +18,7 @@
     </div>
 
     <!-- 申请者列表 -->
-    <div v-else-if="applicants.length > 0" class="p-4 space-y-3">
+    <div v-else-if="applicants.length > 0" class="flex-1 overflow-y-auto p-4 space-y-3">
       <div v-for="applicant in applicants" :key="applicant.user.id" class="bg-white rounded-2xl p-4 shadow-sm">
         <div class="flex items-center justify-between">
           <!-- 用户信息 -->

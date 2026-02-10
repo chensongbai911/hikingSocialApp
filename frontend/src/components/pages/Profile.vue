@@ -1,7 +1,7 @@
 <template>
-  <div class="profile-page">
+  <div class="profile-page h-screen flex flex-col overflow-hidden">
     <!-- 页面头部 -->
-    <div class="sticky top-0 z-10 bg-white border-b border-gray-200">
+    <div class="sticky top-0 z-10 bg-white border-b border-gray-200 flex-shrink-0">
       <div class="flex items-center justify-between px-4 py-4">
         <button @click="goBack" class="p-2">
           <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
@@ -19,7 +19,7 @@
       </div>
     </div>
 
-    <div class="px-4 py-6 pb-20">
+    <div class="flex-1 overflow-y-auto px-4 py-6 pb-20">
       <!-- 头像和基本信息 -->
       <div class="flex flex-col items-center mb-6">
         <div class="relative mb-4">

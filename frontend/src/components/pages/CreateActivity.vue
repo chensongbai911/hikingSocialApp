@@ -1,7 +1,7 @@
 <template>
-  <div class="create-activity-page min-h-screen bg-gray-50 pb-32">
+  <div class="create-activity-page min-h-screen bg-gray-50 pb-32 flex flex-col overflow-hidden">
     <!-- 顶部导航栏 -->
-    <div class="bg-white border-b border-gray-100 sticky top-0 z-10">
+    <div class="bg-white border-b border-gray-100 sticky top-0 z-10 flex-shrink-0">
       <div class="flex items-center justify-center relative px-4 py-4">
         <button @click="goBack" class="absolute left-4 w-10 h-10 flex items-center justify-center">
           <span class="text-2xl">←</span>
@@ -13,7 +13,7 @@
     </div>
 
     <!-- 表单内容 -->
-    <div class="px-4 py-6 space-y-4">
+    <div class="flex-1 overflow-y-auto px-4 py-6 space-y-4">
       <!-- 活动名称 -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-2">活动名称</label>

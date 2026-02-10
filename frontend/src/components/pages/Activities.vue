@@ -1,7 +1,7 @@
 <template>
-  <div class="activities-page min-h-screen bg-gray-50 pb-24">
+  <div class="activities-page min-h-screen bg-gray-50 pb-24 flex flex-col overflow-hidden">
     <!-- 页面头部 -->
-    <div class="bg-white pt-6 pb-4 px-4 border-b border-gray-100 sticky top-0 z-10">
+    <div class="bg-white pt-6 pb-4 px-4 border-b border-gray-100 sticky top-0 z-10 flex-shrink-0">
       <div class="container mx-auto">
         <div class="flex items-center justify-between mb-4">
           <button @click="router.back()" class="p-2 hover:bg-gray-100 rounded-full">
@@ -26,7 +26,7 @@
     </div>
 
     <!-- 活动列表 -->
-    <div class="px-4 py-4">
+    <div class="flex-1 overflow-y-auto px-4 py-4">
       <!-- 加载状态 -->
       <div v-if="loading && activities.length === 0" class="space-y-4">
         <div v-for="i in 5" :key="i" class="bg-white rounded-2xl p-4 animate-pulse">

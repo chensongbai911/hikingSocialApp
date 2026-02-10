@@ -1,7 +1,7 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="min-h-screen bg-gray-50 flex flex-col overflow-hidden">
     <!-- 顶部导航栏 -->
-    <div class="bg-white p-4 sticky top-0 z-10 border-b border-gray-100">
+    <div class="bg-white p-4 sticky top-0 z-10 border-b border-gray-100 flex-shrink-0">
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-3">
           <button @click="router.back()" class="p-2 -ml-2">
@@ -21,7 +21,7 @@
     </div>
 
     <!-- 提醒列表 -->
-    <div class="p-4 space-y-4">
+    <div class="flex-1 overflow-y-auto p-4 space-y-4">
       <div
         v-for="reminder in reminders"
         :key="reminder.id"

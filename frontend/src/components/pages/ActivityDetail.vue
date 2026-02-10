@@ -1,5 +1,5 @@
 <template>
-  <div class="fixed inset-0 bg-white flex flex-col z-40">
+  <div class="fixed inset-0 bg-white flex flex-col z-40 overflow-hidden">
     <!-- 顶部导航栏 -->
     <div class="flex-shrink-0 bg-white border-b border-gray-100">
       <div class="flex items-center justify-between px-4 py-3">
@@ -28,7 +28,7 @@
     </div>
 
     <!-- 内容区域 -->
-    <div class="flex-1 overflow-y-auto pb-24">
+    <div class="flex-1 overflow-y-auto pb-24 min-h-0">
       <!-- 活动封面图 -->
       <div class="relative">
         <img :src="activity.coverImage" :alt="activity.title" class="w-full h-64 object-cover" />

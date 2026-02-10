@@ -1,7 +1,7 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="min-h-screen bg-gray-50 flex flex-col overflow-hidden">
     <!-- 顶部导航栏 -->
-    <div class="bg-white p-4 sticky top-0 z-10 border-b border-gray-100">
+    <div class="bg-white p-4 sticky top-0 z-10 border-b border-gray-100 flex-shrink-0">
       <div class="flex items-center space-x-3">
         <button @click="router.back()" class="p-2 -ml-2">
           <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -13,7 +13,7 @@
     </div>
 
     <!-- 通知列表 -->
-    <div class="p-4 space-y-4">
+    <div class="flex-1 overflow-y-auto p-4 space-y-4">
       <div
         v-for="notification in notifications"
         :key="notification.id"

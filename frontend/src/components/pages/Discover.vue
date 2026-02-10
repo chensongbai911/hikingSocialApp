@@ -1,5 +1,5 @@
 <template>
-  <div class="discover-page min-h-screen bg-white pb-24">
+  <div class="discover-page min-h-screen bg-white pb-24 flex flex-col overflow-hidden">
     <!-- 页面头部 -->
     <div class="bg-white pt-6 pb-4 px-4 border-b border-gray-100 sticky top-0 z-10">
       <div class="container mx-auto">
