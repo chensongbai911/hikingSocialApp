@@ -34,7 +34,9 @@ class WebSocketService {
       return
     }
 
-    const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:3000'
+    // 根据当前协议自动选择 ws 或 wss
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    const wsUrl = import.meta.env.VITE_WS_URL || `${protocol}//${window.location.host}`
     const url = `${wsUrl}?token=${token}`
 
     try {
@@ -44,7 +46,7 @@ class WebSocketService {
         console.log('WebSocket connected')
         this.reconnectAttempts = 0
         this.startHeartbeat()
-        toast.success('实时通知已连接')
+        // 静默连接成功，不显示 toast
       }
 
       this.ws.onmessage = (event) => {
@@ -58,6 +60,7 @@ class WebSocketService {
 
       this.ws.onerror = (error) => {
         console.error('WebSocket error:', error)
+        // 静默处理错误，不显示 toast
       }
 
       this.ws.onclose = () => {
@@ -67,6 +70,7 @@ class WebSocketService {
       }
     } catch (error) {
       console.error('Failed to create WebSocket:', error)
+      // 静默处理错误，不显示 toast
     }
   }
 
@@ -173,7 +177,7 @@ class WebSocketService {
   private attemptReconnect(token: string): void {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
       console.error('Max reconnection attempts reached')
-      toast.error('实时通知连接失败，请刷新页面重试')
+      // 静默失败，不显示 toast，避免影响用户体验
       return
     }
 

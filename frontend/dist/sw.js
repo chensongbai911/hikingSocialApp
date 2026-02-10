@@ -66,11 +66,11 @@ self.addEventListener('fetch', (event) => {
             }
             // 返回离线提示
             return new Response(
-              JSON.stringify({ 
-                code: 503, 
-                message: '网络连接失败，请检查网络设置' 
+              JSON.stringify({
+                code: 503,
+                message: '网络连接失败，请检查网络设置'
               }),
-              { 
+              {
                 headers: { 'Content-Type': 'application/json' },
                 status: 503
               }
@@ -91,8 +91,8 @@ self.addEventListener('fetch', (event) => {
       return fetch(request).then((response) => {
         // 只缓存成功的 GET 请求
         if (
-          !response || 
-          response.status !== 200 || 
+          !response ||
+          response.status !== 200 ||
           request.method !== 'GET'
         ) {
           return response;
@@ -116,7 +116,7 @@ self.addEventListener('sync', (event) => {
   }
 });
 
-async function syncActivities() {
+async function syncActivities () {
   try {
     // 同步离线期间创建的活动
     const offlineData = await getOfflineData();
@@ -135,12 +135,12 @@ async function syncActivities() {
   }
 }
 
-async function getOfflineData() {
+async function getOfflineData () {
   // 从 IndexedDB 获取离线数据（简化版本）
   return [];
 }
 
-async function clearOfflineData() {
+async function clearOfflineData () {
   // 清空 IndexedDB 离线数据（简化版本）
 }
 

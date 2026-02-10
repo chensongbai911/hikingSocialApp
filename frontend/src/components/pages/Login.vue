@@ -89,17 +89,19 @@ const handleLogin = async () => {
     const success = await userStore.login(form.value)
 
     if (success) {
-      // 初始化WebSocket连接
-      initWebSocket()
       toast.success('登录成功')
 
       // 检查是否为新用户
       const isNewUser = sessionStorage.getItem('isNewUser')
       if (isNewUser === 'true') {
         sessionStorage.removeItem('isNewUser')
+        // 先跳转，再初始化 WebSocket（异步，不阻塞）
         router.push('/user-guide')
+        setTimeout(() => initWebSocket(), 500)
       } else {
+        // 先跳转，再初始化 WebSocket（异步，不阻塞）
         router.push('/discover')
+        setTimeout(() => initWebSocket(), 500)
       }
     } else {
       errorMsg.value = userStore.error || '登录失败，请检查邮箱和密码'
