@@ -157,9 +157,9 @@ const loadActivities = async (page: number = 1) => {
       }
     })
 
-    if (response.data) {
-      const newActivities = response.data.data?.items || []
-      total.value = response.data.data?.pagination?.total || 0
+    if (response?.data?.items) {
+      const newActivities = response.data.items || []
+      total.value = response.data.pagination?.total || 0
 
       if (page === 1) {
         activities.value = newActivities

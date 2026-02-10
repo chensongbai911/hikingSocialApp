@@ -217,8 +217,12 @@ const loadRecommendedActivities = async () => {
     const response = await api.get('/discovery/activities', {
       params: { page: 1, page_size: 5 }
     })
-    if (response.data && response.data.data && response.data.data.items) {
-      recommendedActivities.value = response.data.data.items
+    console.log('推荐活动响应:', response)
+    if (response?.data?.items) {
+      recommendedActivities.value = response.data.items
+      console.log('加载成功,数量:', recommendedActivities.value.length)
+    } else {
+      console.warn('响应数据结构不合预期:', response)
     }
   } catch (error) {
     console.error('加载推荐活动失败:', error)
@@ -233,8 +237,12 @@ const loadRecommendedUsers = async () => {
     const response = await api.get('/discovery/users', {
       params: { page: 1, page_size: 10 }
     })
-    if (response.data.data?.items) {
-      recommendedUsers.value = response.data.data.items
+    console.log('推荐用户响应:', response)
+    if (response?.data?.items) {
+      recommendedUsers.value = response.data.items
+      console.log('加载成功,数量:', recommendedUsers.value.length)
+    } else {
+      console.warn('响应数据结构不合预期:', response)
     }
   } catch (error) {
     console.error('加载推荐用户失败:', error)

@@ -11,6 +11,8 @@ export interface UserRecommendation {
     photo_count: number;
 }
 export declare class DiscoveryService {
+    private getPresetActivities;
+    private getPresetUsers;
     /**
      * 获取推荐活动列表
      * 基于用户偏好、历史参与等推荐合适的活动

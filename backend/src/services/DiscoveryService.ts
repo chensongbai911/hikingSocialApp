@@ -15,6 +15,211 @@ export interface UserRecommendation {
 }
 
 export class DiscoveryService {
+  private getPresetActivities(): ActivityWithCreator[] {
+    const now = new Date();
+    return [
+      {
+        id: 'preset-activity-1',
+        creator_id: 'preset-user-1',
+        title: '香山轻徒步小队',
+        description: '适合新手的轻松路线，沿途拍照打卡。',
+        cover_image_url: 'https://picsum.photos/800/600?random=preset-activity-1',
+        location: '北京市海淀区·香山',
+        latitude: 39.9928,
+        longitude: 116.1887,
+        start_time: new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000),
+        end_time: new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000),
+        difficulty: 'easy',
+        max_participants: 12,
+        status: 'approved',
+        route_description: '山脚集合，沿木栈道上山，山顶补给。',
+        equipment_required: '轻便登山鞋、饮水、帽子',
+        created_at: now,
+        updated_at: now,
+        deleted_at: null,
+        creator: {
+          id: 'preset-user-1',
+          nickname: '小禾',
+          avatar_url: 'https://picsum.photos/200/200?random=preset-user-1',
+          hiking_level: 'beginner'
+        },
+        participant_count: 5,
+        is_joined: false
+      },
+      {
+        id: 'preset-activity-2',
+        creator_id: 'preset-user-2',
+        title: '龙泉寺日落徒步',
+        description: '傍晚出发，拍夕阳与城市夜景。',
+        cover_image_url: 'https://picsum.photos/800/600?random=preset-activity-2',
+        location: '北京市海淀区·龙泉寺',
+        latitude: 40.0321,
+        longitude: 116.1389,
+        start_time: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000),
+        end_time: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000),
+        difficulty: 'moderate',
+        max_participants: 10,
+        status: 'approved',
+        route_description: '寺庙集合，环线徒步约6公里。',
+        equipment_required: '登山鞋、头灯、饮水',
+        created_at: now,
+        updated_at: now,
+        deleted_at: null,
+        creator: {
+          id: 'preset-user-2',
+          nickname: '阿柒',
+          avatar_url: 'https://picsum.photos/200/200?random=preset-user-2',
+          hiking_level: 'intermediate'
+        },
+        participant_count: 7,
+        is_joined: false
+      },
+      {
+        id: 'preset-activity-3',
+        creator_id: 'preset-user-3',
+        title: '百望山晨练',
+        description: '清晨出发，轻松爬升。',
+        cover_image_url: 'https://picsum.photos/800/600?random=preset-activity-3',
+        location: '北京市海淀区·百望山',
+        latitude: 40.0155,
+        longitude: 116.2884,
+        start_time: new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000),
+        end_time: new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000),
+        difficulty: 'easy',
+        max_participants: 8,
+        status: 'approved',
+        route_description: '山脚集合，缓坡上山，山顶休息。',
+        equipment_required: '运动鞋、饮水',
+        created_at: now,
+        updated_at: now,
+        deleted_at: null,
+        creator: {
+          id: 'preset-user-3',
+          nickname: '暮山',
+          avatar_url: 'https://picsum.photos/200/200?random=preset-user-3',
+          hiking_level: 'beginner'
+        },
+        participant_count: 3,
+        is_joined: false
+      },
+      {
+        id: 'preset-activity-4',
+        creator_id: 'preset-user-4',
+        title: '西山林道挑战',
+        description: '中等强度，适合有基础的伙伴。',
+        cover_image_url: 'https://picsum.photos/800/600?random=preset-activity-4',
+        location: '北京市海淀区·西山森林公园',
+        latitude: 39.9665,
+        longitude: 116.2493,
+        start_time: new Date(now.getTime() + 4 * 24 * 60 * 60 * 1000),
+        end_time: new Date(now.getTime() + 4 * 24 * 60 * 60 * 1000 + 4 * 60 * 60 * 1000),
+        difficulty: 'moderate',
+        max_participants: 15,
+        status: 'approved',
+        route_description: '林道环线约10公里，补给点较少。',
+        equipment_required: '登山鞋、补给、雨具',
+        created_at: now,
+        updated_at: now,
+        deleted_at: null,
+        creator: {
+          id: 'preset-user-4',
+          nickname: '远行',
+          avatar_url: 'https://picsum.photos/200/200?random=preset-user-4',
+          hiking_level: 'intermediate'
+        },
+        participant_count: 9,
+        is_joined: false
+      },
+      {
+        id: 'preset-activity-5',
+        creator_id: 'preset-user-5',
+        title: '妙峰山进阶线',
+        description: '进阶路线，爬升较大，风景绝佳。',
+        cover_image_url: 'https://picsum.photos/800/600?random=preset-activity-5',
+        location: '北京市门头沟·妙峰山',
+        latitude: 39.9972,
+        longitude: 116.0653,
+        start_time: new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000),
+        end_time: new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000 + 5 * 60 * 60 * 1000),
+        difficulty: 'hard',
+        max_participants: 6,
+        status: 'approved',
+        route_description: '高爬升路线，注意节奏与补给。',
+        equipment_required: '登山鞋、登山杖、能量补给',
+        created_at: now,
+        updated_at: now,
+        deleted_at: null,
+        creator: {
+          id: 'preset-user-5',
+          nickname: '北冥',
+          avatar_url: 'https://picsum.photos/200/200?random=preset-user-5',
+          hiking_level: 'advanced'
+        },
+        participant_count: 2,
+        is_joined: false
+      }
+    ];
+  }
+
+  private getPresetUsers(): UserRecommendation[] {
+    return [
+      {
+        id: 'preset-user-1',
+        nickname: '小禾',
+        avatar_url: 'https://picsum.photos/200/200?random=preset-user-1',
+        gender: 'female',
+        age: 24,
+        bio: '周末徒步爱好者，喜欢轻松路线。',
+        hiking_level: 'beginner',
+        common_preferences: 3,
+        photo_count: 4
+      },
+      {
+        id: 'preset-user-2',
+        nickname: '阿柒',
+        avatar_url: 'https://picsum.photos/200/200?random=preset-user-2',
+        gender: 'male',
+        age: 27,
+        bio: '喜欢日落徒步和摄影。',
+        hiking_level: 'intermediate',
+        common_preferences: 4,
+        photo_count: 6
+      },
+      {
+        id: 'preset-user-3',
+        nickname: '暮山',
+        avatar_url: 'https://picsum.photos/200/200?random=preset-user-3',
+        gender: 'female',
+        age: 22,
+        bio: '清晨徒步，路线不长但风景好。',
+        hiking_level: 'beginner',
+        common_preferences: 2,
+        photo_count: 3
+      },
+      {
+        id: 'preset-user-4',
+        nickname: '远行',
+        avatar_url: 'https://picsum.photos/200/200?random=preset-user-4',
+        gender: 'male',
+        age: 30,
+        bio: '中强度徒步爱好者，擅长路线规划。',
+        hiking_level: 'intermediate',
+        common_preferences: 5,
+        photo_count: 7
+      },
+      {
+        id: 'preset-user-5',
+        nickname: '北冥',
+        avatar_url: 'https://picsum.photos/200/200?random=preset-user-5',
+        gender: 'other',
+        age: 31,
+        bio: '进阶路线，注重安全与装备。',
+        hiking_level: 'advanced',
+        common_preferences: 3,
+        photo_count: 5
+      }
+    ];
+  }
   /**
    * 获取推荐活动列表
    * 基于用户偏好、历史参与等推荐合适的活动
@@ -104,6 +309,11 @@ export class DiscoveryService {
       is_joined: false
     }));
 
+    if (formattedActivities.length === 0 && page === 1) {
+      const presetActivities = this.getPresetActivities();
+      return { activities: presetActivities, total: presetActivities.length };
+    }
+
     return { activities: formattedActivities, total };
   }
 
@@ -157,20 +367,24 @@ export class DiscoveryService {
       [userId, userId, pageSize, offset]
     );
 
-    return {
-      users: users.map((user: any) => ({
-        id: user.id,
-        nickname: user.nickname,
-        avatar_url: user.avatar_url,
-        gender: user.gender,
-        age: user.age,
-        bio: user.bio,
-        hiking_level: user.hiking_level,
-        common_preferences: user.common_preferences,
-        photo_count: user.photo_count
-      })),
-      total
-    };
+    const formattedUsers = users.map((user: any) => ({
+      id: user.id,
+      nickname: user.nickname,
+      avatar_url: user.avatar_url,
+      gender: user.gender,
+      age: user.age,
+      bio: user.bio,
+      hiking_level: user.hiking_level,
+      common_preferences: user.common_preferences,
+      photo_count: user.photo_count
+    }));
+
+    if (formattedUsers.length === 0 && page === 1) {
+      const presetUsers = this.getPresetUsers();
+      return { users: presetUsers, total: presetUsers.length };
+    }
+
+    return { users: formattedUsers, total };
   }
 
   /**
