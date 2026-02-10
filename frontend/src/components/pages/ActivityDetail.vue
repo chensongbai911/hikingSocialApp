@@ -253,25 +253,55 @@
 
         <!-- 活动简介 -->
         <div class="bg-white rounded-2xl border border-gray-100 p-4" v-if="activity.description">
-          <h3 class="font-semibold text-gray-900 mb-3">活动简介</h3>
+          <h3 class="font-semibold text-gray-900 mb-3">📝 活动简介</h3>
           <p class="text-sm text-gray-600 leading-relaxed">{{ activity.description }}</p>
         </div>
 
-        <!-- 参与者 -->
-        <div
-          class="bg-white rounded-2xl border border-gray-100 p-4"
-          v-if="activity.participants && activity.participants.length > 0"
-        >
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="font-semibold text-gray-900">参与者</h3>
-            <span class="text-sm text-gray-500">{{ activity.participants.length }}人已报名</span>
+        <!-- 路线描述 -->
+        <div class="bg-white rounded-2xl border border-gray-100 p-4" v-if="activity.routeDescription">
+          <h3 class="font-semibold text-gray-900 mb-3">🗺️ 路线描述</h3>
+          <p class="text-sm text-gray-600 leading-relaxed">{{ activity.routeDescription }}</p>
+        </div>
+
+        <!-- 装备要求 -->
+        <div class="bg-white rounded-2xl border border-gray-100 p-4" v-if="activity.equipmentRequired">
+          <h3 class="font-semibold text-gray-900 mb-3">🎒 装备要求</h3>
+          <p class="text-sm text-gray-600 leading-relaxed">{{ activity.equipmentRequired }}</p>
+        </div>
+
+        <!-- 活动亮点 -->
+        <div class="bg-white rounded-2xl border border-gray-100 p-4" v-if="activity.highlights">
+          <h3 class="font-semibold text-gray-900 mb-3">✨ 活动亮点</h3>
+          <p class="text-sm text-gray-600 leading-relaxed">{{ activity.highlights }}</p>
+        </div>
+
+        <!-- 注意事项 -->
+        <div class="bg-white rounded-2xl border border-gray-100 p-4" v-if="activity.precautions">
+          <h3 class="font-semibold text-gray-900 mb-3">⚠️ 注意事项</h3>
+          <p class="text-sm text-gray-600 leading-relaxed">{{ activity.precautions }}</p>
+        </div>
+
+        <!-- 最佳季节 -->
+        <div class="bg-white rounded-2xl border border-gray-100 p-4" v-if="activity.bestSeason || activity.weatherTips">
+          <h3 class="font-semibold text-gray-900 mb-3">🌤️ 天气建议</h3>
+          <div class="space-y-2 text-sm text-gray-600">
+            <p v-if="activity.bestSeason"><span class="font-medium">最佳季节：</span>{{ activity.bestSeason }}</p>
+            <p v-if="activity.weatherTips"><span class="font-medium">温馨提示：</span>{{ activity.weatherTips }}</p>
           </div>
-          <div class="flex -space-x-2">
+        </div>
+
+        <!-- 参与者 -->
+        <div class="bg-white rounded-2xl border border-gray-100 p-4" v-if="activity.participantCount > 0">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-semibold text-gray-900">👥 参与者</h3>
+            <span class="text-sm text-gray-500">{{ activity.participantCount }}人已报名</span>
+          </div>
+          <div v-if="activity.participants && activity.participants.length > 0" class="flex -space-x-2">
             <img
               v-for="(participant, index) in activity.participants.slice(0, 5)"
               :key="index"
-              :src="participant.avatar"
-              :alt="participant.name"
+              :src="participant.avatar_url || '/default-avatar.png'"
+              :alt="participant.nickname"
               class="w-10 h-10 rounded-full border-2 border-white object-cover"
             />
             <div
@@ -280,6 +310,9 @@
             >
               +{{ activity.participants.length - 5 }}
             </div>
+          </div>
+          <div v-else class="text-sm text-gray-500">
+            已有 {{ activity.participantCount }} 人报名
           </div>
         </div>
       </div>
@@ -359,20 +392,25 @@
 
         <!-- 已发布状态：显示报名按钮 -->
         <button
-          v-else-if="!activity.isOrganizer"
+          v-else-if="!activity.isOrganizer && activity.id"
           @click="handleJoinActivity"
-          :disabled="activity.status === '已结束'"
+          :disabled="activity.status === '已结束' || loading"
           :class="[
             'flex-1 py-3 rounded-full font-semibold text-white transition-all',
             activity.isJoined
               ? 'bg-gray-400 hover:bg-gray-500'
               : activity.status === '已结束'
               ? 'bg-gray-300 cursor-not-allowed'
+              : loading
+              ? 'bg-gray-400 cursor-not-allowed'
               : 'bg-teal-500 hover:bg-teal-600',
           ]"
         >
           {{
-            activity.isJoined ? '已报名' : activity.status === '已结束' ? '活动已结束' : '立即报名'
+            loading ? '处理中...' :
+            activity.isJoined ? '已报名' :
+            activity.status === '已结束' ? '活动已结束' :
+            '立即报名'
           }}
         </button>
 
@@ -642,11 +680,11 @@ const activity = computed(() => {
   const current = activityStore.currentActivity
   if (!current) {
     return {
-      id: 0,
-      title: '加载中...',
-      coverImage: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800',
-      status: '加载中',
-      difficulty: '0',
+      id: '',
+      title: '',
+      coverImage: '',
+      status: '',
+      difficulty: 'moderate',
       distance: 0,
       elevationGain: 0,
       elevationLoss: 0,
@@ -660,28 +698,7 @@ const activity = computed(() => {
       isOrganizer: false,
       isFavorite: false,
       isPending: false,
-      elevationData: [
-        210,
-        280,
-        350,
-        420,
-        520,
-        650,
-        720,
-        780,
-        840,
-        800,
-        720,
-        650,
-        580,
-        520,
-        480,
-        420,
-        380,
-        340,
-        280,
-        210,
-      ],
+      elevationData: [],
     }
   }
 
@@ -701,48 +718,51 @@ const activity = computed(() => {
     statusText = '已取消'
   }
 
+  // 处理海拔数据
+  let elevationData = []
+  if (current.elevation_data && Array.isArray(current.elevation_data)) {
+    elevationData = current.elevation_data
+  } else if (current.min_elevation && current.max_elevation) {
+    // 如果没有完整的海拔数据，生成模拟数据
+    const min = current.min_elevation
+    const max = current.max_elevation
+    const points = 20
+    elevationData = Array.from({ length: points }, (_, i) => {
+      const progress = i / (points - 1)
+      // 生成符合实际的爬升曲线
+      const height = min + (max - min) * Math.sin(progress * Math.PI)
+      return Math.round(height)
+    })
+  }
+
   return {
-    id: parseInt(current.id),
-    title: current.title,
-    coverImage:
-      current.cover_image_url || 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800',
+    id: current.id,
+    title: current.title || '未命名活动',
+    coverImage: current.cover_image_url || 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800',
     status: statusText,
-    difficulty: current.difficulty || 'easy',
-    distance: current.distance || 12.5,
-    elevationGain: current.elevation_gain || 642,
-    elevationLoss: current.elevation_loss || 638,
-    maxElevation: current.max_elevation || 840,
-    minElevation: current.min_elevation || 210,
+    difficulty: current.difficulty || 'moderate',
+    distance: current.distance || 0,
+    elevationGain: current.elevation_gain || 0,
+    elevationLoss: current.elevation_loss || 0,
+    maxElevation: current.max_elevation || 0,
+    minElevation: current.min_elevation || 0,
     startTime: current.start_time,
-    meetingPoint: current.location,
+    meetingPoint: current.meeting_point || current.location || '待确定',
     description: current.description || '',
-    participants: [],
+    routeDescription: current.route_description || '',
+    equipmentRequired: current.equipment_required || '',
+    highlights: current.highlights || '',
+    precautions: current.precautions || '',
+    weatherTips: current.weather_tips || '',
+    bestSeason: current.best_season || '',
+    participants: current.participants || [],
     isJoined: current.is_joined || false,
     isOrganizer: current.creator_id === userStore.currentUser?.id,
     isFavorite: false,
     isPending: isPending,
-    elevationData: current.elevation_data || [
-      210,
-      280,
-      350,
-      420,
-      520,
-      650,
-      720,
-      780,
-      840,
-      800,
-      720,
-      650,
-      580,
-      520,
-      480,
-      420,
-      380,
-      340,
-      280,
-      210,
-    ],
+    elevationData: elevationData,
+    creator: current.creator || { nickname: '未知用户', avatar_url: '' },
+    participantCount: current.participant_count || 0,
   }
 })
 
@@ -992,9 +1012,16 @@ const handleJoinActivity = async () => {
   if (activity.value.isJoined) {
     showCancelJoinConfirm.value = true
   } else {
-    // 显示申请留言对话框
-    applyMessage.value = ''
-    showApplyMessageDialog.value = true
+    // 直接加入活动
+    try {
+      await activityStore.joinActivity(activityId)
+      toast.success('成功加入活动！')
+      // 重新加载活动详情
+      await activityStore.fetchActivityDetail(activityId)
+    } catch (error: any) {
+      console.error('加入活动失败:', error)
+      toast.error('加入活动失败: ' + (error.message || '请重试'))
+    }
   }
 }
 

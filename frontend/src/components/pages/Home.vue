@@ -1,5 +1,13 @@
 <template>
   <div class="home-page min-h-screen bg-gray-50 pb-20">
+    <!-- 成功提示 -->
+    <div
+      v-if="joinSuccessMessage"
+      class="fixed top-4 left-4 right-4 bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg z-50"
+    >
+      {{ joinSuccessMessage }}
+    </div>
+
     <!-- 顶部欢迎栏 -->
     <div class="bg-gradient-to-r from-teal-500 to-green-500 text-white">
       <div class="px-4 py-6">
@@ -127,9 +135,9 @@
               </div>
             </div>
 
-            <!-- 创建者和参与人数 -->
+          <!-- 创建者和参与人数 -->
             <div class="flex items-center justify-between pt-3 border-t border-gray-100">
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2 flex-1">
                 <img
                   :src="activity.creator.avatar_url || '/default-avatar.png'"
                   :alt="activity.creator.nickname"
@@ -137,9 +145,22 @@
                 />
                 <span class="text-xs text-gray-600">{{ activity.creator.nickname }}</span>
               </div>
-              <div class="flex items-center gap-1 text-xs text-gray-500">
-                <span>👥</span>
-                <span>{{ activity.participant_count || 0 }}人参加</span>
+              <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1 text-xs text-gray-500">
+                  <span>👥</span>
+                  <span>{{ activity.participant_count || 0 }}人</span>
+                </div>
+                <button
+                  v-if="!activity.is_joined"
+                  @click="joinActivity($event, activity.id)"
+                  :disabled="joiningActivityId === activity.id"
+                  class="px-3 py-1 bg-teal-500 text-white text-xs rounded-full hover:bg-teal-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
+                >
+                  {{ joiningActivityId === activity.id ? '加入中...' : '加入' }}
+                </button>
+                <span v-else class="px-3 py-1 bg-gray-200 text-gray-600 text-xs rounded-full">
+                  已加入
+                </span>
               </div>
             </div>
           </div>
@@ -201,6 +222,9 @@ const loading = ref(false)
 const recommendedActivities = ref<any[]>([])
 const recommendedUsers = ref<any[]>([])
 const unreadCount = ref(0)
+const currentActivityPage = ref(1)
+const joiningActivityId = ref<string | null>(null)
+const joinSuccessMessage = ref('')
 
 // 问候语
 const greeting = computed(() => {
@@ -215,7 +239,7 @@ const loadRecommendedActivities = async () => {
   try {
     loading.value = true
     const response = await api.get('/discovery/activities', {
-      params: { page: 1, page_size: 5 }
+      params: { page: currentActivityPage.value, page_size: 5 }
     })
     console.log('推荐活动响应:', response)
     if (response?.data?.items) {
@@ -262,7 +286,8 @@ const loadUnreadCount = async () => {
 }
 
 // 刷新推荐
-const refreshRecommended = () => {
+const refreshRecommended = async () => {
+  currentActivityPage.value = Math.floor(Math.random() * 5) + 1 // 随机跳转到1-5页
   loadRecommendedActivities()
   loadRecommendedUsers()
 }
@@ -270,6 +295,42 @@ const refreshRecommended = () => {
 // 查看活动详情
 const viewActivity = (id: string) => {
   router.push(`/activity/${id}`)
+}
+
+// 加入活动
+const joinActivity = async (e: Event, activityId: string) => {
+  e.stopPropagation() // 阻止冒泡触发查看详情
+
+  try {
+    joiningActivityId.value = activityId
+    const response = await api.post(`/api/v1/activities/${activityId}/join`, {})
+
+    if (response.code === 0 || response.code === 200) {
+      // 加入成功，更新参与人数
+      const activity = recommendedActivities.value.find(a => a.id === activityId)
+      if (activity) {
+        activity.participant_count = (activity.participant_count || 0) + 1
+        activity.is_joined = true
+      }
+
+      // 显示成功消息
+      joinSuccessMessage.value = '成功加入活动！'
+      setTimeout(() => {
+        joinSuccessMessage.value = ''
+      }, 3000)
+
+      console.log('成功加入活动:', activityId)
+    } else {
+      console.error('加入活动失败:', response.message)
+      alert(response.message || '加入活动失败，请重试')
+    }
+  } catch (error: any) {
+    console.error('加入活动异常:', error)
+    const errorMsg = error.response?.data?.message || '加入活动失败，请检查网络连接'
+    alert(errorMsg)
+  } finally {
+    joiningActivityId.value = null
+  }
 }
 
 // 格式化日期时间
