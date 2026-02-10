@@ -66,9 +66,14 @@
     <div class="px-4 mb-6">
       <div class="flex items-center justify-between mb-3">
         <h2 class="text-lg font-bold text-gray-800">🔥 推荐活动</h2>
-        <button @click="refreshRecommended" class="text-sm text-teal-600 hover:text-teal-700">
-          换一批
-        </button>
+        <div class="flex gap-2">
+          <button @click="refreshRecommended" class="text-sm text-teal-600 hover:text-teal-700">
+            换一批
+          </button>
+          <router-link to="/activities" class="text-sm text-teal-600 hover:text-teal-700">
+            查看更多
+          </router-link>
+        </div>
       </div>
 
       <!-- 加载状态 -->
@@ -209,11 +214,11 @@ const greeting = computed(() => {
 const loadRecommendedActivities = async () => {
   try {
     loading.value = true
-    const response = await api.get('/api/v1/discovery/recommended-activities', {
+    const response = await api.get('/discovery/activities', {
       params: { page: 1, page_size: 5 }
     })
-    if (response.data.activities) {
-      recommendedActivities.value = response.data.activities
+    if (response.data && response.data.data && response.data.data.items) {
+      recommendedActivities.value = response.data.data.items
     }
   } catch (error) {
     console.error('加载推荐活动失败:', error)
@@ -225,11 +230,11 @@ const loadRecommendedActivities = async () => {
 // 加载推荐用户
 const loadRecommendedUsers = async () => {
   try {
-    const response = await api.get('/api/v1/discovery/recommended-users', {
+    const response = await api.get('/discovery/users', {
       params: { page: 1, page_size: 10 }
     })
-    if (response.data.users) {
-      recommendedUsers.value = response.data.users
+    if (response.data.data?.items) {
+      recommendedUsers.value = response.data.data.items
     }
   } catch (error) {
     console.error('加载推荐用户失败:', error)

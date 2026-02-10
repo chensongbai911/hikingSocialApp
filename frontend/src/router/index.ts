@@ -28,6 +28,12 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/activities',
+    name: 'Activities',
+    component: () => import('@/components/pages/Activities.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/my-hiking',
     name: 'MyHiking',
     component: () => import('@/components/pages/MyHiking.vue'),
