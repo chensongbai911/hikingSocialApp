@@ -9,19 +9,19 @@ class DiscoveryService {
             {
                 id: 'preset-activity-1',
                 creator_id: 'preset-user-1',
-                title: '香山轻徒步小队',
-                description: '适合新手的轻松路线，沿途拍照打卡。',
-                cover_image_url: 'https://picsum.photos/800/600?random=preset-activity-1',
-                location: '北京市海淀区·香山',
-                latitude: 39.9928,
-                longitude: 116.1887,
+                title: '泰山日出登顶之旅',
+                description: '五岳之首，感受中国第一山的壮阔风景。凌晨出发，在天街迎接日出，体验泰山的雄伟与磅礴。',
+                cover_image_url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&auto=format&fit=crop&q=80',
+                location: '山东省泰安市·泰山',
+                latitude: 36.2534,
+                longitude: 117.1205,
                 start_time: new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000),
-                end_time: new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000),
-                difficulty: 'easy',
-                max_participants: 12,
+                end_time: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000),
+                difficulty: 'hard',
+                max_participants: 15,
                 status: 'approved',
-                route_description: '山脚集合，沿木栈道上山，山顶补给。',
-                equipment_required: '轻便登山鞋、饮水、帽子',
+                route_description: '红门出发→中天门→南天门→玉皇顶，全程约7小时，海拔上升约1544米。',
+                equipment_required: '登山鞋、登山杖、防晒霜、充足饮水、能量补给、手电筒',
                 created_at: now,
                 updated_at: now,
                 deleted_at: null,
@@ -29,27 +29,27 @@ class DiscoveryService {
                     id: 'preset-user-1',
                     nickname: '小禾',
                     avatar_url: 'https://picsum.photos/200/200?random=preset-user-1',
-                    hiking_level: 'beginner'
+                    hiking_level: 'advanced'
                 },
-                participant_count: 5,
+                participant_count: 8,
                 is_joined: false
             },
             {
                 id: 'preset-activity-2',
                 creator_id: 'preset-user-2',
-                title: '龙泉寺日落徒步',
-                description: '傍晚出发，拍夕阳与城市夜景。',
-                cover_image_url: 'https://picsum.photos/800/600?random=preset-activity-2',
-                location: '北京市海淀区·龙泉寺',
-                latitude: 40.0321,
-                longitude: 116.1389,
+                title: '华山险峰挑战赛',
+                description: '西岳华山，以险峻著称。走过千尺幢、百尺峡，俯瞰秦岭壮观景色，感受刀锋上的冒险。',
+                cover_image_url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&auto=format&fit=crop&q=80',
+                location: '陕西省渭南市华阴·华山',
+                latitude: 34.4853,
+                longitude: 110.0840,
                 start_time: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000),
-                end_time: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000),
-                difficulty: 'moderate',
+                end_time: new Date(now.getTime() + 4 * 24 * 60 * 60 * 1000 + 4 * 60 * 60 * 1000),
+                difficulty: 'hard',
                 max_participants: 10,
                 status: 'approved',
-                route_description: '寺庙集合，环线徒步约6公里。',
-                equipment_required: '登山鞋、头灯、饮水',
+                route_description: '玉泉院→五里关→千尺幢→百尺峡→北峰→东峰，全程约8小时，需具备一定攀爬能力。',
+                equipment_required: '专业登山鞋、安全绳、头盔、手套、充足补给',
                 created_at: now,
                 updated_at: now,
                 deleted_at: null,
@@ -57,27 +57,27 @@ class DiscoveryService {
                     id: 'preset-user-2',
                     nickname: '阿柒',
                     avatar_url: 'https://picsum.photos/200/200?random=preset-user-2',
-                    hiking_level: 'intermediate'
+                    hiking_level: 'advanced'
                 },
-                participant_count: 7,
+                participant_count: 6,
                 is_joined: false
             },
             {
                 id: 'preset-activity-3',
                 creator_id: 'preset-user-3',
-                title: '百望山晨练',
-                description: '清晨出发，轻松爬升。',
-                cover_image_url: 'https://picsum.photos/800/600?random=preset-activity-3',
-                location: '北京市海淀区·百望山',
-                latitude: 40.0155,
-                longitude: 116.2884,
+                title: '黄山云海探秘',
+                description: '奇松怪石云海温泉，黄山四绝尽收眼底。徒步经过莲花峰、光明顶，享受最壮观的日出和云海景观。',
+                cover_image_url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&auto=format&fit=crop&q=80',
+                location: '安徽省黄山市·黄山',
+                latitude: 30.1165,
+                longitude: 118.2329,
                 start_time: new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000),
-                end_time: new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000),
-                difficulty: 'easy',
-                max_participants: 8,
+                end_time: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000),
+                difficulty: 'moderate',
+                max_participants: 12,
                 status: 'approved',
-                route_description: '山脚集合，缓坡上山，山顶休息。',
-                equipment_required: '运动鞋、饮水',
+                route_description: '温泉景区→玉屏楼→莲花峰→光明顶→排云亭，全程约10公里，海拔起伏1200米。',
+                equipment_required: '登山鞋、防晒、防风衣、充足饮水、相机',
                 created_at: now,
                 updated_at: now,
                 deleted_at: null,
@@ -85,27 +85,27 @@ class DiscoveryService {
                     id: 'preset-user-3',
                     nickname: '暮山',
                     avatar_url: 'https://picsum.photos/200/200?random=preset-user-3',
-                    hiking_level: 'beginner'
+                    hiking_level: 'intermediate'
                 },
-                participant_count: 3,
+                participant_count: 9,
                 is_joined: false
             },
             {
                 id: 'preset-activity-4',
                 creator_id: 'preset-user-4',
-                title: '西山林道挑战',
-                description: '中等强度，适合有基础的伙伴。',
-                cover_image_url: 'https://picsum.photos/800/600?random=preset-activity-4',
-                location: '北京市海淀区·西山森林公园',
-                latitude: 39.9665,
-                longitude: 116.2493,
+                title: '珠峰大本营高山之旅',
+                description: '挑战世界之巅，徒步珠峰大本营。在海拔5200米俯瞰珠穆朗玛峰，感受高原的壮阔与神圣。',
+                cover_image_url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&auto=format&fit=crop&q=80',
+                location: '西藏·珠穆朗玛峰',
+                latitude: 28.0081,
+                longitude: 86.8644,
                 start_time: new Date(now.getTime() + 4 * 24 * 60 * 60 * 1000),
-                end_time: new Date(now.getTime() + 4 * 24 * 60 * 60 * 1000 + 4 * 60 * 60 * 1000),
-                difficulty: 'moderate',
-                max_participants: 15,
+                end_time: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000),
+                difficulty: 'hard',
+                max_participants: 8,
                 status: 'approved',
-                route_description: '林道环线约10公里，补给点较少。',
-                equipment_required: '登山鞋、补给、雨具',
+                route_description: '拉萨→日喀则→定日→珠峰大本营，全程需5-7天，需提前适应高原环境。',
+                equipment_required: '专业高山登山装备、防寒衣物、氧气罐、防晒霜、水补给、高原反应药物',
                 created_at: now,
                 updated_at: now,
                 deleted_at: null,
@@ -113,27 +113,27 @@ class DiscoveryService {
                     id: 'preset-user-4',
                     nickname: '远行',
                     avatar_url: 'https://picsum.photos/200/200?random=preset-user-4',
-                    hiking_level: 'intermediate'
+                    hiking_level: 'advanced'
                 },
-                participant_count: 9,
+                participant_count: 4,
                 is_joined: false
             },
             {
                 id: 'preset-activity-5',
                 creator_id: 'preset-user-5',
-                title: '妙峰山进阶线',
-                description: '进阶路线，爬升较大，风景绝佳。',
-                cover_image_url: 'https://picsum.photos/800/600?random=preset-activity-5',
-                location: '北京市门头沟·妙峰山',
-                latitude: 39.9972,
-                longitude: 116.0653,
+                title: '峨眉山金顶之光',
+                description: '普贤菩萨道场，佛教名山。登上金顶欣赏日出、云海、佛光三景，感受宗教与自然的完美融合。',
+                cover_image_url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&auto=format&fit=crop&q=80',
+                location: '四川省乐山市·峨眉山',
+                latitude: 29.5428,
+                longitude: 103.3372,
                 start_time: new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000),
-                end_time: new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000 + 5 * 60 * 60 * 1000),
-                difficulty: 'hard',
-                max_participants: 6,
+                end_time: new Date(now.getTime() + 6 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000),
+                difficulty: 'moderate',
+                max_participants: 14,
                 status: 'approved',
-                route_description: '高爬升路线，注意节奏与补给。',
-                equipment_required: '登山鞋、登山杖、能量补给',
+                route_description: '报国寺→清音阁→万年寺→洪椿坪→金顶，全程约18公里，可选择搭乘缆车。',
+                equipment_required: '登山鞋、防滑装备、防寒衣物、充足饮水、驱虫剂',
                 created_at: now,
                 updated_at: now,
                 deleted_at: null,
@@ -141,9 +141,9 @@ class DiscoveryService {
                     id: 'preset-user-5',
                     nickname: '北冥',
                     avatar_url: 'https://picsum.photos/200/200?random=preset-user-5',
-                    hiking_level: 'advanced'
+                    hiking_level: 'intermediate'
                 },
-                participant_count: 2,
+                participant_count: 10,
                 is_joined: false
             }
         ];
@@ -153,57 +153,57 @@ class DiscoveryService {
             {
                 id: 'preset-user-1',
                 nickname: '小禾',
-                avatar_url: 'https://picsum.photos/200/200?random=preset-user-1',
+                avatar_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80',
                 gender: 'female',
                 age: 24,
-                bio: '周末徒步爱好者，喜欢轻松路线。',
-                hiking_level: 'beginner',
-                common_preferences: 3,
-                photo_count: 4
+                bio: '五岳登顶者，专注高山徒步，追求极致风景。摄影爱好者，有3次国外登山经验。',
+                hiking_level: 'advanced',
+                common_preferences: 8,
+                photo_count: 42
             },
             {
                 id: 'preset-user-2',
                 nickname: '阿柒',
-                avatar_url: 'https://picsum.photos/200/200?random=preset-user-2',
+                avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
                 gender: 'male',
                 age: 27,
-                bio: '喜欢日落徒步和摄影。',
-                hiking_level: 'intermediate',
-                common_preferences: 4,
-                photo_count: 6
+                bio: '野山野岭探险家，热爱未开发徒步路线。装备技术控，擅长路线规划和安全教学。',
+                hiking_level: 'advanced',
+                common_preferences: 9,
+                photo_count: 58
             },
             {
                 id: 'preset-user-3',
                 nickname: '暮山',
-                avatar_url: 'https://picsum.photos/200/200?random=preset-user-3',
+                avatar_url: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=200&q=80',
                 gender: 'female',
                 age: 22,
-                bio: '清晨徒步，路线不长但风景好。',
-                hiking_level: 'beginner',
-                common_preferences: 2,
-                photo_count: 3
+                bio: '登山新人，已完成泰山、华山登顶。希望挑战更多名山，记录每次登山的故事。',
+                hiking_level: 'intermediate',
+                common_preferences: 5,
+                photo_count: 31
             },
             {
                 id: 'preset-user-4',
                 nickname: '远行',
-                avatar_url: 'https://picsum.photos/200/200?random=preset-user-4',
+                avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80',
                 gender: 'male',
                 age: 30,
-                bio: '中强度徒步爱好者，擅长路线规划。',
-                hiking_level: 'intermediate',
-                common_preferences: 5,
-                photo_count: 7
+                bio: '资深山友，徒步足迹遍布大江南北。善于发现冷门徒步线路，周末活跃度最高。',
+                hiking_level: 'advanced',
+                common_preferences: 10,
+                photo_count: 87
             },
             {
                 id: 'preset-user-5',
                 nickname: '北冥',
-                avatar_url: 'https://picsum.photos/200/200?random=preset-user-5',
+                avatar_url: 'https://images.unsplash.com/photo-1463453091185-61582044d556?auto=format&fit=crop&w=200&q=80',
                 gender: 'other',
                 age: 31,
-                bio: '进阶路线，注重安全与装备。',
+                bio: '专业登山队员，雪山高山探险经验丰富。致力于推广登山安全文化和户外技能培训。',
                 hiking_level: 'advanced',
-                common_preferences: 3,
-                photo_count: 5
+                common_preferences: 12,
+                photo_count: 124
             }
         ];
     }
@@ -212,6 +212,16 @@ class DiscoveryService {
      * 基于用户偏好、历史参与等推荐合适的活动
      */
     async getRecommendedActivities(userId, page = 1, pageSize = 20) {
+        // 首先返回精心策划的 preset 活动（真实名山大川）
+        if (page === 1) {
+            const presetActivities = this.getPresetActivities();
+            // 如果 preset 活动足够，直接返回
+            if (presetActivities.length >= pageSize) {
+                return { activities: presetActivities.slice(0, pageSize), total: presetActivities.length };
+            }
+            // 否则返回 preset 活动
+            return { activities: presetActivities, total: presetActivities.length };
+        }
         // 获取用户偏好
         const [userPrefs] = await database_1.pool.query('SELECT preference_type, preference_value FROM user_preferences WHERE user_id = ?', [userId]);
         // 构建推荐查询
@@ -278,10 +288,6 @@ class DiscoveryService {
             participant_count: activity.participant_count,
             is_joined: false
         }));
-        if (formattedActivities.length === 0 && page === 1) {
-            const presetActivities = this.getPresetActivities();
-            return { activities: presetActivities, total: presetActivities.length };
-        }
         return { activities: formattedActivities, total };
     }
     /**
