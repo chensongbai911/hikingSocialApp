@@ -208,8 +208,8 @@ export const useUserStore = defineStore('user', () => {
       const response = await userApi.updatePreferences(preferencesData)
 
       if (response.code === 200) {
-        // 重新获取用户资料以更新preferences
-        await fetchCurrentUser()
+        // ✅ 重新获取用户资料以更新preferences，添加includePreferences=true参数
+        await fetchCurrentUser(false, false, true)
         return true
       }
 

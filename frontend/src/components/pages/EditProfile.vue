@@ -361,18 +361,22 @@ const saveProfile = async () => {
     const success = await userStore.updateProfile(updateData);
 
     if (success) {
-      // 保存偏好
+      // ✅ 等待偏好保存完成
       if (formData.value.preferences.length > 0) {
-        await userStore.updatePreferences(formData.value.preferences);
+        const prefSuccess = await userStore.updatePreferences(formData.value.preferences);
+        if (!prefSuccess) {
+          toast.error('偏好保存失败，请重试');
+          return;
+        }
       }
 
       toast.success('资料保存成功');
       console.log('保存资料成功');
 
-      // 延迟300ms后返回，防止闪烁
+      // ✅ 延迟500ms返回，确保数据已同步
       setTimeout(() => {
         router.back();
-      }, 300)
+      }, 500)
     } else {
       toast.error(userStore.error || '保存失败');
       console.error('保存资料失败:', userStore.error);
@@ -388,8 +392,9 @@ const saveProfile = async () => {
 // 加载用户资料
 const loadUserProfile = async () => {
   try {
+    // ✅ 添加 includePreferences=true 参数来获取完整的偏好数据
     if (!currentUser.value) {
-      await userStore.fetchCurrentUser();
+      await userStore.fetchCurrentUser(false, false, true);
     }
 
     if (currentUser.value) {
@@ -402,7 +407,12 @@ const loadUserProfile = async () => {
         province: currentUser.value.province || '',
         city: currentUser.value.city || '',
         region: currentUser.value.region || '',
-        preferences: (currentUser.value.preferences || []).map(p => p.preference_value)
+        // ✅ 完善 preferences 映射逻辑，处理两种格式（字符串数组或对象数组）
+        preferences: Array.isArray(currentUser.value.preferences)
+          ? (currentUser.value.preferences as any[])
+              .map(p => typeof p === 'string' ? p : (p as any).preference_value)
+              .filter(Boolean)
+          : []
       };
 
       // 如果有省份，加载对应的城市列表

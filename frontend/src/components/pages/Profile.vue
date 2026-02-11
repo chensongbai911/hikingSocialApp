@@ -106,11 +106,11 @@
         <!-- 标签列表 -->
         <div v-else class="flex flex-wrap gap-2">
           <span
-            v-for="(tag, index) in userProfile.preferences"
+            v-for="(pref, index) in formattedPreferences"
             :key="index"
             class="px-4 py-2 bg-teal-50 text-teal-600 rounded-full text-sm font-medium"
           >
-            {{ tag }}
+            {{ pref }}
           </span>
         </div>
       </div>
@@ -403,6 +403,22 @@ const showLogoutConfirm = ref(false)
 // 从store获取用户数据
 const currentUser = computed(() => userStore.currentUser)
 
+// ✅ 新增：格式化偏好标签的计算属性
+const formattedPreferences = computed(() => {
+  if (!currentUser.value?.preferences) return []
+
+  return currentUser.value.preferences
+    .map(pref => {
+      // 处理两种格式：字符串 或 对象
+      if (typeof pref === 'string') {
+        return pref
+      }
+      // 对象格式：提取 preference_value 字段
+      return (pref as any).preference_value || (pref as any).value || ''
+    })
+    .filter(Boolean)  // 过滤空值
+})
+
 // 用户资料数据 - 使用computed从store映射
 const userProfile = computed(() => {
   if (!currentUser.value || isLoading.value) {
@@ -678,8 +694,8 @@ const loadUserProfile = async () => {
     if (shouldShowSkeleton) {
       isLoading.value = true
     }
-    // 每次进入页面都从服务器获取最新数据，并包含照片
-    await userStore.fetchCurrentUser(false, true)
+    // ✅ 每次进入页面都从服务器获取最新数据，并包含照片和偏好
+    await userStore.fetchCurrentUser(false, true, true)
     console.log('用户资料加载成功', currentUser.value)
   } catch (error) {
     console.error('加载用户资料失败:', error)
