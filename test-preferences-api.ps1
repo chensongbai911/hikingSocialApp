@@ -2,7 +2,7 @@
 # 测试用户偏好设置的保存、加载和同步流程
 
 param(
-    [string]$BaseUrl = "http://localhost:3001",
+    [string]$BaseUrl = "http://localhost:3000",
     [string]$ApiVersion = "v1"
 )
 
@@ -130,11 +130,14 @@ try {
         preferences = $newPreferences
     } | ConvertTo-Json
 
-    $response = Invoke-WebRequest -Uri "$ApiBaseUrl/users/preferences" `
-        -Method PUT `
-        -Headers $Headers `
-        -Body $payload `
-        -ErrorAction Stop
+    $requestParams = @{
+        Uri = "$ApiBaseUrl/users/preferences"
+        Method = "PUT"
+        Headers = $Headers
+        Body = $payload
+        ErrorAction = "Stop"
+    }
+    $response = Invoke-WebRequest @requestParams
 
     $result = $response.Content | ConvertFrom-Json
 
@@ -193,11 +196,14 @@ try {
         preferences = $updatedPreferences
     } | ConvertTo-Json
 
-    $response = Invoke-WebRequest -Uri "$ApiBaseUrl/users/preferences" `
-        -Method PUT `
-        -Headers $Headers `
-        -Body $payload `
-        -ErrorAction Stop
+    $requestParams = @{
+        Uri = "$ApiBaseUrl/users/preferences"
+        Method = "PUT"
+        Headers = $Headers
+        Body = $payload
+        ErrorAction = "Stop"
+    }
+    $response = Invoke-WebRequest @requestParams
 
     $result = $response.Content | ConvertFrom-Json
 
@@ -233,11 +239,14 @@ try {
         preferences = @()
     } | ConvertTo-Json
 
-    $response = Invoke-WebRequest -Uri "$ApiBaseUrl/users/preferences" `
-        -Method PUT `
-        -Headers $Headers `
-        -Body $payload `
-        -ErrorAction Stop
+    $requestParams = @{
+        Uri = "$ApiBaseUrl/users/preferences"
+        Method = "PUT"
+        Headers = $Headers
+        Body = $payload
+        ErrorAction = "Stop"
+    }
+    $response = Invoke-WebRequest @requestParams
 
     $result = $response.Content | ConvertFrom-Json
 

@@ -3,6 +3,7 @@ import { User } from '../models/User'
 import { UserPreference } from '../models/UserPreference'
 import { BusinessError, BusinessErrorCode } from '../utils/errors'
 import { Op } from 'sequelize'
+import { pool } from '../config/database'
 
 export class FriendService {
   /**
@@ -93,6 +94,18 @@ export class FriendService {
           ],
         },
       }
+    )
+
+    const followId1 = `follow-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    const followId2 = `follow-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+
+    await pool.query(
+      'INSERT INTO user_followers (id, follower_id, following_id) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE id = id',
+      [followId1, userId, friendId]
+    )
+    await pool.query(
+      'INSERT INTO user_followers (id, follower_id, following_id) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE id = id',
+      [followId2, friendId, userId]
     )
   }
 

@@ -122,10 +122,10 @@ export class MessageController {
         data: {
           conversationId,
           otherUserId: precheck.receiverId,
-          isLimited: !precheck.isMutualFollow && (precheck.remainingMessages ?? 3) < 3,
-          limitReason: precheck.isMutualFollow ? null : 'not_mutual_follow',
-          messageCount: precheck.remainingMessages !== undefined ? 3 - (precheck.remainingMessages || 0) : 0,
-          remainingMessages: precheck.remainingMessages,
+          isLimited: !precheck.isMutualFollow,
+          limitReason: precheck.isMutualFollow ? null : (precheck.reason || 'not_mutual_follow'),
+          messageCount: 0,
+          remainingMessages: precheck.remainingMessages ?? 0,
           canSend: precheck.canSend,
           relationshipType: precheck.isMutualFollow ? 'mutual' : (precheck.canSend ? 'one_way' : 'none'),
           isBlacklisted: isBlack,
@@ -279,10 +279,6 @@ export class MessageController {
         throw err
       }
 
-      // 单向关注限制：计数+1
-      if (!precheck.isMutualFollow && precheck.remainingMessages !== undefined) {
-        await chatPolicyService.incrementLimit(conversationId, String(userId))
-      }
 
       // 推送新消息给对方
       if (precheck.receiverId) {
@@ -297,7 +293,7 @@ export class MessageController {
         message: '发送消息成功',
         data: {
           message,
-          remainingMessages: precheck.remainingMessages !== undefined ? Math.max((precheck.remainingMessages || 0) - 1, 0) : undefined,
+          remainingMessages: precheck.remainingMessages ?? 0,
         },
       })
     } catch (error) {

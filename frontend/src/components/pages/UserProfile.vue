@@ -56,38 +56,50 @@
 
           <!-- 关注/私信按钮（卡片右侧） - 响应式 -->
           <div class="w-full sm:w-auto sm:flex-shrink-0 space-y-2">
-            <!-- 关注按钮 -->
             <button
-              v-if="!isFollowing"
               @click="toggleFollow"
               :disabled="followLoading"
-              class="w-full px-4 py-2 bg-teal-500 text-white rounded-xl font-medium text-sm hover:bg-teal-600 transition active:scale-95 flex items-center justify-center gap-1"
+              class="w-full px-4 py-2 rounded-xl font-medium text-sm transition active:scale-95 flex items-center justify-center gap-1"
+              :class="isFollowing ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-teal-500 text-white hover:bg-teal-600'"
             >
               <span v-if="followLoading">⏳</span>
-              <span v-else>+ 关注</span>
+              <span v-else>{{ isFollowing ? '取消关注' : '+ 关注' }}</span>
             </button>
 
-            <!-- 私信按钮 -->
             <button
-              v-if="isFollowing"
+              v-if="friendshipStatus === 'accepted'"
+              class="w-full px-4 py-2 bg-gray-100 text-gray-600 rounded-xl font-medium text-sm"
+              disabled
+            >
+              已好友
+            </button>
+
+            <button
+              v-else-if="friendshipStatus === 'pending'"
+              class="w-full px-4 py-2 bg-gray-100 text-gray-600 rounded-xl font-medium text-sm"
+              disabled
+            >
+              好友请求中
+            </button>
+
+            <button
+              v-else
+              @click="sendFriendRequest"
+              :disabled="friendRequestLoading"
+              class="w-full px-4 py-2 bg-teal-500 text-white rounded-xl font-medium text-sm hover:bg-teal-600 transition active:scale-95"
+            >
+              <span v-if="friendRequestLoading">发送中...</span>
+              <span v-else>加好友</span>
+            </button>
+
+            <button
+              v-if="isFollowing || friendshipStatus === 'accepted'"
               @click="openChat"
               :disabled="chatLoading"
               class="w-full px-4 py-2 bg-teal-500 text-white rounded-xl font-medium text-sm hover:bg-teal-600 transition active:scale-95 flex items-center justify-center gap-1"
             >
               <span v-if="chatLoading">⏳ 加载中</span>
               <span v-else>💬 私信</span>
-            </button>
-
-            <!-- 取消关注按钮 -->
-            <button
-              v-if="isFollowing"
-              @click="toggleFollow"
-              :disabled="followLoading"
-              class="w-full px-4 py-2 bg-gray-100 text-gray-600 rounded-xl font-medium text-sm hover:bg-gray-200 transition active:scale-95"
-              title="取消关注"
-            >
-              <span v-if="followLoading">⏳</span>
-              <span v-else>取消关注</span>
             </button>
           </div>
         </div>
@@ -230,6 +242,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { userApi, activityApi, messageApi } from '@/api'
+import * as friendApi from '@/api/friendApi'
 import toast from '@/utils/toast'
 
 const router = useRouter()
@@ -241,6 +254,8 @@ const loading = ref(true)
 const isFollowing = ref(false)
 const followLoading = ref(false)
 const chatLoading = ref(false)
+const friendshipStatus = ref<'pending' | 'accepted' | 'rejected' | 'blocked' | 'none'>('none')
+const friendRequestLoading = ref(false)
 
 // 防止重复请求的标记
 let isLoadingData = false
@@ -361,6 +376,24 @@ const toggleFollow = async () => {
   }
 }
 
+const sendFriendRequest = async () => {
+  if (!user.value || friendRequestLoading.value) return
+  try {
+    friendRequestLoading.value = true
+    const res = await friendApi.sendFriendRequest({ friend_id: user.value.id })
+    if (res.code === 200) {
+      friendshipStatus.value = 'pending'
+      toast.success('好友请求已发送')
+    } else {
+      toast.error(res.message || '发送失败')
+    }
+  } catch (error: any) {
+    toast.error(error?.message || '发送失败')
+  } finally {
+    friendRequestLoading.value = false
+  }
+}
+
 // 加载用户数据
 onMounted(async () => {
   const userId = route.params.id as string
@@ -383,10 +416,11 @@ onMounted(async () => {
     loading.value = true
 
     // 从 API 获取用户详情（包含关注者、徒步次数等）
-    const [detailRes, joinedRes, followStatusRes] = await Promise.all([
+    const [detailRes, joinedRes, followStatusRes, friendStatusRes] = await Promise.all([
       userApi.getUserDetail(userId),
       activityApi.getUserJoinedActivities(userId, { page_size: 3 }),
-      userApi.getFollowStatus(userId)
+      userApi.getFollowStatus(userId),
+      friendApi.getFriendshipStatus(userId)
     ])
 
     if (detailRes.code === 200 && detailRes.data) {
@@ -396,6 +430,10 @@ onMounted(async () => {
       // 设置关注状态
       if (followStatusRes.code === 200 && followStatusRes.data) {
         isFollowing.value = followStatusRes.data.is_following
+      }
+
+      if (friendStatusRes.code === 200 && friendStatusRes.data) {
+        friendshipStatus.value = (friendStatusRes.data.status || 'none') as any
       }
 
       // 转换为组件需要的格式

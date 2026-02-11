@@ -35,9 +35,7 @@
         </p>
       </div>
       <div class="flex items-center space-x-2" v-if="isLimited">
-        <span class="text-xs text-amber-700 bg-amber-100 px-2 py-1 rounded-full"
-          >剩余 {{ remainingMessages ?? 0 }} / 3</span
-        >
+        <span class="text-xs text-amber-700 bg-amber-100 px-2 py-1 rounded-full">需互相关注</span>
       </div>
       <button @click="handleClear" class="p-2 text-gray-500 hover:text-red-500" title="清空对话">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -58,7 +56,7 @@
       对方已将你拉黑，无法发送消息
     </div>
     <div v-else-if="isLimited" class="bg-amber-50 text-amber-700 text-sm px-4 py-2">
-      未互关，仅可再发送 {{ remainingMessages ?? 0 }} 条消息
+      需要互相关注才能聊天
     </div>
 
     <div ref="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50" @scroll="handleScroll">
@@ -126,7 +124,7 @@
                   <button class="hover:text-red-500" @click="handleRecall(message.id)">撤回</button>
                 </template>
                 <template v-else-if="!message.isRecalled">
-                  <button class="hover:text-amber-600" @click="handleReport(message.id)">举报</button>
+                  <button class="hover:text-amber-600" @click="openReportDialog(message.id)">举报</button>
                 </template>
               </div>
             </div>
@@ -261,6 +259,35 @@
       </div>
     </div>
 
+    <div v-if="showReportDialog" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+      <div class="bg-white rounded-2xl w-80 p-5">
+        <h3 class="text-lg font-semibold text-gray-800 mb-3">举报消息</h3>
+        <div class="space-y-2 mb-3">
+          <button
+            v-for="reason in reportReasons"
+            :key="reason"
+            @click="reportReason = reason"
+            :class="[
+              'w-full text-left px-3 py-2 rounded-lg text-sm',
+              reportReason === reason ? 'bg-teal-50 text-teal-700 border border-teal-200' : 'bg-gray-50 text-gray-700'
+            ]"
+          >
+            {{ reason }}
+          </button>
+        </div>
+        <textarea
+          v-model="reportExtra"
+          placeholder="补充说明（可选）"
+          rows="3"
+          class="w-full px-3 py-2 text-sm bg-gray-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+        ></textarea>
+        <div class="flex justify-end gap-2 mt-4">
+          <button class="px-3 py-2 text-sm text-gray-600" @click="closeReportDialog">取消</button>
+          <button class="px-3 py-2 text-sm bg-teal-500 text-white rounded-lg" @click="submitReport">提交</button>
+        </div>
+      </div>
+    </div>
+
     <div
       v-if="previewImageUrl"
       @click="previewImageUrl = null"
@@ -320,6 +347,11 @@ const isLimited = ref(false)
 const remainingMessages = ref<number | undefined>(undefined)
 const isBlacklisted = ref(false)
 const typingUsers = ref<Set<string>>(new Set())
+const showReportDialog = ref(false)
+const reportTargetId = ref<string | null>(null)
+const reportReason = ref('')
+const reportExtra = ref('')
+const reportReasons = ['垃圾广告', '骚扰辱骂', '涉黄低俗', '违法违规', '其他']
 
 let typingTimeout: number | null = null
 let recordingTimer: number | null = null
@@ -503,8 +535,8 @@ const handleSendMessage = async (
     toast.warning('你已被对方拉黑，无法发送')
     return
   }
-  if (isLimited.value && remainingMessages.value !== undefined && remainingMessages.value <= 0) {
-    toast.warning('未互关仅可发送3条消息，已达上限')
+  if (isLimited.value) {
+    toast.warning('需要互相关注才能聊天')
     return
   }
   const trimmed = messageInput.value.trim()
@@ -557,12 +589,11 @@ const handleSendMessage = async (
     scrollToBottom()
   } catch (err: any) {
     console.error('[ChatWindow] 发送消息失败:', err)
-    const code = err?.code || err?.response?.data?.code
     const msg = err?.message || err?.response?.data?.message
-    if (code === 3013 || msg === 'message_limit_exceeded') {
+    if (msg && msg.includes('互相关注')) {
       isLimited.value = true
       remainingMessages.value = 0
-      toast.warning('未互关仅可发送3条消息，请互相关注后继续聊天')
+      toast.warning('需要互相关注才能聊天')
       return
     }
     toast.error(msg || '发送失败')
@@ -570,10 +601,8 @@ const handleSendMessage = async (
 }
 
 const sendDisabled = computed(() => {
-  const limitedEmpty =
-    isLimited.value && remainingMessages.value !== undefined && remainingMessages.value <= 0
   const noContent = !messageInput.value.trim()
-  return isBlacklisted.value || limitedEmpty || noContent
+  return isBlacklisted.value || isLimited.value || noContent
 })
 
 const handleImageUpload = async (e: Event) => {
@@ -609,10 +638,32 @@ const handleRecall = async (messageId: string) => {
   }
 }
 
-const handleReport = async (messageId: string) => {
+const openReportDialog = (messageId: string) => {
+  reportTargetId.value = messageId
+  reportReason.value = ''
+  reportExtra.value = ''
+  showReportDialog.value = true
+}
+
+const closeReportDialog = () => {
+  showReportDialog.value = false
+  reportTargetId.value = null
+}
+
+const submitReport = async () => {
+  if (!reportTargetId.value) {
+    closeReportDialog()
+    return
+  }
+  if (!reportReason.value) {
+    toast.warning('请选择举报原因')
+    return
+  }
   try {
-    await reportMessage(messageId, 'inappropriate')
+    const extra = reportExtra.value ? { note: reportExtra.value } : undefined
+    await reportMessage(reportTargetId.value, reportReason.value, extra)
     toast.success('已举报')
+    closeReportDialog()
   } catch (err) {
     toast.error(err?.message || '举报失败')
   }
