@@ -416,11 +416,10 @@ onMounted(async () => {
     loading.value = true
 
     // 从 API 获取用户详情（包含关注者、徒步次数等）
-    const [detailRes, joinedRes, followStatusRes, friendStatusRes] = await Promise.all([
+    const [detailRes, joinedRes, followStatusRes] = await Promise.all([
       userApi.getUserDetail(userId),
       activityApi.getUserJoinedActivities(userId, { page_size: 3 }),
       userApi.getFollowStatus(userId),
-      friendApi.getFriendshipStatus(userId)
     ])
 
     if (detailRes.code === 200 && detailRes.data) {
@@ -432,9 +431,8 @@ onMounted(async () => {
         isFollowing.value = followStatusRes.data.is_following
       }
 
-      if (friendStatusRes.code === 200 && friendStatusRes.data) {
-        friendshipStatus.value = (friendStatusRes.data.status || 'none') as any
-      }
+      // 初始化好友状态为 'none'（后端 API 暂不可用）
+      friendshipStatus.value = 'none'
 
       // 转换为组件需要的格式
       user.value = {

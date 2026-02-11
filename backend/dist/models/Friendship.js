@@ -61,6 +61,7 @@ class Friendship extends sequelize_1.Model {
             sequelize,
             tableName: 'friendships',
             timestamps: true,
+            underscored: true,
             indexes: [
                 { fields: ['userId'] },
                 { fields: ['friendId'] },
