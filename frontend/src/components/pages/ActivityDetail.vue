@@ -392,7 +392,7 @@
 
         <!-- 已发布状态：显示报名按钮 -->
         <button
-          v-else-if="!activity.isOrganizer && activity.id"
+          v-else-if="!activity.isOrganizer && activity.id && !isPresetActivityId(activity.id)"
           @click="handleJoinActivity"
           :disabled="activity.status === '已结束' || loading"
           :class="[
@@ -412,6 +412,13 @@
             activity.status === '已结束' ? '活动已结束' :
             '立即报名'
           }}
+        </button>
+        <button
+          v-else-if="!activity.isOrganizer && activity.id && isPresetActivityId(activity.id)"
+          disabled
+          class="flex-1 py-3 rounded-full font-semibold text-gray-500 bg-gray-200 cursor-not-allowed"
+        >
+          预设活动不可加入
         </button>
 
         <!-- 组织者已发布状态：显示编辑按钮 -->
@@ -674,6 +681,10 @@ const showCancelJoinConfirm = ref(false)
 const showApplyMessageDialog = ref(false)
 const applyMessage = ref('')
 const loading = computed(() => activityStore.loading)
+
+const isPresetActivityId = (activityId: string) => {
+  return typeof activityId === 'string' && activityId.startsWith('preset-activity-')
+}
 
 // 从 store 获取当前活动
 const activity = computed(() => {

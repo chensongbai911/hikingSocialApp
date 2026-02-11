@@ -151,13 +151,19 @@
                   <span>{{ activity.participant_count || 0 }}人</span>
                 </div>
                 <button
-                  v-if="!activity.is_joined"
+                  v-if="canJoinActivity(activity) && !activity.is_joined"
                   @click="joinActivity($event, activity.id)"
                   :disabled="joiningActivityId === activity.id"
                   class="px-3 py-1 bg-teal-500 text-white text-xs rounded-full hover:bg-teal-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
                 >
                   {{ joiningActivityId === activity.id ? '加入中...' : '加入' }}
                 </button>
+                <span
+                  v-else-if="!canJoinActivity(activity)"
+                  class="px-3 py-1 bg-gray-200 text-gray-600 text-xs rounded-full"
+                >
+                  不可加入
+                </span>
                 <span v-else class="px-3 py-1 bg-gray-200 text-gray-600 text-xs rounded-full">
                   已加入
                 </span>
@@ -228,6 +234,17 @@ const unreadCount = ref(0)
 const currentActivityPage = ref(1)
 const joiningActivityId = ref<string | null>(null)
 const joinSuccessMessage = ref('')
+
+const isPresetActivity = (activityId: string) => {
+  return typeof activityId === 'string' && activityId.startsWith('preset-activity-')
+}
+
+const canJoinActivity = (activity: any) => {
+  if (!activity || !activity.id) return false
+  if (isPresetActivity(activity.id)) return false
+  if (activity.status === 'completed' || activity.status === 'cancelled') return false
+  return true
+}
 
 // 问候语
 const greeting = computed(() => {
