@@ -113,17 +113,9 @@ class ChatPolicyService {
             return { canSend: true, receiverId, isMutualFollow: true };
         }
         if (!rel.aFollowB) {
-            // 发送方未关注对方，禁止发送
-            return { canSend: false, reason: 'must_follow_to_message', receiverId, isMutualFollow: false };
+            return { canSend: false, reason: 'must_follow_to_message', receiverId, isMutualFollow: false, remainingMessages: 0 };
         }
-        // 单向关注：3条限制
-        await this.ensureLimitRow(conversationId, senderId, receiverId);
-        const record = await this.getLimitRecord(conversationId, senderId);
-        const count = record?.message_count ?? 0;
-        if (count >= 3) {
-            return { canSend: false, reason: 'message_limit_exceeded', remainingMessages: 0, receiverId, isMutualFollow: false };
-        }
-        return { canSend: true, remainingMessages: 3 - count, receiverId, isMutualFollow: false };
+        return { canSend: false, reason: 'not_mutual_follow', receiverId, isMutualFollow: false, remainingMessages: 0 };
     }
 }
 exports.ChatPolicyService = ChatPolicyService;

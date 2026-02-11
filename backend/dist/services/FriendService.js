@@ -6,6 +6,7 @@ const User_1 = require("../models/User");
 const UserPreference_1 = require("../models/UserPreference");
 const errors_1 = require("../utils/errors");
 const sequelize_1 = require("sequelize");
+const database_1 = require("../config/database");
 class FriendService {
     /**
      * 发送好友请求
@@ -83,6 +84,10 @@ class FriendService {
                 ],
             },
         });
+        const followId1 = `follow-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const followId2 = `follow-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        await database_1.pool.query('INSERT INTO user_followers (id, follower_id, following_id) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE id = id', [followId1, userId, friendId]);
+        await database_1.pool.query('INSERT INTO user_followers (id, follower_id, following_id) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE id = id', [followId2, friendId, userId]);
     }
     /**
      * 拒绝好友请求
