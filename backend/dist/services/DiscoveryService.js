@@ -296,16 +296,6 @@ class DiscoveryService {
      * 基于用户偏好、历史参与等推荐合适的活动
      */
     async getRecommendedActivities(userId, page = 1, pageSize = 20) {
-        // 首先返回精心策划的 preset 活动（真实名山大川）
-        if (page === 1) {
-            const presetActivities = this.getPresetActivities();
-            // 如果 preset 活动足够，直接返回
-            if (presetActivities.length >= pageSize) {
-                return { activities: presetActivities.slice(0, pageSize), total: presetActivities.length };
-            }
-            // 否则返回 preset 活动
-            return { activities: presetActivities, total: presetActivities.length };
-        }
         // 获取用户偏好
         const [userPrefs] = await database_1.pool.query('SELECT preference_type, preference_value FROM user_preferences WHERE user_id = ?', [userId]);
         // 构建推荐查询
@@ -372,6 +362,21 @@ class DiscoveryService {
             participant_count: activity.participant_count,
             is_joined: false
         }));
+        // 如果第一页真实活动不足，则用 preset 补齐，但不提供真实可加入能力
+        if (page === 1 && formattedActivities.length < pageSize) {
+            const presetActivities = this.getPresetActivities();
+            if (formattedActivities.length === 0) {
+                return {
+                    activities: presetActivities.slice(0, pageSize),
+                    total: presetActivities.length
+                };
+            }
+            const remaining = pageSize - formattedActivities.length;
+            return {
+                activities: [...formattedActivities, ...presetActivities.slice(0, remaining)],
+                total: total + presetActivities.length
+            };
+        }
         return { activities: formattedActivities, total };
     }
     /**

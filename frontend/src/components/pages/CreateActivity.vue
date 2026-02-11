@@ -1060,6 +1060,18 @@ const handleSubmit = async () => {
     toast.warning('请选择难度等级')
     return
   }
+  if (!form.value.meetingPoint) {
+    toast.warning('请选择集合地点')
+    return
+  }
+  if (!form.value.maxParticipants || form.value.maxParticipants < 2) {
+    toast.warning('最少需要 2 人成团')
+    return
+  }
+  if (!form.value.description) {
+    toast.warning('请输入活动描述')
+    return
+  }
 
   try {
     // 构建活动数据

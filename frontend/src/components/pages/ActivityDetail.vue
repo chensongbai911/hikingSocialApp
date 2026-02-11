@@ -231,6 +231,30 @@
             <div class="text-sm text-gray-600 ml-6">
               {{ formatTime(activity.startTime) }} 准时出发
             </div>
+            <div v-if="activity.endTime" class="text-sm text-gray-600 ml-6 mt-1">
+              {{ formatTime(activity.endTime) }} 预计结束
+            </div>
+          </div>
+
+          <!-- 名额与参与情况 -->
+          <div class="bg-gray-50 rounded-xl p-4 mb-3">
+            <div class="flex items-center justify-between text-sm text-gray-700">
+              <span>名额</span>
+              <span class="font-semibold">
+                {{ activity.participantCount }}/{{ activity.maxParticipants || '不限' }}
+              </span>
+            </div>
+            <div v-if="activity.maxParticipants" class="mt-2">
+              <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  class="h-2 bg-teal-500"
+                  :style="{ width: `${Math.min(100, (activity.participantCount / activity.maxParticipants) * 100)}%` }"
+                ></div>
+              </div>
+              <div class="text-xs text-gray-500 mt-2">
+                剩余 {{ Math.max(0, activity.maxParticipants - activity.participantCount) }} 个名额
+              </div>
+            </div>
           </div>
 
           <!-- 集合地点 -->
@@ -392,33 +416,19 @@
 
         <!-- 已发布状态：显示报名按钮 -->
         <button
-          v-else-if="!activity.isOrganizer && activity.id && !isPresetActivityId(activity.id)"
+          v-else-if="!activity.isOrganizer && activity.id"
           @click="handleJoinActivity"
-          :disabled="activity.status === '已结束' || loading"
+          :disabled="joinDisabled"
           :class="[
             'flex-1 py-3 rounded-full font-semibold text-white transition-all',
-            activity.isJoined
-              ? 'bg-gray-400 hover:bg-gray-500'
-              : activity.status === '已结束'
+            joinDisabled
               ? 'bg-gray-300 cursor-not-allowed'
-              : loading
-              ? 'bg-gray-400 cursor-not-allowed'
+              : activity.isJoined
+              ? 'bg-gray-400 hover:bg-gray-500'
               : 'bg-teal-500 hover:bg-teal-600',
           ]"
         >
-          {{
-            loading ? '处理中...' :
-            activity.isJoined ? '已报名' :
-            activity.status === '已结束' ? '活动已结束' :
-            '立即报名'
-          }}
-        </button>
-        <button
-          v-else-if="!activity.isOrganizer && activity.id && isPresetActivityId(activity.id)"
-          disabled
-          class="flex-1 py-3 rounded-full font-semibold text-gray-500 bg-gray-200 cursor-not-allowed"
-        >
-          预设活动不可加入
+          {{ joinButtonText }}
         </button>
 
         <!-- 组织者已发布状态：显示编辑按钮 -->
@@ -746,6 +756,9 @@ const activity = computed(() => {
     })
   }
 
+  const maxParticipants = current.max_participants || null
+  const participantCount = current.participant_count || 0
+
   return {
     id: current.id,
     title: current.title || '未命名活动',
@@ -758,6 +771,8 @@ const activity = computed(() => {
     maxElevation: current.max_elevation || 0,
     minElevation: current.min_elevation || 0,
     startTime: current.start_time,
+    endTime: current.end_time || null,
+    location: current.location || '',
     meetingPoint: current.meeting_point || current.location || '待确定',
     description: current.description || '',
     routeDescription: current.route_description || '',
@@ -773,8 +788,33 @@ const activity = computed(() => {
     isPending: isPending,
     elevationData: elevationData,
     creator: current.creator || { nickname: '未知用户', avatar_url: '' },
-    participantCount: current.participant_count || 0,
+    participantCount,
+    maxParticipants,
+    rawStatus: current.status,
   }
+})
+
+const joinDisabledReason = computed(() => {
+  if (!activity.value.id) return '活动不存在'
+  if (isPresetActivityId(activity.value.id)) return '预设活动不可加入'
+  if (activity.value.isOrganizer) return '你是组织者'
+  if (activity.value.rawStatus === 'cancelled') return '活动已取消'
+  if (activity.value.rawStatus === 'completed') return '活动已结束'
+  if (activity.value.rawStatus === 'pending') return '活动待发布'
+  if (activity.value.isJoined) return '已报名'
+  if (activity.value.maxParticipants && activity.value.participantCount >= activity.value.maxParticipants) {
+    return '人数已满'
+  }
+  return ''
+})
+
+const joinDisabled = computed(() => {
+  return loading.value || joinDisabledReason.value !== ''
+})
+
+const joinButtonText = computed(() => {
+  if (loading.value) return '处理中...'
+  return joinDisabledReason.value || '立即报名'
 })
 
 // 图表尺寸
@@ -943,13 +983,13 @@ const saveImage = async () => {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
             </svg>
-            <span style="color: #6b7280; font-size: 14px;">${activity.value.location}</span>
+            <span style="color: #6b7280; font-size: 14px;">${activity.value.location || activity.value.meetingPoint}</span>
           </div>
           <div style="display: flex; align-items: center; margin-bottom: 12px;">
             <svg style="width: 16px; height: 16px; color: #14b8a6; margin-right: 8px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
             </svg>
-            <span style="color: #6b7280; font-size: 14px;">${activity.value.date}</span>
+            <span style="color: #6b7280; font-size: 14px;">${formatDate(activity.value.startTime)}</span>
           </div>
           <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
             <div style="text-align: center;">
@@ -1019,6 +1059,11 @@ const contactOrganizer = () => {
 // 申请加入活动
 const handleJoinActivity = async () => {
   const activityId = route.params.id as string
+
+  if (joinDisabled.value) {
+    toast.error(joinDisabledReason.value || '当前不可报名')
+    return
+  }
 
   if (activity.value.isJoined) {
     showCancelJoinConfirm.value = true

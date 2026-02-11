@@ -170,9 +170,10 @@
       <!-- 保存按钮 -->
       <button
         @click="saveProfile"
-        class="w-full py-4 bg-teal-500 text-white rounded-2xl font-semibold text-lg hover:bg-teal-600 transition-colors shadow-sm"
+        :disabled="isSaving"
+        class="w-full py-4 bg-teal-500 text-white rounded-2xl font-semibold text-lg hover:bg-teal-600 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        保存修改
+        {{ isSaving ? '保存中...' : '保存修改' }}
       </button>
     </div>
   </div>
@@ -310,8 +311,34 @@ const removePreference = (index: number) => {
 };
 
 // 保存资料
+const isSaving = ref(false);
+
 const saveProfile = async () => {
+  // 表单验证
+  if (!formData.value.nickname?.trim()) {
+    toast.warning('昵称不能为空')
+    return
+  }
+  if (formData.value.nickname.trim().length < 2) {
+    toast.warning('昵称至少2个字符')
+    return
+  }
+  if (formData.value.nickname.trim().length > 20) {
+    toast.warning('昵称最多20个字符')
+    return
+  }
+  if (!formData.value.province) {
+    toast.warning('请选择所在地区')
+    return
+  }
+  if (formData.value.age && (formData.value.age < 18 || formData.value.age > 100)) {
+    toast.warning('年龄应在18-100之间')
+    return
+  }
+
   try {
+    isSaving.value = true
+
     // 根据省份和城市构建完整地区描述
     let regionText = '';
     if (formData.value.province && formData.value.city) {
@@ -321,7 +348,7 @@ const saveProfile = async () => {
     }
 
     const updateData: UpdateProfileData = {
-      nickname: formData.value.nickname,
+      nickname: formData.value.nickname.trim(),
       gender: formData.value.gender,
       age: formData.value.age,
       bio: formData.value.bio,
@@ -341,7 +368,11 @@ const saveProfile = async () => {
 
       toast.success('资料保存成功');
       console.log('保存资料成功');
-      router.back();
+
+      // 延迟300ms后返回，防止闪烁
+      setTimeout(() => {
+        router.back();
+      }, 300)
     } else {
       toast.error(userStore.error || '保存失败');
       console.error('保存资料失败:', userStore.error);
@@ -349,6 +380,8 @@ const saveProfile = async () => {
   } catch (error) {
     toast.error('保存失败，请重试');
     console.error('保存资料失败:', error);
+  } finally {
+    isSaving.value = false
   }
 };
 

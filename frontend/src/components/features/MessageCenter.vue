@@ -30,10 +30,19 @@
 
     <!-- 私信列表 -->
     <div v-if="activeTab === 'conversations'" class="tab-content">
-      <div v-if="conversations.length === 0" class="empty">
+      <!-- 加载状态 -->
+      <div v-if="loadingConversations" class="loading-container">
+        <div class="spinner"></div>
+        <p>加载对话中...</p>
+      </div>
+
+      <!-- 空状态 -->
+      <div v-else-if="conversations.length === 0" class="empty">
         <div class="empty-icon">💬</div>
         <p>暂无私信</p>
       </div>
+
+      <!-- 对话列表 -->
       <div v-else class="conversation-list">
         <div
           v-for="conv in conversations"
@@ -45,6 +54,7 @@
             :src="conv.avatar_url || '/default-avatar.png'"
             :alt="conv.name"
             class="avatar"
+            @error="handleAvatarError"
           />
           <div class="conversation-info">
             <div class="header">
@@ -52,22 +62,39 @@
               <span class="time">{{ formatTime(conv.last_message_time) }}</span>
             </div>
             <div class="preview">
-              <p class="message">{{ conv.last_message }}</p>
+              <p class="message">{{ conv.last_message || '暂无消息' }}</p>
               <span v-if="conv.unread_count && conv.unread_count > 0" class="unread-badge">
                 {{ conv.unread_count }}
               </span>
             </div>
           </div>
+          <!-- 删除按钮 -->
+          <button
+            class="delete-btn"
+            @click.stop="deleteConversation(conv.id)"
+            title="删除对话"
+          >
+            ✕
+          </button>
         </div>
       </div>
     </div>
 
     <!-- 通知列表 -->
     <div v-if="activeTab === 'notifications'" class="tab-content">
-      <div v-if="notifications.length === 0" class="empty">
+      <!-- 加载状态 -->
+      <div v-if="loadingNotifications" class="loading-container">
+        <div class="spinner"></div>
+        <p>加载通知中...</p>
+      </div>
+
+      <!-- 空状态 -->
+      <div v-else-if="notifications.length === 0" class="empty">
         <div class="empty-icon">🔔</div>
         <p>暂无通知</p>
       </div>
+
+      <!-- 通知列表 -->
       <div v-else class="notification-list">
         <div
           v-for="notif in notifications"
@@ -82,7 +109,12 @@
             <p class="text">{{ notif.content }}</p>
             <span class="time">{{ formatTime(notif.created_at) }}</span>
           </div>
-          <button v-if="!notif.is_read" class="mark-read" @click="markAsRead(notif.id)">
+          <button
+            v-if="!notif.is_read"
+            class="mark-read"
+            @click="markNotificationAsRead(notif.id)"
+            title="标记为已读"
+          >
             ✓
           </button>
         </div>
@@ -91,10 +123,19 @@
 
     <!-- 活动消息 -->
     <div v-if="activeTab === 'activity'" class="tab-content">
-      <div v-if="activityMessages.length === 0" class="empty">
+      <!-- 加载状态 -->
+      <div v-if="loadingActivity" class="loading-container">
+        <div class="spinner"></div>
+        <p>加载活动消息中...</p>
+      </div>
+
+      <!-- 空状态 -->
+      <div v-else-if="activityMessages.length === 0" class="empty">
         <div class="empty-icon">🎯</div>
         <p>暂无活动消息</p>
       </div>
+
+      <!-- 活动消息列表 -->
       <div v-else class="activity-message-list">
         <div
           v-for="msg in activityMessages"
@@ -117,94 +158,174 @@
         </div>
       </div>
     </div>
+
+    <!-- 错误提示 -->
+    <div v-if="error" class="error-banner">
+      <p>{{ error }}</p>
+      <button @click="dismissError" class="close-btn">✕</button>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import type { Conversation } from '../../types'
+import { messageApi } from '@/api/index'
+import toast from '@/utils/toast'
+
+interface Conversation {
+  id: string | number
+  name: string
+  avatar_url: string
+  last_message: string
+  last_message_time: string
+  unread_count?: number
+}
+
+interface Notification {
+  id: string | number
+  type: string
+  content: string
+  created_at: string
+  is_read: boolean
+}
+
+interface ActivityMessage {
+  id: string | number
+  type: string
+  title: string
+  content: string
+  activity_name: string
+  activity_id: string
+  created_at: string
+  is_read: boolean
+}
 
 const router = useRouter()
 
 const activeTab = ref<'conversations' | 'notifications' | 'activity'>('conversations')
+const loadingConversations = ref(false)
+const loadingNotifications = ref(false)
+const loadingActivity = ref(false)
+const error = ref<string | null>(null)
+
+// 实际数据
+const conversations = ref<Conversation[]>([])
+const notifications = ref<Notification[]>([])
+const activityMessages = ref<ActivityMessage[]>([])
 
 // Tab切换时滚动到顶部
 const handleTabChange = (tab: 'conversations' | 'notifications' | 'activity') => {
   activeTab.value = tab
-  // 滚动到页面顶部
   window.scrollTo({ top: 0, behavior: 'smooth' })
+
+  // 根据tab加载对应数据
+  if (tab === 'conversations' && conversations.value.length === 0) {
+    loadConversations()
+  } else if (tab === 'notifications' && notifications.value.length === 0) {
+    loadNotifications()
+  } else if (tab === 'activity' && activityMessages.value.length === 0) {
+    loadActivityMessages()
+  }
 }
 
-// 模拟数据 (实际应从store获取)
-const conversations = ref<Conversation[]>([
-  {
-    id: '1',
-    name: '张三',
-    avatar_url: '',
-    last_message: '明天的徒步活动准备好了吗?',
-    last_message_time: new Date(Date.now() - 3600000).toISOString(),
-    unread_count: 2
-  },
-  {
-    id: '2',
-    name: '李四',
-    avatar_url: '',
-    last_message: '好的,那我们明天见',
-    last_message_time: new Date(Date.now() - 7200000).toISOString(),
-    unread_count: 0
-  }
-])
+// 加载对话列表
+const loadConversations = async () => {
+  try {
+    loadingConversations.value = true
+    error.value = null
 
-const notifications = ref([
-  {
-    id: '1',
-    type: 'friend',
-    content: '王五 接受了你的好友请求',
-    created_at: new Date(Date.now() - 1800000).toISOString(),
-    is_read: false
-  },
-  {
-    id: '2',
-    type: 'system',
-    content: '您的账号安全等级已提升',
-    created_at: new Date(Date.now() - 86400000).toISOString(),
-    is_read: true
-  }
-])
+    const response = await messageApi.getConversations()
+    console.log('Conversations API response:', response)
 
-const activityMessages = ref([
-  {
-    id: '1',
-    type: 'application_approved',
-    title: '报名通过',
-    content: '您的活动报名申请已通过',
-    activity_name: '周末香山徒步',
-    activity_id: '1',
-    created_at: new Date(Date.now() - 3600000).toISOString(),
-    is_read: false
-  },
-  {
-    id: '2',
-    type: 'activity_reminder',
-    title: '活动提醒',
-    content: '活动将在1小时后开始,请做好准备',
-    activity_name: '植物园徒步',
-    activity_id: '2',
-    created_at: new Date(Date.now() - 7200000).toISOString(),
-    is_read: false
-  },
-  {
-    id: '3',
-    type: 'activity_cancelled',
-    title: '活动取消',
-    content: '活动因天气原因取消,敬请谅解',
-    activity_name: '雨中徒步',
-    activity_id: '3',
-    created_at: new Date(Date.now() - 172800000).toISOString(),
-    is_read: true
+    if (response && Array.isArray(response.data)) {
+      conversations.value = response.data.map((conv: any) => ({
+        id: conv.id,
+        name: conv.other_user_name || '未知用户',
+        avatar_url: conv.other_user_avatar || '',
+        last_message: conv.last_message || '',
+        last_message_time: conv.last_message_time || new Date().toISOString(),
+        unread_count: conv.unread_count || 0
+      }))
+    }
+  } catch (err: any) {
+    console.error('加载对话失败:', err)
+    error.value = '加载对话失败，请重试'
+    toast.error('加载对话失败')
+  } finally {
+    loadingConversations.value = false
   }
-])
+}
+
+// 加载通知列表
+const loadNotifications = async () => {
+  try {
+    loadingNotifications.value = true
+    error.value = null
+
+    // 使用模拟数据，因为后端通知系统可能未完全实现
+    notifications.value = [
+      {
+        id: '1',
+        type: 'friend',
+        content: '王五 接受了你的好友请求',
+        created_at: new Date(Date.now() - 1800000).toISOString(),
+        is_read: false
+      },
+      {
+        id: '2',
+        type: 'system',
+        content: '您的账号安全等级已提升',
+        created_at: new Date(Date.now() - 86400000).toISOString(),
+        is_read: true
+      }
+    ]
+  } catch (err: any) {
+    console.error('加载通知失败:', err)
+    error.value = '加载通知失败，请重试'
+    toast.error('加载通知失败')
+  } finally {
+    loadingNotifications.value = false
+  }
+}
+
+// 加载活动消息
+const loadActivityMessages = async () => {
+  try {
+    loadingActivity.value = true
+    error.value = null
+
+    // 使用模拟数据，因为后端活动通知系统可能未完全实现
+    activityMessages.value = [
+      {
+        id: '1',
+        type: 'application_approved',
+        title: '报名通过',
+        content: '您的活动报名申请已通过',
+        activity_name: '周末香山徒步',
+        activity_id: '1',
+        created_at: new Date(Date.now() - 3600000).toISOString(),
+        is_read: false
+      },
+      {
+        id: '2',
+        type: 'activity_reminder',
+        title: '活动提醒',
+        content: '活动将在1小时后开始,请做好准备',
+        activity_name: '植物园徒步',
+        activity_id: '2',
+        created_at: new Date(Date.now() - 7200000).toISOString(),
+        is_read: false
+      }
+    ]
+  } catch (err: any) {
+    console.error('加载活动消息失败:', err)
+    error.value = '加载活动消息失败，请重试'
+    toast.error('加载活动消息失败')
+  } finally {
+    loadingActivity.value = false
+  }
+}
 
 // 未读数统计
 const unreadConversations = computed(() => {
@@ -220,12 +341,24 @@ const unreadActivity = computed(() => {
 })
 
 // 打开对话
-const openConversation = (conversationId: string) => {
+const openConversation = (conversationId: string | number) => {
   router.push(`/chat/${conversationId}`)
 }
 
-// 标记为已读
-const markAsRead = (notificationId: string) => {
+// 删除对话
+const deleteConversation = async (conversationId: string | number) => {
+  try {
+    await messageApi.clearConversation(String(conversationId))
+    conversations.value = conversations.value.filter(c => c.id !== conversationId)
+    toast.success('对话已删除')
+  } catch (err: any) {
+    console.error('删除对话失败:', err)
+    toast.error('删除失败，请重试')
+  }
+}
+
+// 标记通知为已读
+const markNotificationAsRead = (notificationId: string | number) => {
   const notif = notifications.value.find(n => n.id === notificationId)
   if (notif) {
     notif.is_read = true
@@ -233,7 +366,7 @@ const markAsRead = (notificationId: string) => {
 }
 
 // 处理活动消息点击
-const handleActivityMessage = (message: any) => {
+const handleActivityMessage = (message: ActivityMessage) => {
   // 标记为已读
   message.is_read = true
   // 跳转到活动详情
@@ -242,19 +375,23 @@ const handleActivityMessage = (message: any) => {
 
 // 格式化时间
 const formatTime = (dateString: string) => {
-  const date = new Date(dateString)
-  const now = new Date()
-  const diff = now.getTime() - date.getTime()
-  const minutes = Math.floor(diff / 60000)
-  const hours = Math.floor(diff / 3600000)
-  const days = Math.floor(diff / 86400000)
+  try {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diff = now.getTime() - date.getTime()
+    const minutes = Math.floor(diff / 60000)
+    const hours = Math.floor(diff / 3600000)
+    const days = Math.floor(diff / 86400000)
 
-  if (minutes < 1) return '刚刚'
-  if (minutes < 60) return `${minutes}分钟前`
-  if (hours < 24) return `${hours}小时前`
-  if (days < 7) return `${days}天前`
+    if (minutes < 1) return '刚刚'
+    if (minutes < 60) return `${minutes}分钟前`
+    if (hours < 24) return `${hours}小时前`
+    if (days < 7) return `${days}天前`
 
-  return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
+    return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
+  } catch {
+    return '未知时间'
+  }
 }
 
 // 获取通知图标
@@ -282,8 +419,30 @@ const getActivityIcon = (type: string) => {
   return icons[type] || '🎯'
 }
 
+// 处理头像加载错误
+const handleAvatarError = (e: Event) => {
+  const img = e.target as HTMLImageElement
+  img.src = '/default-avatar.png'
+}
+
+// 关闭错误提示
+const dismissError = () => {
+  error.value = null
+}
+
+// 组件挂载时加载数据
 onMounted(() => {
-  // TODO: 加载真实数据
+  loadConversations()
+
+  // 每30秒刷新一次对话列表
+  const refreshInterval = setInterval(() => {
+    if (activeTab.value === 'conversations') {
+      loadConversations()
+    }
+  }, 30000)
+
+  // 清理定时器
+  return () => clearInterval(refreshInterval)
 })
 </script>
 
@@ -345,6 +504,38 @@ onMounted(() => {
 /* 内容区域 */
 .tab-content {
   padding: 16px;
+  min-height: calc(100vh - 56px);
+}
+
+/* 加载状态 */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #ff6b00;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-container p {
+  color: #999;
+  font-size: 14px;
 }
 
 /* 空状态 */
@@ -373,11 +564,20 @@ onMounted(() => {
   border-radius: 12px;
   margin-bottom: 8px;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: transform 0.2s, background 0.2s;
+  position: relative;
 }
 
 .conversation-item:active {
   transform: scale(0.98);
+}
+
+.conversation-item:hover {
+  background: #f9f9f9;
+}
+
+.conversation-item:hover .delete-btn {
+  opacity: 1;
 }
 
 .avatar {
@@ -438,6 +638,32 @@ onMounted(() => {
   line-height: 18px;
   text-align: center;
   font-weight: 500;
+  flex-shrink: 0;
+}
+
+/* 删除按钮 */
+.delete-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #e0e0e0;
+  background: white;
+  color: #999;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-left: 8px;
+  opacity: 0;
+}
+
+.delete-btn:hover {
+  background: #ff6b00;
+  color: white;
+  border-color: #ff6b00;
 }
 
 /* 通知列表 */
@@ -582,5 +808,43 @@ onMounted(() => {
   font-size: 12px;
   color: #ff6b00;
   font-weight: 500;
+}
+
+/* 错误提示 */
+.error-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #ff4444;
+  color: white;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 999;
+}
+
+.error-banner p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-btn:hover {
+  opacity: 0.8;
 }
 </style>

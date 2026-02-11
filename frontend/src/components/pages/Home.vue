@@ -162,7 +162,7 @@
                   v-else-if="!canJoinActivity(activity)"
                   class="px-3 py-1 bg-gray-200 text-gray-600 text-xs rounded-full"
                 >
-                  不可加入
+                  {{ getJoinStatusText(activity) }}
                 </span>
                 <span v-else class="px-3 py-1 bg-gray-200 text-gray-600 text-xs rounded-full">
                   已加入
@@ -242,8 +242,21 @@ const isPresetActivity = (activityId: string) => {
 const canJoinActivity = (activity: any) => {
   if (!activity || !activity.id) return false
   if (isPresetActivity(activity.id)) return false
-  if (activity.status === 'completed' || activity.status === 'cancelled') return false
+  if (activity.is_joined) return false
+  if (activity.status && !['approved', 'recruiting'].includes(activity.status)) return false
+  if (activity.max_participants && activity.participant_count >= activity.max_participants) return false
   return true
+}
+
+const getJoinStatusText = (activity: any) => {
+  if (!activity || !activity.id) return '不可加入'
+  if (isPresetActivity(activity.id)) return '预设活动'
+  if (activity.is_joined) return '已加入'
+  if (activity.status === 'pending') return '待发布'
+  if (activity.status === 'cancelled') return '已取消'
+  if (activity.status === 'completed') return '已结束'
+  if (activity.max_participants && activity.participant_count >= activity.max_participants) return '已满'
+  return '不可加入'
 }
 
 // 问候语
