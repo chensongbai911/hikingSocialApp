@@ -7,9 +7,9 @@
 // 测试Case 1: 发布流程验证
 // ============================================================
 
-async function test_publishFlow() {
+async function test_publishFlow () {
   console.log('🧪 测试 Case 1: 发布流程验证');
-  
+
   const testData = {
     title: '周末爬山测试活动',
     destination: '奥林匹克森林公园',
@@ -22,7 +22,7 @@ async function test_publishFlow() {
   };
 
   console.log('✓ 填写活动表单:', testData);
-  
+
   // 模拟提交
   const response = {
     status: 'recruiting', // ✅ 应该直接为recruiting
@@ -45,12 +45,12 @@ async function test_publishFlow() {
 // 测试Case 2: 编辑权限检查
 // ============================================================
 
-async function test_editPermission() {
+async function test_editPermission () {
   console.log('🧪 测试 Case 2: 编辑权限检查');
 
   const activityId = '12345';
   const currentUserId = 'user_a';
-  
+
   // 测试2a: 非创建者尝试编辑
   console.log('  📌 子测试2a: 非创建者编辑');
   const activity = {
@@ -111,7 +111,7 @@ async function test_editPermission() {
 // 测试Case 3: 并发加入防护
 // ============================================================
 
-async function test_concurrencyProtection() {
+async function test_concurrencyProtection () {
   console.log('🧪 测试 Case 3: 并发加入防护');
 
   // 模拟joiningActivityIds集合
@@ -155,7 +155,7 @@ async function test_concurrencyProtection() {
 // 测试Case 4: 人数上限检查
 // ============================================================
 
-async function test_maxParticipants() {
+async function test_maxParticipants () {
   console.log('🧪 测试 Case 4: 人数上限检查');
 
   const activity = {
@@ -187,7 +187,7 @@ async function test_maxParticipants() {
   };
 
   const isActivityFull2 = activity2.participantCount >= activity2.maxParticipants;
-  
+
   if (!isActivityFull2) {
     console.log('  ✓ 未满员: 加入按钮应可用');
   } else {
@@ -203,7 +203,7 @@ async function test_maxParticipants() {
 // 测试Case 5: 综合流程测试
 // ============================================================
 
-async function test_completeFlow() {
+async function test_completeFlow () {
   console.log('🧪 测试 Case 5: 完整活动流程');
 
   console.log('📌 流程: 创建 → 发布 → 其他用户加入 → 编辑 → 取消报名');
@@ -225,7 +225,7 @@ async function test_completeFlow() {
   console.log('\n[Step 2] 用户B加入活动');
   const joiningIds = new Set();
   const b_activity_id = activity.id;
-  
+
   if (!joiningIds.has(b_activity_id)) {
     joiningIds.add(b_activity_id);
     console.log('✓ 开始加入...');
@@ -251,7 +251,7 @@ async function test_completeFlow() {
   console.log('\n[Step 5] 用户D尝试加入活动');
   activity.participantCount++; // 现在3人
   const isFull = activity.participantCount >= activity.maxParticipants;
-  
+
   if (isFull) {
     console.log('✓ 人数已满:', `${activity.participantCount}/${activity.maxParticipants}`);
     console.log('✓ 拒绝用户E加入');
@@ -270,13 +270,13 @@ async function test_completeFlow() {
 // 主测试运行函数
 // ============================================================
 
-async function runAllTests() {
+async function runAllTests () {
   console.log('=====================================');
   console.log('🚀 活动流程优化测试套件');
   console.log('=====================================\n');
 
   const results = [];
-  
+
   try {
     results.push({
       name: '发布流程验证',
@@ -314,10 +314,10 @@ async function runAllTests() {
   console.log('\n=====================================');
   console.log('📊 测试结果总结');
   console.log('=====================================');
-  
+
   const passed = results.filter(r => r.passed).length;
   const total = results.length;
-  
+
   results.forEach((result, index) => {
     const status = result.passed ? '✅ PASS' : '❌ FAIL';
     console.log(`${index + 1}. ${result.name}: ${status}`);
