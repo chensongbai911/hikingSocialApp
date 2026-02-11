@@ -213,10 +213,13 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { useActivityStore } from '@/stores/activity'
+import toast from '@/utils/toast'
 import { api } from '@/api'
 
 const router = useRouter()
 const userStore = useUserStore()
+const activityStore = useActivityStore()
 
 const loading = ref(false)
 const recommendedActivities = ref<any[]>([])
@@ -276,7 +279,7 @@ const loadRecommendedUsers = async () => {
 // 加载未读消息数
 const loadUnreadCount = async () => {
   try {
-    const response = await api.get('/api/v1/messages/unread-count')
+    const response = await api.get('/messages/unread-count')
     if (response.data) {
       unreadCount.value = response.data.count || 0
     }

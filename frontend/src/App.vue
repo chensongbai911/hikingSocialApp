@@ -1,7 +1,13 @@
 <template>
-  <div id="app" class="app" :class="{ 'pb-20': shouldShowTabBar, 'pt-safe': true }">
+  <div
+    id="app"
+    class="app h-full flex flex-col overflow-hidden"
+    :class="{ 'pb-20': shouldShowTabBar, 'pt-safe': true }"
+  >
     <!-- 路由视图 -->
-    <RouterView />
+    <div class="flex-1 min-h-0 overflow-y-auto app-scroll">
+      <RouterView />
+    </div>
     <!-- 底部导航栏 - 只在特定页面显示 -->
     <TabBar v-if="shouldShowTabBar" />
   </div>
@@ -33,6 +39,7 @@ onMounted(() => {
 <style scoped>
 #app {
   width: 100%;
+  height: 100%;
   min-height: 100vh;
   background-color: #f5f5f5;
 }
