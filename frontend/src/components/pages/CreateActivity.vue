@@ -626,43 +626,62 @@ const form = ref({
 const loadActivityData = async (id: string) => {
   try {
     const activity = await activityStore.getActivityById(id)
-    if (activity) {
-      // 回显数据
-      form.value.title = activity.title
-      form.value.destination = activity.location
-      form.value.difficulty = activity.difficulty || 'easy'
-      form.value.maxParticipants = activity.max_participants || 4
-      form.value.description = activity.description || ''
-
-      // 解析日期和时间
-      if (activity.start_time) {
-        const startDate = new Date(activity.start_time)
-        const year = startDate.getFullYear()
-        const month = String(startDate.getMonth() + 1).padStart(2, '0')
-        const day = String(startDate.getDate()).padStart(2, '0')
-        const hours = String(startDate.getHours()).padStart(2, '0')
-        const minutes = String(startDate.getMinutes()).padStart(2, '0')
-
-        form.value.date = `${year}-${month}-${day}`
-        form.value.time = `${hours}:${minutes}`
-        selectedDate.value = startDate
-        selectedHour.value = hours
-        selectedMinute.value = minutes
-      }
-
-      // 加载照片数组（如果有多张）
-      if (activity.photos && activity.photos.length > 0) {
-        uploadedPhotos.value = activity.photos
-      } else if (activity.cover_image_url) {
-        // 兼容旧数据，只有封面图的情况
-        uploadedPhotos.value = [activity.cover_image_url]
-      }
-
-      toast.success('活动数据加载成功')
+    if (!activity) {
+      toast.error('活动不存在')
+      goBack()
+      return
     }
+
+    // 检查是否为创建者（通过isOrganizer标志）
+    if (!activity.isOrganizer) {
+      toast.error('只有活动创建者可以编辑')
+      goBack()
+      return
+    }
+
+    // 检查活动状态
+    if (activity.status === 'completed' || activity.status === 'cancelled') {
+      toast.error('已结束或已取消的活动无法编辑')
+      goBack()
+      return
+    }
+
+    // 回显数据
+    form.value.title = activity.title
+    form.value.destination = activity.location
+    form.value.difficulty = activity.difficulty || 'easy'
+    form.value.maxParticipants = activity.max_participants || 4
+    form.value.description = activity.description || ''
+
+    // 解析日期和时间
+    if (activity.start_time) {
+      const startDate = new Date(activity.start_time)
+      const year = startDate.getFullYear()
+      const month = String(startDate.getMonth() + 1).padStart(2, '0')
+      const day = String(startDate.getDate()).padStart(2, '0')
+      const hours = String(startDate.getHours()).padStart(2, '0')
+      const minutes = String(startDate.getMinutes()).padStart(2, '0')
+
+      form.value.date = `${year}-${month}-${day}`
+      form.value.time = `${hours}:${minutes}`
+      selectedDate.value = startDate
+      selectedHour.value = hours
+      selectedMinute.value = minutes
+    }
+
+    // 加载照片数组（如果有多张）
+    if (activity.photos && activity.photos.length > 0) {
+      uploadedPhotos.value = activity.photos
+    } else if (activity.cover_image_url) {
+      // 兼容旧数据，只有封面图的情况
+      uploadedPhotos.value = [activity.cover_image_url]
+    }
+
+    toast.success('活动数据加载成功')
   } catch (error) {
     console.error('加载活动数据失败:', error)
     toast.error('加载活动数据失败')
+    goBack()
     router.back()
   }
 }
@@ -1106,6 +1125,7 @@ const handleSubmit = async () => {
       max_participants: form.value.maxParticipants,
       cover_image_url: coverImageUrl,
       photos, // 照片数组
+      status: 'recruiting' // 直接发布为招募状态
     }
 
     let success = false

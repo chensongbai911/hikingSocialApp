@@ -330,9 +330,20 @@ const viewActivity = (id: string) => {
   router.push(`/activity/${id}`)
 }
 
+// 跟踪正在加入的活动ID（防止并发加入）
+const joiningActivityIds = ref<Set<string>>(new Set())
+
 // 加入活动
 const joinActivity = async (e: Event, activityId: string) => {
   e.stopPropagation() // 阻止冒泡触发查看详情
+
+  // 防止重复加入
+  if (joiningActivityIds.value.has(activityId)) {
+    toast.warning('正在处理中...')
+    return
+  }
+
+  joiningActivityIds.value.add(activityId)
 
   try {
     joiningActivityId.value = activityId
@@ -359,6 +370,7 @@ const joinActivity = async (e: Event, activityId: string) => {
     toast.error(errorMsg)
   } finally {
     joiningActivityId.value = null
+    joiningActivityIds.value.delete(activityId)
   }
 }
 
