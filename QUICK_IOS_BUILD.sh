@@ -61,10 +61,10 @@ if [ "$BUILD_TYPE" = "debug" ]; then
     -derivedDataPath "$IOS_DIR/build" \
     -arch arm64 \
     -sdk iphoneos
-  
+
   echo "✓ Debug 版本构建完成"
   echo "位置: $IOS_DIR/build"
-  
+
 elif [ "$BUILD_TYPE" = "release" ]; then
   echo "构建 Release 版本并生成 IPA..."
   xcodebuild \
@@ -76,17 +76,17 @@ elif [ "$BUILD_TYPE" = "release" ]; then
     -sdk iphoneos \
     archive \
     -archivePath "$IOS_DIR/build/App.xcarchive"
-  
+
   # 导出 IPA
   xcodebuild -exportArchive \
     -archivePath "$IOS_DIR/build/App.xcarchive" \
     -exportOptionsPlist "$IOS_DIR/App/App/ExportOptions.plist" \
     -exportPath "$IOS_DIR/build/output" \
     -allowProvisioningUpdates
-  
+
   echo "✓ Release 版本构建完成"
   echo "IPA 位置: $IOS_DIR/build/output/App.ipa"
-  
+
 else
   echo "❌ 未知的构建类型: $BUILD_TYPE"
   echo "用法: bash QUICK_IOS_BUILD.sh [debug|release]"

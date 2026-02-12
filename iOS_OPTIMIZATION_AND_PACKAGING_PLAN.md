@@ -20,6 +20,7 @@
 ### 2. 核心 API 调用流程
 
 #### 2.1 认证流程
+
 ```
 用户输入账号密码
     ↓
@@ -35,6 +36,7 @@ Token 过期时 POST /api/v1/auth/refresh 刷新
 ```
 
 #### 2.2 首页加载流程
+
 ```
 页面挂载 (onMounted)
     ↓
@@ -50,6 +52,7 @@ UI 渲染组件
 ```
 
 #### 2.3 用户交互流程（关注 + 私信）
+
 ```
 发现页面加载用户卡片
     ↓
@@ -66,6 +69,7 @@ UI 渲染组件
 ```
 
 #### 2.4 关注与好友流程
+
 ```
 用户点击"+ 关注"按钮
     ↓
@@ -91,6 +95,7 @@ PUT /api/v1/friends/{friendId}/accept
 ```
 
 #### 2.5 私信流程
+
 ```
 互关用户点击"私信"按钮
     ↓
@@ -110,6 +115,7 @@ POST /api/v1/messages/send (同时实时发送 socket 事件)
 ```
 
 #### 2.6 活动参加流程
+
 ```
 用户点击活动卡片
     ↓
@@ -135,6 +141,7 @@ PUT /api/v1/activities/{activityId}/apply/{userId}/approve
 ### 3. 数据状态管理架构
 
 #### 3.1 Pinia Store 结构
+
 ```
 stores/
 ├── user.ts
@@ -168,6 +175,7 @@ stores/
 ```
 
 #### 3.2 缓存策略
+
 ```
 API 响应缓存:
 ├── 短期缓存 (2 分钟): 用户推荐、活动列表
@@ -185,6 +193,7 @@ API 响应缓存:
 ### 4. WebSocket 实时通信
 
 #### 4.1 连接管理
+
 ```
 应用启动
     ↓
@@ -198,6 +207,7 @@ API 响应缓存:
 ```
 
 #### 4.2 实时事件
+
 ```
 消息事件:
 - 'message:new' → 接收新消息
@@ -225,15 +235,18 @@ API 响应缓存:
 ### 1. 关键 Bug
 
 #### Bug #1: 好友状态 API 返回 500
+
 **位置**: `GET /api/v1/friends/{userId}/status`
 **根因**: Friendship 表字段名映射错误 (userId vs user_id)
 **影响**: 用户详情页无法加载
 **⚠️ 临时方案**: 前端跳过此 API 调用，直接初始化 friendshipStatus = 'none'
-**✅ 永久方案**: 
+**✅ 永久方案**:
+
 1. 修复 Friendship.ts 模型添加 `underscored: true`
 2. 或在每个字段上指定 `columnName: 'user_id'`
 
 #### Bug #2: 消息报告功能 (Report)
+
 **位置**: `ChatWindow.vue` 报告按钮
 **问题**: 需要实现报告原因选择 UI
 **状态**: 已实现对话框，需联调后端 API
@@ -241,25 +254,31 @@ API 响应缓存:
 ### 2. 性能瓶颈
 
 #### 瓶颈 #1: 首页多 API 并行加载
+
 **当前**: 4 个 API 并行请求，单个请求 200-500ms
 **总耗时**: ~500ms (最慢的那个)
 **优化**: 添加请求缓存 + 请求去重
 
 #### 瓶颈 #2: 用户卡片列表 (Discover)
+
 **当前**: 加载 20 个用户卡片，每个卡片触发 1 个关注状态 API
-**总请求数**: 20 请求 * 500ms = 可怕的瀑布流
-**优化**: 
+**总请求数**: 20 请求 \* 500ms = 可怕的瀑布流
+**优化**:
+
 1. 批量获取关注状态 API: `GET /api/v1/users/follow-status/batch?userIds=...`
 2. 或使用 WebSocket 推送关注状态变化
 
 #### 瓶颈 #3: WebSocket 消息量
+
 **当前**: 每条消息实时推送
 **风险**: 高并发时，WebSocket 连接会被淹没
-**优化**: 
+**优化**:
+
 1. 消息轮询一次性获取 (每 3 秒)
 2. 或使用消息分页 API
 
 #### 瓶颈 #4: 前端包体积
+
 **当前**: Vue 3 + Pinia + socket.io + TailwindCSS
 **预期包体积**: ~3-5 MB (压缩后 1-1.5 MB)
 **优化**: 代码分割 + tree-shaking + 动态导入
@@ -276,23 +295,23 @@ API 响应缓存:
 class ApiService {
   private requestCache = new Map<string, { data: any; timestamp: number }>()
   private pendingRequests = new Map<string, Promise<any>>()
-  
+
   async request<T>(key: string, fetcher: () => Promise<T>, cacheTTL = 0): Promise<T> {
     // 1. 如果正在请求，等待现有请求
     if (this.pendingRequests.has(key)) {
       return this.pendingRequests.get(key)!
     }
-    
+
     // 2. 检查缓存是否有效
     const cached = this.requestCache.get(key)
     if (cached && Date.now() - cached.timestamp < cacheTTL) {
       return cached.data
     }
-    
+
     // 3. 发起新请求
     const promise = fetcher()
     this.pendingRequests.set(key, promise)
-    
+
     try {
       const data = await promise
       this.requestCache.set(key, { data, timestamp: Date.now() })
@@ -313,18 +332,18 @@ class ApiService {
 app.get('/users/follow-status/batch', authMiddleware, async (req, res) => {
   const { userIds } = req.query // userIds=id1,id2,id3
   const currentUserId = req.user.id
-  
+
   const statuses = await sequelize.query(
-    `SELECT user_id, is_following FROM user_followers 
+    `SELECT user_id, is_following FROM user_followers
      WHERE follower_id = ? AND user_id IN (?)`,
     [currentUserId, userIds.split(',')]
   )
-  
+
   return success(res, {
     statuses: statuses.reduce((acc, [userId, isFollowing]) => {
       acc[userId] = isFollowing
       return acc
-    }, {})
+    }, {}),
   })
 })
 
@@ -342,15 +361,21 @@ onMounted(async () => {
   // P0: 加载用户信息（必需）
   const userRes = await userApi.getCurrentUser()
   user.value = userRes.data
-  
+
   // P1: 加载推荐活动（快速显示内容）
-  activityApi.getRecommendedActivities({ page: 1, limit: 10 })
-    .then(res => { activities.value = res.data.items })
+  activityApi
+    .getRecommendedActivities({ page: 1, limit: 10 })
+    .then((res) => {
+      activities.value = res.data.items
+    })
     .catch(() => {}) // 静默失败
-  
+
   // P2: 加载推荐用户（不阻塞）
-  discoveryApi.getRecommendedUsers({ limit: 6 })
-    .then(res => { recommendedUsers.value = res.data })
+  discoveryApi
+    .getRecommendedUsers({ limit: 6 })
+    .then((res) => {
+      recommendedUsers.value = res.data
+    })
     .catch(() => {})
 })
 ```
@@ -358,6 +383,7 @@ onMounted(async () => {
 ### 优化方案 4: 代码分割与懒加载
 
 **webpack.config.ts**:
+
 ```typescript
 // 路由级别代码分割
 const Home = () => import('@/pages/Home.vue')
@@ -365,9 +391,7 @@ const Discover = () => import('@/pages/Discover.vue')
 const Messages = () => import('@/pages/Messages.vue')
 
 // 组件级别代码分割（大组件）
-const ActivityDetail = defineAsyncComponent(() => 
-  import('@/components/ActivityDetail.vue')
-)
+const ActivityDetail = defineAsyncComponent(() => import('@/components/ActivityDetail.vue'))
 ```
 
 ### 优化方案 5: WebSocket 消息缓冲
@@ -377,17 +401,17 @@ const ActivityDetail = defineAsyncComponent(() =>
 class SocketService {
   private messageBuffer: Message[] = []
   private flushTimer: NodeJS.Timeout | null = null
-  
+
   private flushMessages() {
     if (this.messageBuffer.length > 0) {
       const batch = this.messageBuffer.splice(0)
       store.commit('addMessages', batch)
     }
   }
-  
+
   onMessage(message: Message) {
     this.messageBuffer.push(message)
-    
+
     // 批量提交消息（200ms 或 10 条消息）
     if (!this.flushTimer) {
       this.flushTimer = setTimeout(() => {
@@ -395,7 +419,7 @@ class SocketService {
         this.flushTimer = null
       }, 200)
     }
-    
+
     if (this.messageBuffer.length >= 10) {
       clearTimeout(this.flushTimer!)
       this.flushMessages()
@@ -437,6 +461,7 @@ export function optimizeImageUrl(url: string, options?: {
 ### 1. 环境准备
 
 #### 1.1 安装 Capacitor CLI
+
 ```bash
 npm install -g @capacitor/cli
 cd frontend
@@ -445,6 +470,7 @@ npm install @capacitor/geolocation @capacitor/camera @capacitor/filesystem
 ```
 
 #### 1.2 初始化 Capacitor 项目
+
 ```bash
 npx cap init
 # appName: "HikingSocialApp"
@@ -452,6 +478,7 @@ npx cap init
 ```
 
 #### 1.3 构建 Web 资源
+
 ```bash
 npm run build
 npx cap add ios
@@ -460,18 +487,22 @@ npx cap add ios
 ### 2. Xcode 配置
 
 #### 2.1 打开 iOS 项目
+
 ```bash
 npx cap open ios
 ```
 
 #### 2.2 在 Xcode 中配置签名
+
 1. 选择 "Signing & Capabilities" tab
 2. 修改 Bundle Identifier: `com.hikingsocial.app`
 3. 修改 Team
 4. 如果使用真机测试：选择 "iPhone" 作为目标
 
 #### 2.3 配置权限
+
 编辑 `ios/App/App/Info.plist`:
+
 ```xml
 <dict>
   <key>NSLocationWhenInUseUsageDescription</key>
@@ -486,6 +517,7 @@ npx cap open ios
 ### 3. 构建配置
 
 #### 3.1 Debug 版本 (用于真机测试)
+
 ```bash
 # 在 Xcode 中
 # Product > Scheme > Edit Scheme
@@ -494,6 +526,7 @@ npx cap open ios
 ```
 
 #### 3.2 Release 版本 (用于 TestFlight/App Store)
+
 ```bash
 # 在 Xcode 中
 # Product > Scheme > Edit Scheme
@@ -504,6 +537,7 @@ npx cap open ios
 ### 4. 打包流程
 
 #### 4.1 本地 Debug 打包 (IPA)
+
 ```bash
 # 步骤 1: 构建前端
 cd frontend
@@ -529,6 +563,7 @@ xcodebuild -workspace ios/App/App.xcworkspace \
 ```
 
 #### 4.2 生成测试 IPA
+
 ```bash
 # 使用 xcodebuild 导出 IPA
 xcodebuild -exportArchive \
@@ -543,6 +578,7 @@ xcodebuild -exportArchive \
 ### 5. iOS 18.6.2 测试
 
 #### 5.1 使用 Xcode 直接运行
+
 ```bash
 npx cap open ios
 # 在 Xcode 中：
@@ -551,6 +587,7 @@ npx cap open ios
 ```
 
 #### 5.2 使用 Apple Configurator 2 安装 IPA
+
 ```bash
 # Mac App Store 下载 Apple Configurator 2
 # 步骤:
@@ -561,6 +598,7 @@ npx cap open ios
 ```
 
 #### 5.3 使用 Transporter 上传到 TestFlight
+
 ```bash
 # 步骤 1: 创建 App ID 和证书 (Apple Developer)
 # 步骤 2: 使用 Xcode 生成 IPA (Archive)
@@ -575,6 +613,7 @@ npx cap open ios
 ## 🧪 第五部分：测试清单
 
 ### 测试场景 1: 用户认证
+
 - [ ] 注册新账号
 - [ ] 登录已有账号
 - [ ] 登出
@@ -582,6 +621,7 @@ npx cap open ios
 - [ ] 修改密码
 
 ### 测试场景 2: 首页加载
+
 - [ ] 检查加载时间 (< 2 秒)
 - [ ] 检查推荐活动显示
 - [ ] 检查推荐用户显示
@@ -589,6 +629,7 @@ npx cap open ios
 - [ ] 检查网络错误处理
 
 ### 测试场景 3: 用户交互
+
 - [ ] 进入发现页面
 - [ ] 查看用户详情
 - [ ] 关注用户
@@ -597,6 +638,7 @@ npx cap open ios
 - [ ] 接受好友请求
 
 ### 测试场景 4: 私信功能
+
 - [ ] 创建对话
 - [ ] 发送消息
 - [ ] 接收消息 (WebSocket)
@@ -604,6 +646,7 @@ npx cap open ios
 - [ ] 未读计数
 
 ### 测试场景 5: 活动功能
+
 - [ ] 创建活动
 - [ ] 浏览活动列表
 - [ ] 查看活动详情
@@ -611,6 +654,7 @@ npx cap open ios
 - [ ] 活动管理 (批准申请者)
 
 ### 测试场景 6: 设备特定测试
+
 - [ ] 地理定位 (允许/拒绝)
 - [ ] 相机权限 (拍照)
 - [ ] 相册权限 (上传图片)
@@ -622,6 +666,7 @@ npx cap open ios
 ## 📋 第六部分：优化检查清单
 
 ### 前端优化
+
 - [ ] 移除 console.log 调试语句
 - [ ] 启用 gzip 压缩
 - [ ] 配置代码分割 (路由级别)
@@ -631,6 +676,7 @@ npx cap open ios
 - [ ] 实现动画节流 (requestAnimationFrame)
 
 ### 后端优化
+
 - [ ] 添加数据库索引 (userId, status, createdAt 等)
 - [ ] 实现 API 速率限制 (rate limiting)
 - [ ] 添加 Redis 缓存层
@@ -639,6 +685,7 @@ npx cap open ios
 - [ ] 启用 HTTPS
 
 ### 测试覆盖
+
 - [ ] 单元测试 (关键函数)
 - [ ] 集成测试 (API + 数据库)
 - [ ] E2E 测试 (用户场景)
@@ -650,6 +697,7 @@ npx cap open ios
 ## 🚀 第七部分：部署流程
 
 ### 开发环境 (本地 + 真机)
+
 ```bash
 # 启动后端
 cd backend
@@ -664,6 +712,7 @@ npx cap open ios  # 在 Xcode 中运行
 ```
 
 ### 生产环境 (云服务器 + App Store)
+
 ```bash
 # 构建优化版本
 npm run build:prod
@@ -681,12 +730,14 @@ npx cap sync ios
 ## 📈 预期效果
 
 ### 优化前
+
 - 首屏加载: ~2.5 秒
 - API 响应: 500-800ms
 - 包体积: ~5 MB (压缩前)
 - WebSocket 消息延迟: 100-500ms
 
 ### 优化后
+
 - 首屏加载: ~1.2 秒 (↓ 50%)
 - API 响应: 150-300ms (↓ 60%)
 - 包体积: ~2 MB (↓ 60%)
@@ -700,4 +751,3 @@ npx cap sync ios
 2. **WebSocket 稳定性**: 弱网环境下可能断连，需要重连机制
 3. **数据库扩展性**: 当用户量 > 100K 时，需要考虑分库分表
 4. **文件上传大小**: 图片限制 5MB，视频限制 50MB
-

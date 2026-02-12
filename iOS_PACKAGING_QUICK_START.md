@@ -139,6 +139,7 @@ npx cap open ios
 ## 🧪 iOS 18.6.2 测试检查清单
 
 ### 启动与认证
+
 - [ ] App 启动无崩溃
 - [ ] 显示登录页面
 - [ ] 注册新账号成功
@@ -146,30 +147,35 @@ npx cap open ios
 - [ ] 首页加载 < 2 秒
 
 ### 页面导航
+
 - [ ] 底部 Tab 导航正常
 - [ ] 所有页面都可以访问
 - [ ] 返回按钮工作正常
 - [ ] 页面切换流畅
 
 ### 用户功能
+
 - [ ] 浏览推荐用户
 - [ ] 进入用户详情页
 - [ ] 点击"关注"成功
 - [ ] 显示关注人数更新
 
 ### 消息功能
+
 - [ ] 进入私信页面
 - [ ] 发送消息成功
 - [ ] 接收消息 (需要双设备)
 - [ ] 消息实时显示
 
 ### 活动功能
+
 - [ ] 浏览活动列表
 - [ ] 查看活动详情
 - [ ] 点击"参加"成功
 - [ ] 参加人数更新
 
 ### 设备特定功能
+
 - [ ] 允许地理定位权限
 - [ ] 允许相机权限
 - [ ] 允许相册权限
@@ -177,6 +183,7 @@ npx cap open ios
 - [ ] 从相册选择图片
 
 ### 网络与性能
+
 - [ ] WiFi 下加载速度正常
 - [ ] 蜂窝网络下可用
 - [ ] 网络切换无崩溃
@@ -184,6 +191,7 @@ npx cap open ios
 - [ ] 没有内存泄漏 (观察内存占用)
 
 ### 错误处理
+
 - [ ] 网络超时显示友好提示
 - [ ] 登录过期自动刷新 token
 - [ ] 操作失败显示错误信息
@@ -194,23 +202,25 @@ npx cap open ios
 ## 📱 配置文件说明
 
 ### capacitor.config.json
+
 ```json
 {
-  "appId": "com.hikingsocial.app",      // 应用唯一标识
-  "appName": "徒步社交",                 // App Store 显示名称
-  "webDir": "dist",                      // Vue 构建输出目录
+  "appId": "com.hikingsocial.app", // 应用唯一标识
+  "appName": "徒步社交", // App Store 显示名称
+  "webDir": "dist", // Vue 构建输出目录
   "server": {
-    "ioscheme": "https"                 // iOS 使用 HTTPS
+    "ioscheme": "https" // iOS 使用 HTTPS
   },
   "plugins": {
-    "Geolocation": {},                  // 地理定位插件
-    "Camera": {},                        // 相机插件
-    "Filesystem": {}                     // 文件系统插件
+    "Geolocation": {}, // 地理定位插件
+    "Camera": {}, // 相机插件
+    "Filesystem": {} // 文件系统插件
   }
 }
 ```
 
 ### ExportOptions.plist
+
 - 配置 Ad Hoc 签名
 - 指定临时配置文件
 - 用于自动化导出 IPA
@@ -234,11 +244,13 @@ npx cap open ios
    - Ad Hoc 配置文件 (Ad Hoc Profile)
 
 ### 自动签名 (推荐)
+
 - Xcode 可以自动生成证书
 - Signing & Capabilities > Automatically manage signing
 - 选择 Team
 
 ### 手动签名
+
 - Apple Developer 后台创建证书
 - 下载并导入到 Keychain
 - 在 Xcode 中选择相应证书
@@ -248,6 +260,7 @@ npx cap open ios
 ## 📈 构建优化
 
 ### 减少包体积
+
 ```bash
 # 检查包大小
 du -sh frontend/dist
@@ -257,6 +270,7 @@ npm install vite-plugin-compression
 ```
 
 ### 加快构建速度
+
 ```bash
 # 并行构建
 npm run build -- --mode production
@@ -266,6 +280,7 @@ npm run build -- --analyze
 ```
 
 ### 性能分析
+
 ```bash
 # 使用 Lighthouse (Chrome DevTools)
 # 检查性能指标
@@ -279,33 +294,43 @@ npm run build -- --analyze
 ## 🐛 常见问题
 
 ### Q: 编译错误 "Cannot find module"
+
 **A**: 删除 node_modules，重新安装
+
 ```bash
 rm -rf node_modules package-lock.json
 npm install
 ```
 
 ### Q: 签名错误 "Provisioning profile failed to verify"
-**A**: 
+
+**A**:
+
 1. Xcode > Preferences > Accounts
 2. 添加 Apple ID
 3. 点击 "Manage Certificates"
 4. 创建新的开发证书
 
 ### Q: App 在真机上崩溃
+
 **A**:
+
 1. 检查控制台日志: Xcode > Window > Devices and Simulators > 选择设备 > View Device Logs
 2. 查看最后一条错误日志
 3. 常见原因: permission denied, network timeout, memory shortage
 
 ### Q: WebSocket 连接失败
+
 **A**:
+
 1. 确保后端正在运行: `npm run dev` 在 backend 目录
 2. 检查 API 地址是否正确 (frontend/src/api/http.ts)
 3. 确保防火墙允许连接
 
 ### Q: 消息实时性差
+
 **A**:
+
 1. 检查 WebSocket 连接状态
 2. 查看网络 latency
 3. 尝试 WiFi 而不是蜂窝网络
@@ -315,16 +340,19 @@ npm install
 ## 📚 更多资源
 
 ### 官方文档
+
 - [Capacitor 文档](https://capacitorjs.com)
 - [iOS 开发指南](https://developer.apple.com/ios)
 - [Xcode 文档](https://help.apple.com/xcode)
 
 ### 项目文档
+
 - [iOS 优化方案](./iOS_OPTIMIZATION_AND_PACKAGING_PLAN.md)
 - [后端 API 文档](./backend/README.md)
 - [前端代码文档](./frontend/README.md)
 
 ### 技术栈
+
 - Vue 3 + TypeScript
 - Capacitor (跨端框架)
 - Express.js (后端)
@@ -335,12 +363,14 @@ npm install
 ## ✨ 打包完成后
 
 ### 立即测试
+
 ```bash
 # 在真机上打开 App
 # 执行测试检查清单中的所有项
 ```
 
 ### 收集反馈
+
 ```
 测试期间记录:
 - 功能是否正常
@@ -350,6 +380,7 @@ npm install
 ```
 
 ### 部署上线
+
 ```
 1. TestFlight 测试 (内部 + 外部测试人员)
 2. 收集反馈和 bug 报告
@@ -361,4 +392,3 @@ npm install
 ---
 
 **祝打包顺利！🚀**
-
